@@ -158,7 +158,7 @@ export default function SignIn() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <Link href={'/dashboard'}>
+            <Link href={'/dashboard/dashboard-overview'}>
               <Button
                 type="submit"
                 className="w-full bg-yellow-400 mt-10 hover:bg-yellow-500 text-black"
