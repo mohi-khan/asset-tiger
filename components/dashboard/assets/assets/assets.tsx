@@ -176,7 +176,7 @@ const Assets = () => {
         isOpen={isPopupOpen}
         onClose={() => setIsPopupOpen(false)}
         title="Add Asset"
-        size="sm:max-w-md"
+        size="max-w-4xl"
       >
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid gap-4">

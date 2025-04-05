@@ -12,7 +12,7 @@ interface PopupProps {
 export function Popup({ isOpen, onClose, title, children, size }: PopupProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`${size} max-h-[90vh] overflow-y-auto`}>
+      <DialogContent className={`${size} max-h-[30vh] overflow-y-auto`}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>

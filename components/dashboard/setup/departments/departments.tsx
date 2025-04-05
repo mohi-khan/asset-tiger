@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Popup } from "@/utils/popup"
 import { Users } from "lucide-react"
+import { Department, initialDepartments } from "@/app/type"
 
 const Departments = () => {
   // State for popup visibility
@@ -23,17 +24,7 @@ const Departments = () => {
   })
 
   // State for table data
-  const [departments, setDepartments] = useState([
-    // Sample data
-    {
-      id: 1,
-      departmentName: "Human Resources",
-      departmentCode: "HR-001",
-      location: "Headquarters",
-      manager: "Jane Doe",
-      employeeCount: "12",
-    },
-  ])
+  const [departments, setDepartments] = useState<Department[]>(initialDepartments)
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,6 +87,7 @@ const Departments = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
+         =
             {departments.map((department) => (
               <TableRow key={department.id}>
                 <TableCell>{department.departmentName}</TableCell>

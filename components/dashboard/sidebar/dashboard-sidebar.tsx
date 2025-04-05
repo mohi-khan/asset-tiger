@@ -39,6 +39,10 @@ export function DashboardSidebar() {
     //   href: '/dashboard/assets',
     // },
     {
+      title: 'Alerts',
+      icon: Settings,
+      href: '/dashboard/alerts',},
+    {
       title: 'Assets',
       icon: Settings,
       href: '/dashboard/assets',
@@ -46,6 +50,10 @@ export function DashboardSidebar() {
         {
           title: 'Assets',
           href: '/dashboard/assets/assets',
+        },
+        {
+          title: 'Add Assets',
+          href: '/dashboard/assets/add-assets',
         },
         {
           title: 'Dispose',
@@ -105,8 +113,43 @@ export function DashboardSidebar() {
           title: 'Options',
           href: '/dashboard/setup/options',
         },
-      ],
-    },
+      ],},
+      {
+      title: 'Reports',
+      icon: Settings,
+      href: '/dashboard/reports',
+      subItems: [
+        {
+          title: 'Asset Register',
+          href: '/dashboard/report/asset-register',
+        },
+        {
+          title: 'Depreciation Report',
+          href: '/dashboard/report/depreciation-report',
+        },
+        {
+          title: 'Asset Movement Reprot',
+          href: '/dashboard/report/Asset Movement Report',
+        },
+        {
+          title: 'Maintainence Report',
+          href: '/dashboard/report/maintainence-report',
+        },
+        {
+          title: 'Disposal Report',
+          href: '/dashboard/report/disposal-Report',
+        },
+        {
+          title: 'Asset Valuation Summery',
+          href: '/dashboard/report/asset-Valuation-Summery',
+        },
+        {
+          title: 'Accounting Journal Report',
+          href: '/dashboard/report/accounting-Journal-Report',
+        },
+       
+      ],}
+
   ]
 
   // Check if the current path is in the submenu items
