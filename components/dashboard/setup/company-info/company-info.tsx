@@ -22,8 +22,6 @@ const CompanyInfo = () => {
   // State for form data
   const [formData, setFormData] = useState({
     companyName: '',
-    department: '',
-    costCenter: '',
     address: '',
     city: '',
     state: '',
@@ -36,8 +34,6 @@ const CompanyInfo = () => {
     {
       id: 1,
       companyName: 'Acme Inc',
-      department: 'Engineering',
-      costCenter: 'CC001',
       address: '123 Main St',
       city: 'San Francisco',
       state: 'CA',
@@ -70,8 +66,6 @@ const CompanyInfo = () => {
     // Reset form and close popup
     setFormData({
       companyName: '',
-      department: '',
-      costCenter: '',
       address: '',
       city: '',
       state: '',
@@ -119,8 +113,6 @@ const CompanyInfo = () => {
           <TableHeader className="bg-amber-100">
             <TableRow>
               <TableHead>Company Name</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Cost Center</TableHead>
               <TableHead>Address</TableHead>
               <TableHead>City</TableHead>
               <TableHead>State</TableHead>
@@ -131,8 +123,6 @@ const CompanyInfo = () => {
             {companies.map((company) => (
               <TableRow key={company.id}>
                 <TableCell>{company.companyName}</TableCell>
-                <TableCell>{company.department}</TableCell>
-                <TableCell>{company.costCenter}</TableCell>
                 <TableCell>{company.address}</TableCell>
                 <TableCell>{company.city}</TableCell>
                 <TableCell>{company.state}</TableCell>
@@ -211,28 +201,6 @@ const CompanyInfo = () => {
                 id="companyName"
                 name="companyName"
                 value={formData.companyName}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Input
-                id="department"
-                name="department"
-                value={formData.department}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="costCenter">Cost Center</Label>
-              <Input
-                id="costCenter"
-                name="costCenter"
-                value={formData.costCenter}
                 onChange={handleInputChange}
                 required
               />

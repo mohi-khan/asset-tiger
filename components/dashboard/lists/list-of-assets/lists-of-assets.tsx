@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import Link from "next/link"
+import { Eye } from "lucide-react"
 
 const ListOfAssets = () => {
   // State for table data
@@ -60,6 +62,8 @@ const ListOfAssets = () => {
               <TableHead>Cost</TableHead>
               <TableHead>Brand</TableHead>
               <TableHead>Model</TableHead>
+              <TableHead>Action</TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -73,6 +77,11 @@ const ListOfAssets = () => {
                 <TableCell>{asset.cost}</TableCell>
                 <TableCell>{asset.brand}</TableCell>
                 <TableCell>{asset.model}</TableCell>
+                <TableCell>
+                <TableCell>
+                  <Link href={'/dashboard/assets/assets/asset-details/1'}><Eye /></Link>
+                </TableCell>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

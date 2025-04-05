@@ -14,6 +14,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Popup } from '@/utils/popup'
+import { Eye } from 'lucide-react'
+import Link from 'next/link'
 
 const Assets = () => {
   // State for popup visibility
@@ -146,6 +148,7 @@ const Assets = () => {
               <TableHead>Cost</TableHead>
               <TableHead>Brand</TableHead>
               <TableHead>Model</TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -159,6 +162,9 @@ const Assets = () => {
                 <TableCell>{asset.cost}</TableCell>
                 <TableCell>{asset.brand}</TableCell>
                 <TableCell>{asset.model}</TableCell>
+                <TableCell>
+                  <Link href={'/dashboard/assets/assets/asset-details/1'}><Eye /></Link>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

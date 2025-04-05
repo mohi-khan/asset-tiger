@@ -33,10 +33,25 @@ export function DashboardSidebar() {
       icon: Home,
       href: '/dashboard/dashboard-overview',
     },
+    // {
+    //   title: 'Assets',
+    //   icon: Home,
+    //   href: '/dashboard/assets',
+    // },
     {
       title: 'Assets',
-      icon: Home,
+      icon: Settings,
       href: '/dashboard/assets',
+      subItems: [
+        {
+          title: 'Assets',
+          href: '/dashboard/assets/assets',
+        },
+        {
+          title: 'Dispose',
+          href: '/dashboard/assets/dispose',
+        },
+      ],
     },
     {
       title: 'Lists',
@@ -66,47 +81,17 @@ export function DashboardSidebar() {
           title: 'Locations & Sites',
           href: '/dashboard/setup/locations-sites',
         },
-      ],
-    },
-    {
-      title: 'Projects',
-      icon: FileText,
-      href: '/dashboard/projects',
-      subItems: [
         {
-          title: 'Active Projects',
-          href: '/dashboard/projects/active',
+          title: 'Categories',
+          href: '/dashboard/setup/categories',
         },
         {
-          title: 'Archived Projects',
-          href: '/dashboard/projects/archived',
+          title: 'Departments',
+          href: '/dashboard/setup/departments',
         },
         {
-          title: 'Project Templates',
-          href: '/dashboard/projects/templates',
-        },
-      ],
-    },
-    {
-      title: 'Settings',
-      icon: Settings,
-      href: '/dashboard/settings',
-      subItems: [
-        {
-          title: 'Profile',
-          href: '/dashboard/settings/profile',
-        },
-        {
-          title: 'Account',
-          href: '/dashboard/settings/account',
-        },
-        {
-          title: 'Notifications',
-          href: '/dashboard/settings/notifications',
-        },
-        {
-          title: 'Security',
-          href: '/dashboard/settings/security',
+          title: 'Cost Centers',
+          href: '/dashboard/setup/cost-centers',
         },
       ],
     },
@@ -140,7 +125,7 @@ export function DashboardSidebar() {
                     // Regular menu item without submenu
                     <SidebarMenuButton
                       asChild
-                      className={`${isItemActive(item) ? 'bg-yellow-400 text-black' : ''}  `}
+                      className={`${isItemActive(item) ? 'bg-yellow-400 text-black hover:bg-yellow-400' : ''}  `}
                     >
                       <Link href={item.href}>
                         <item.icon className="mr-2 h-4 w-4" />
@@ -155,7 +140,7 @@ export function DashboardSidebar() {
                     >
                       <CollapsibleTrigger className="w-full" asChild>
                         <SidebarMenuButton
-                          className={`${isItemActive(item) ? 'bg-yellow-400 text-black' : ''} `}
+                          className={`${isItemActive(item) ? 'bg-yellow-400 text-black hover:bg-yellow-400' : ''}  `}
                         >
                           <item.icon className="mr-2 h-4 w-4" />
                           <span>{item.title}</span>
