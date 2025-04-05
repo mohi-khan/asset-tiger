@@ -93,6 +93,18 @@ export function DashboardSidebar() {
           title: 'Cost Centers',
           href: '/dashboard/setup/cost-centers',
         },
+        {
+          title: 'Events',
+          href: '/dashboard/setup/events',
+        },
+        {
+          title: 'Inventory',
+          href: '/dashboard/setup/inventory',
+        },
+        {
+          title: 'Options',
+          href: '/dashboard/setup/options',
+        },
       ],
     },
   ]
