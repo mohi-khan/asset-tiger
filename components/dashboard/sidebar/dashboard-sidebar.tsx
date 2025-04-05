@@ -129,7 +129,7 @@ export function DashboardSidebar() {
         },
         {
           title: 'Asset Movement Reprot',
-          href: '/dashboard/report/Asset Movement Report',
+          href: '/dashboard/report/asset-movement-report',
         },
         {
           title: 'Maintainence Report',
@@ -141,7 +141,7 @@ export function DashboardSidebar() {
         },
         {
           title: 'Asset Valuation Summery',
-          href: '/dashboard/report/asset-Valuation-Summery',
+          href: '/dashboard/report/asset-valuation-summery',
         },
         {
           title: 'Accounting Journal Report',
