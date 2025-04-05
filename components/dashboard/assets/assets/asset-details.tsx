@@ -277,50 +277,50 @@ export default function AssetDetails() {
           />
         </div>
         <div className="col-span-2 grid grid-cols-2 gap-x-4 gap-y-2">
-          <div className="border-b pb-2">
-            <div className="text-sm text-muted-foreground">Asset Tag ID</div>
-            <div>{assetData.tagId}</div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">Asset Tag ID</div>
+            <div className="p-1 border">{assetData.tagId}</div>
           </div>
-          <div className="border-b pb-2">
-            <div className="text-sm text-muted-foreground">Site</div>
-            <div>{assetData.site}</div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">Site</div>
+            <div className="p-1 border">{assetData.site}</div>
           </div>
-          <div className="border-b pb-2">
-            <div className="text-sm text-muted-foreground">Purchase Date</div>
-            <div>{assetData.purchaseDate}</div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">Purchase Date</div>
+            <div className="p-1 border">{assetData.purchaseDate}</div>
           </div>
-          <div className="border-b pb-2">
-            <div className="text-sm text-muted-foreground">Location</div>
-            <div>{assetData.location}</div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">Location</div>
+            <div className="p-1 border">{assetData.location}</div>
           </div>
-          <div className="border-b pb-2">
-            <div className="text-sm text-muted-foreground">Cost</div>
-            <div>{assetData.cost}</div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">Cost</div>
+            <div className="p-1 border">{assetData.cost}</div>
           </div>
-          <div className="border-b pb-2">
-            <div className="text-sm text-muted-foreground">Category</div>
-            <div>{assetData.category}</div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">Category</div>
+            <div className="p-1 border">{assetData.category}</div>
           </div>
-          <div className="border-b pb-2">
-            <div className="text-sm text-muted-foreground">Brand</div>
-            <div>{assetData.brand}</div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">Brand</div>
+            <div className="p-1 border">{assetData.brand}</div>
           </div>
-          <div className="border-b pb-2">
-            <div className="text-sm text-muted-foreground">Department</div>
-            <div>{assetData.department}</div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">Department</div>
+            <div className="p-1 border">{assetData.department}</div>
           </div>
-          <div className="border-b pb-2">
-            <div className="text-sm text-muted-foreground">Model</div>
-            <div>{assetData.model}</div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">Model</div>
+            <div className="p-1 border">{assetData.model}</div>
           </div>
-          <div className="border-b pb-2">
-            <div className="text-sm text-muted-foreground">Assigned to</div>
-            <div>{assetData.assignedTo}</div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">Assigned to</div>
+            <div className="p-1 border">{assetData.assignedTo}</div>
           </div>
           <div className="col-span-1"></div>
-          <div className="border-b pb-2">
-            <div className="text-sm text-muted-foreground">Status</div>
-            <div className="text-green-600">{assetData.status}</div>
+          <div className="grid grid-cols-2">
+            <div className="text-sm border p-1 text-muted-foreground">Status</div>
+            <div className="text-green-600 p-1 border">{assetData.status}</div>
           </div>
         </div>
       </div>
@@ -379,13 +379,13 @@ export default function AssetDetails() {
           <div className="mb-6">
             <h4 className="text-primary font-medium mb-2">Miscellaneous</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border-b pb-2">
-                <div className="text-sm text-muted-foreground">Serial No</div>
-                <div>{assetData.serialNo}</div>
+              <div className="grid grid-cols-2">
+                <div className="p-1 border text-sm text-muted-foreground">Serial No</div>
+                <div className="border p-1">{assetData.serialNo}</div>
               </div>
-              <div className="border-b pb-2">
-                <div className="text-sm text-muted-foreground">Purchased from</div>
-                <div>{assetData.purchasedFrom}</div>
+              <div className="grid grid-cols-2">
+                <div className="p-1 border text-sm text-muted-foreground">Purchased from</div>
+                <div className="border p-1">{assetData.purchasedFrom}</div>
               </div>
             </div>
           </div>
@@ -393,9 +393,9 @@ export default function AssetDetails() {
           <div className="mb-6">
             <h4 className="text-primary font-medium mb-2">Custom fields</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border-b pb-2">
-                <div className="text-sm text-muted-foreground">Asset Name</div>
-                <div>{assetData.assetName}</div>
+              <div className="grid grid-cols-2">
+                <div className="p-1 border text-sm text-muted-foreground">Asset Name</div>
+                <div className="border p-1">{assetData.assetName}</div>
               </div>
             </div>
           </div>
@@ -403,25 +403,25 @@ export default function AssetDetails() {
           <div className="mb-6">
             <h4 className="text-primary font-medium mb-2">Depreciation</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border-b pb-2">
-                <div className="text-sm text-muted-foreground">Depreciable Cost</div>
-                <div>{assetData.depreciableCost}</div>
+              <div className="grid grid-cols-2">
+                <div className="p-1 border text-sm text-muted-foreground">Depreciable Cost</div>
+                <div className="border p-1">{assetData.depreciableCost}</div>
               </div>
-              <div className="border-b pb-2">
-                <div className="text-sm text-muted-foreground">Asset Life (months)</div>
-                <div>{assetData.assetLife}</div>
+              <div className="grid grid-cols-2">
+                <div className="p-1 border text-sm text-muted-foreground">Asset Life (months)</div>
+                <div className="border p-1">{assetData.assetLife}</div>
               </div>
-              <div className="border-b pb-2">
-                <div className="text-sm text-muted-foreground">Salvage Value</div>
-                <div>{assetData.salvageValue}</div>
+              <div className="grid grid-cols-2">
+                <div className="p-1 border text-sm text-muted-foreground">Salvage Value</div>
+                <div className="border p-1">{assetData.salvageValue}</div>
               </div>
-              <div className="border-b pb-2">
-                <div className="text-sm text-muted-foreground">Depr. Method</div>
-                <div>{assetData.deprMethod}</div>
+              <div className="grid grid-cols-2">
+                <div className="p-1 border text-sm text-muted-foreground">Depr. Method</div>
+                <div className="border p-1">{assetData.deprMethod}</div>
               </div>
-              <div className="border-b pb-2">
-                <div className="text-sm text-muted-foreground">Date Acquired</div>
-                <div>{assetData.dateAcquired}</div>
+              <div className="grid grid-cols-2">
+                <div className="p-1 border text-sm text-muted-foreground">Date Acquired</div>
+                <div className="border p-1">{assetData.dateAcquired}</div>
               </div>
             </div>
           </div>
@@ -429,13 +429,13 @@ export default function AssetDetails() {
           <div className="mb-6">
             <h4 className="text-primary font-medium mb-2">Creation</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border-b pb-2">
-                <div className="text-sm text-muted-foreground">Date Created</div>
-                <div>{assetData.dateCreated}</div>
+              <div className="grid grid-cols-2">
+                <div className="p-1 border text-sm text-muted-foreground">Date Created</div>
+                <div className="border p-1">{assetData.dateCreated}</div>
               </div>
-              <div className="border-b pb-2">
-                <div className="text-sm text-muted-foreground">Created by</div>
-                <div>{assetData.createdBy}</div>
+              <div className="grid grid-cols-2">
+                <div className="p-1 border text-sm text-muted-foreground">Created by</div>
+                <div className="border p-1">{assetData.createdBy}</div>
               </div>
             </div>
           </div>
