@@ -7,7 +7,6 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Card,
   CardContent,
@@ -53,16 +52,14 @@ export default function SignIn() {
         // Log the current user information
 
         // Store token if remember me is checked
-        if (rememberMe) {
-          localStorage.setItem('authToken', response.data.data.token)
-        }
+        localStorage.setItem('authToken', response.data.data.token)
+        
         console.log(response.data.data.user)
         // Store user information in localStorage
         const {
           userId,
           roleId,
-          userCompanies,
-          userLocations,
+          // userCompanies,
           voucherTypes,
           employeeId,
         } = response.data.data.user
@@ -70,8 +67,7 @@ export default function SignIn() {
         const userInfo = {
           userId,
           roleId,
-          userCompanies,
-          userLocations,
+          // userCompanies,
           voucherTypes,
           employeeId,
         }
@@ -158,8 +154,7 @@ export default function SignIn() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <Link href={'/dashboard/dashboard-overview'}>
-              <Button
+            <Button
                 type="submit"
                 className="w-full bg-yellow-400 mt-10 hover:bg-yellow-500 text-black"
                 disabled={isLoading}
@@ -167,7 +162,6 @@ export default function SignIn() {
                 <LockIcon className="mr-2 h-4 w-4" />
                 {isLoading ? 'Signing In...' : 'Sign In'}
               </Button>
-            </Link>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
