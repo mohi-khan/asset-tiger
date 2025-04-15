@@ -58,17 +58,11 @@ const LocationSchema = z.object({
   updatedAt: z.string(),
 })
 
-const UserCompanySchema = z.object({
-  userId: z.number(),
-  companyId: z.number(),
-  company: CompanySchema,
-})
-
-const UserLocationSchema = z.object({
-  userId: z.number(),
-  locationId: z.number(),
-  location: LocationSchema,
-})
+// const UserCompanySchema = z.object({
+//   userId: z.number(),
+//   companyId: z.number(),
+//   company: CompanySchema,
+// })
 
 const UserSchema = z.object({
   userId: z.number(),
@@ -77,13 +71,12 @@ const UserSchema = z.object({
   active: z.boolean(),
   roleId: z.number(),
   voucherTypes: z.array(z.string()),
+  employeeId: z.number().nullable(),
   isPasswordResetRequired: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),
   role: RoleSchema,
-  userCompanies: z.array(UserCompanySchema),
-  userLocations: z.array(UserLocationSchema),
-  employeeId: z.number(),
+  // userCompanies: z.array(UserCompanySchema),
 })
 
 // Define the main response schema
