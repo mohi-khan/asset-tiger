@@ -1,4 +1,6 @@
 import axios from 'axios'
+import { fetchApi } from '@/utils/http'
+import { z } from 'zod'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -9,84 +11,76 @@ const api = axios.create({
   },
 })
 
-import { fetchApi } from '@/utils/http'
-import { z } from 'zod'
-
 export const SignInRequestSchema = z.object({
   username: z.string().min(1),
   password: z.string().min(1),
 })
+
+// Define nested schemas to match the actual response
+const PermissionSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+})
+
+const RolePermissionSchema = z.object({
+  roleId: z.number(),
+  permissionId: z.number(),
+  permission: PermissionSchema,
+})
+
 const RoleSchema = z.object({
   roleId: z.number(),
   roleName: z.string(),
-  permissions: z.null(),
+  rolePermissions: z.array(RolePermissionSchema),
 })
+
 const CompanySchema = z.object({
   companyId: z.number(),
   companyName: z.string(),
-  address: z.string(),
-  city: z.string(),
-  state: z.string(),
-  country: z.string(),
+  address: z.string().nullable(),
+  city: z.string().nullable(),
+  state: z.string().nullable(),
+  country: z.string().nullable(),
   postalCode: z.string().nullable(),
-  phone: z.string(),
-  email: z.string(),
-  website: z.string(),
-  taxId: z.string(),
-  currencyId: z.number().nullable(),
+  phone: z.string().nullable(),
+  email: z.string().nullable(),
+  website: z.string().nullable(),
+  taxId: z.string().nullable(),
   logo: z.string().nullable(),
-  parentCompanyId: z.null(),
+  parentCompanyId: z.number().nullable(),
   active: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),
 })
 
-const LocationSchema = z.object({
-  locationId: z.number(),
+const UserCompanySchema = z.object({
+  userId: z.number(),
   companyId: z.number(),
-  branchName: z.string(),
-  address: z.string(),
-  city: z.null(),
-  state: z.null(),
-  country: z.null(),
-  postalCode: z.null(),
-  phone: z.null(),
-  email: z.null(),
-  managerName: z.null(),
-  active: z.boolean(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  company: CompanySchema,
 })
 
-// const UserCompanySchema = z.object({
-//   userId: z.number(),
-//   companyId: z.number(),
-//   company: CompanySchema,
-// })
-
+// Update UserSchema to match the actual response
 const UserSchema = z.object({
   userId: z.number(),
   username: z.string(),
   password: z.string(),
   active: z.boolean(),
   roleId: z.number(),
-  voucherTypes: z.array(z.string()),
-  employeeId: z.number().nullable(),
   isPasswordResetRequired: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),
   role: RoleSchema,
-  // userCompanies: z.array(UserCompanySchema),
+  userCompanies: z.array(UserCompanySchema),
+  // Remove fields that don't exist in the actual response:
+  // voucherTypes and employeeId
 })
 
-// Define the main response schema
+// Update the response schema to match the actual API response
 const SignInResponseSchema = z.object({
-  status: z.literal('success'),
-  data: z.object({
-    token: z.string(),
-    user: UserSchema,
-  }),
+  token: z.string(),
+  user: UserSchema,
 })
+
 export type SignInRequest = z.infer<typeof SignInRequestSchema>
 export type SignInResponse = z.infer<typeof SignInResponseSchema>
 

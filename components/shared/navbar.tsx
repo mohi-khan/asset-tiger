@@ -39,6 +39,14 @@ export default function Navbar() {
     }
   }, [profileRef, companiesRef])
 
+  const router = useRouter()
+  
+  const handleSignOut = () => {
+    localStorage.removeItem('currentUser')
+    setIsProfileOpen(false)
+    router.push('/')
+  }
+
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 border-b">
@@ -110,6 +118,7 @@ export default function Navbar() {
                       Change Password
                     </Link>
                     <button
+                      onClick={handleSignOut}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       role="menuitem"
                     >
