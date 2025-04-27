@@ -1,62 +1,137 @@
-"use client"
+'use client'
 
-import type React from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Popup } from "@/utils/popup"
-import { Users } from "lucide-react"
-import { Department, initialDepartments } from "@/app/type"
+import type React from 'react'
+
+import { useCallback, useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Popup } from '@/utils/popup'
+import { Users } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { format } from 'date-fns'
+import { CreateDepartmentType, GetDepartmentType } from '@/utils/type'
+import { createDepartment, getAllDepartments } from '@/utils/api'
+import { tokenAtom, useInitializeUser } from '@/utils/user'
+import { useAtom } from 'jotai'
 
 const Departments = () => {
+  useInitializeUser()
+  const [token] = useAtom(tokenAtom)
+  console.log("🚀 ~ Departments ~ token:", token)
+
   // State for popup visibility
   const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   // State for form data
-  const [formData, setFormData] = useState({
-    departmentName: "",
-    departmentCode: "",
-    location: "",
-    manager: "",
-    employeeCount: "",
+  const [formData, setFormData] = useState<CreateDepartmentType>({
+    departmentName: '',
+    budget: undefined,
+    companyCode: undefined,
+    isActive: true,
+    startDate: new Date(),
+    endDate: null,
+    actual: undefined,
   })
 
   // State for table data
-  const [departments, setDepartments] = useState<Department[]>(initialDepartments)
+  const [departments, setDepartments] = useState<GetDepartmentType[]>([])
+
+  // Fetch departments on component mount
+  useEffect(() => {
+    fetchDepartments()
+  }, [])
+
+  const fetchDepartments = useCallback(async () => {
+    if (!token) return
+    else {
+      setIsLoading(true)
+      try {
+        const response = await getAllDepartments(token)
+        console.log("🚀 ~ fetchDepartments ~ token:", token)
+        
+        console.log('🚀 ~ fetchDepartments ~ response:', response)
+        setDepartments(response.data ?? [])
+      } catch (error) {
+        console.error('Error fetching departments:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+  }, [token])
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
+    const { name, value, type } = e.target
+
+    if (type === 'number') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value ? Number(value) : undefined,
+      }))
+    } else if (type === 'date') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value ? new Date(value) : null,
+      }))
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }))
+    }
+  }
+
+  // Handle checkbox change
+  const handleCheckboxChange = (checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      isActive: checked,
     }))
   }
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Add new department to the table
-    setDepartments((prev) => [
-      ...prev,
-      {
-        id: Date.now(), // Simple unique ID
-        ...formData,
-      },
-    ])
+    try {
+      await createDepartment(formData)
+      // Refresh the departments list
+      fetchDepartments()
 
-    // Reset form and close popup
+      // Reset form and close popup
+      resetForm()
+    } catch (error) {
+      console.error('Error creating department:', error)
+    }
+  }
+
+  const resetForm = () => {
     setFormData({
-      departmentName: "",
-      departmentCode: "",
-      location: "",
-      manager: "",
-      employeeCount: "",
+      departmentName: '',
+      budget: undefined,
+      companyCode: undefined,
+      isActive: true,
+      startDate: new Date(),
+      endDate: null,
+      actual: undefined,
     })
     setIsPopupOpen(false)
+  }
+
+  // Format date for display
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return '-'
+    return format(new Date(date), 'MMM dd, yyyy')
   }
 
   return (
@@ -69,7 +144,10 @@ const Departments = () => {
           </div>
           <h2 className="text-lg font-semibold">Departments</h2>
         </div>
-        <Button className="bg-yellow-400 hover:bg-yellow-500 text-black" onClick={() => setIsPopupOpen(true)}>
+        <Button
+          className="bg-yellow-400 hover:bg-yellow-500 text-black"
+          onClick={() => setIsPopupOpen(true)}
+        >
           Add
         </Button>
       </div>
@@ -79,34 +157,64 @@ const Departments = () => {
         <Table>
           <TableHeader className="bg-amber-100">
             <TableRow>
+              <TableHead>Department ID</TableHead>
               <TableHead>Department Name</TableHead>
-              <TableHead>Code</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Manager</TableHead>
-              <TableHead>Employee Count</TableHead>
+              <TableHead>Budget</TableHead>
+              <TableHead>Company Code</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Start Date</TableHead>
+              <TableHead>End Date</TableHead>
+              <TableHead>Actual</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-         =
-            {departments.map((department) => (
-              <TableRow key={department.id}>
-                <TableCell>{department.departmentName}</TableCell>
-                <TableCell>{department.departmentCode}</TableCell>
-                <TableCell>{department.location}</TableCell>
-                <TableCell>{department.manager}</TableCell>
-                <TableCell>{department.employeeCount}</TableCell>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-4">
+                  Loading departments...
+                </TableCell>
               </TableRow>
-            ))}
+            ) : departments.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-4">
+                  No departments found
+                </TableCell>
+              </TableRow>
+            ) : (
+              departments.map((department) => (
+                <TableRow key={department.departmentID}>
+                  <TableCell>{department.departmentID}</TableCell>
+                  <TableCell>{department.departmentName}</TableCell>
+                  <TableCell>{department.budget ?? '-'}</TableCell>
+                  <TableCell>{department.companyCode ?? '-'}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${department.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
+                    >
+                      {department.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </TableCell>
+                  <TableCell>{formatDate(department.startDate)}</TableCell>
+                  <TableCell>{formatDate(department.endDate)}</TableCell>
+                  <TableCell>{department.actual ?? '-'}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
       {/* Popup with form */}
-      <Popup isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)} title="Add Department" size="sm:max-w-md">
+      <Popup
+        isOpen={isPopupOpen}
+        onClose={resetForm}
+        title="Add Department"
+        size="sm:max-w-md"
+      >
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid gap-4">
             <div className="space-y-2">
-              <Label htmlFor="departmentName">Department Name</Label>
+              <Label htmlFor="departmentName">Department Name*</Label>
               <Input
                 id="departmentName"
                 name="departmentName"
@@ -117,42 +225,82 @@ const Departments = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="departmentCode">Department Code</Label>
+              <Label htmlFor="budget">Budget</Label>
               <Input
-                id="departmentCode"
-                name="departmentCode"
-                value={formData.departmentCode}
+                id="budget"
+                name="budget"
+                type="number"
+                value={formData.budget ?? ''}
                 onChange={handleInputChange}
-                required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input id="location" name="location" value={formData.location} onChange={handleInputChange} required />
+              <Label htmlFor="companyCode">Company Code</Label>
+              <Input
+                id="companyCode"
+                name="companyCode"
+                type="number"
+                value={formData.companyCode ?? ''}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="actual">Actual</Label>
+              <Input
+                id="actual"
+                name="actual"
+                type="number"
+                value={formData.actual ?? ''}
+                onChange={handleInputChange}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="manager">Manager</Label>
-                <Input id="manager" name="manager" value={formData.manager} onChange={handleInputChange} required />
+                <Label htmlFor="startDate">Start Date</Label>
+                <Input
+                  id="startDate"
+                  name="startDate"
+                  type="date"
+                  value={
+                    formData.startDate
+                      ? format(new Date(formData.startDate), 'yyyy-MM-dd')
+                      : ''
+                  }
+                  onChange={handleInputChange}
+                />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="employeeCount">Employee Count</Label>
+                <Label htmlFor="endDate">End Date</Label>
                 <Input
-                  id="employeeCount"
-                  name="employeeCount"
-                  value={formData.employeeCount}
+                  id="endDate"
+                  name="endDate"
+                  type="date"
+                  value={
+                    formData.endDate
+                      ? format(new Date(formData.endDate), 'yyyy-MM-dd')
+                      : ''
+                  }
                   onChange={handleInputChange}
-                  required
                 />
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isActive"
+                checked={formData.isActive ?? false}
+                onCheckedChange={handleCheckboxChange}
+              />
+              <Label htmlFor="isActive">Active</Label>
             </div>
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsPopupOpen(false)}>
+            <Button type="button" variant="outline" onClick={resetForm}>
               Cancel
             </Button>
             <Button type="submit">Save</Button>
@@ -164,4 +312,3 @@ const Departments = () => {
 }
 
 export default Departments
-

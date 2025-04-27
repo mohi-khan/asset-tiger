@@ -1,16 +1,37 @@
 import { isLastDayOfMonth } from 'date-fns'
 import { locationSchema } from '@/api/company-api'
 import { z } from 'zod'
-import exp from 'constants'
-import { de } from 'date-fns/locale'
 
-// export interface User {
-//   userId: number
-//   username: string
-//   roleId: number
-//   roleName: string
-//   userCompanies: UserCompany[]
-// }
+
+
+//department
+export const createDepartmentSchema = z.object({
+  departmentName: z.string().min(1, 'Department name is required'),
+  budget: z.number().optional(),
+  companyCode: z.number().optional(),
+  isActive: z.boolean().optional(),
+  startDate: z.coerce.date().optional().nullable(),
+  endDate: z.coerce.date().optional().nullable(),
+  actual: z.number().optional(),
+})
+export type CreateDepartmentType = z.infer<typeof createDepartmentSchema>
+
+export const getDepartmentSchema = z.object({
+  departmentID: z.number(),
+  departmentName: z.string().min(1, 'Department name is required'),
+  budget: z.number().optional(),
+  companyCode: z.number().optional(),
+  isActive: z.boolean().optional(),
+  startDate: z.coerce.date().optional().nullable(),
+  endDate: z.coerce.date().optional().nullable(),
+  actual: z.number().optional(),
+})
+export type GetDepartmentType = z.infer<typeof getDepartmentSchema>
+
+
+
+
+
 
 export interface UserCompany {
   userId: number
@@ -493,31 +514,6 @@ export const JournalResultSchema = z.object({
 })
 export type JournalResult = z.infer<typeof JournalResultSchema>
 
-//department
-export const departmentSchema = z.object({
-  departmentID: z.number(),
-  departmentName: z.string().min(1, 'Department name is required'),
-  budget: z.number().optional(),
-  companyCode: z.number().optional(),
-  isActive: z.boolean().optional(),
-  startDate: z.coerce.date().optional().nullable(),
-  endDate: z.coerce.date().optional().nullable(),
-  actual: z.number().optional(),
-})
-export type Department = z.infer<typeof departmentSchema>
-export const departmentsArraySchema = z.array(departmentSchema)
-
-export const getDepartmentSchema = z.object({
-  departmentID: z.number(),
-  departmentName: z.string().min(1, 'Department name is required'),
-  budget: z.number().optional(),
-  companyCode: z.number().optional(),
-  isActive: z.boolean().optional(),
-  startDate: z.coerce.date().optional().nullable(),
-  endDate: z.coerce.date().optional().nullable(),
-  actual: z.number().optional(),
-})
-export type GetDepartment = z.infer<typeof getDepartmentSchema>
 
 //cost center
 const costCenterSchema = z.object({
