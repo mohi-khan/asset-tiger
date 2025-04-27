@@ -23,7 +23,6 @@ import { toast } from '@/hooks/use-toast'
 export default function SignIn() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -52,30 +51,30 @@ export default function SignIn() {
         // Log the current user information
 
         // Store token if remember me is checked
-        localStorage.setItem('authToken', response.data.data.token)
+        localStorage.setItem('authToken', response.data.token)
         
-        console.log(response.data.data.user)
+        console.log(response.data.user)
         // Store user information in localStorage
         const {
           userId,
           roleId,
           // userCompanies,
-          voucherTypes,
-          employeeId,
-        } = response.data.data.user
+          // voucherTypes,
+          // employeeId,
+        } = response.data.user
 
         const userInfo = {
           userId,
           roleId,
           // userCompanies,
-          voucherTypes,
-          employeeId,
+          // voucherTypes,
+          // employeeId,
         }
         localStorage.setItem('currentUser', JSON.stringify(userInfo))
         console.log('Current user info stored:', userInfo)
 
         // Redirect to dashboard
-        router.push('/dashboard')
+        router.push('/dashboard/dashboard-overview')
         toast({
           title: 'Success',
           description: 'you are signined in',
