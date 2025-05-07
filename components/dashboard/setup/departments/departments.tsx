@@ -20,13 +20,14 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { format } from 'date-fns'
 import { CreateDepartmentType, GetDepartmentType } from '@/utils/type'
 import { createDepartment, getAllDepartments } from '@/utils/api'
-import { tokenAtom, useInitializeUser } from '@/utils/user'
+import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
 
 const Departments = () => {
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
-  console.log("🚀 ~ Departments ~ token:", token)
+  const [userData] = useAtom(userDataAtom)
+  // console.log('🚀 ~ Departments ~ token:', token)
 
   // State for popup visibility
   const [isPopupOpen, setIsPopupOpen] = useState(false)
@@ -40,34 +41,33 @@ const Departments = () => {
     isActive: true,
     startDate: new Date(),
     endDate: null,
+    createdBy: userData?.userId || 0,
     actual: undefined,
   })
 
   // State for table data
   const [departments, setDepartments] = useState<GetDepartmentType[]>([])
 
+  const fetchDepartments = useCallback(async () => {
+    // if (!token) return
+    setIsLoading(true)
+    try {
+      const response = await getAllDepartments(token)
+      console.log('🚀 ~ fetchDepartments ~ token:', token)
+
+      console.log('🚀 ~ fetchDepartments ~ response:', response)
+      setDepartments(response.data ?? [])
+    } catch (error) {
+      console.error('Error fetching departments:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [token])
+
   // Fetch departments on component mount
   useEffect(() => {
     fetchDepartments()
-  }, [])
-
-  const fetchDepartments = useCallback(async () => {
-    if (!token) return
-    else {
-      setIsLoading(true)
-      try {
-        const response = await getAllDepartments(token)
-        console.log("🚀 ~ fetchDepartments ~ token:", token)
-        
-        console.log('🚀 ~ fetchDepartments ~ response:', response)
-        setDepartments(response.data ?? [])
-      } catch (error) {
-        console.error('Error fetching departments:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-  }, [token])
+  }, [fetchDepartments])
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,20 +100,35 @@ const Departments = () => {
   }
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
 
-    try {
-      await createDepartment(formData)
-      // Refresh the departments list
-      fetchDepartments()
+      try {
+        // Convert Date objects to 'YYYY-MM-DD' strings
+        const payload = {
+          ...formData,
+          startDate: formData.startDate
+            ? new Date(formData.startDate)
+            : null,
+          endDate: formData.endDate
+            ? new Date(formData.endDate)
+            : null,
+        }
 
-      // Reset form and close popup
-      resetForm()
-    } catch (error) {
-      console.error('Error creating department:', error)
-    }
-  }
+        await createDepartment(payload, token)
+
+        // Refresh the departments list
+        fetchDepartments()
+
+        // Reset form and close popup
+        resetForm()
+      } catch (error) {
+        console.error('Error creating department:', error)
+      }
+    },
+    [formData, userData, token, fetchDepartments]
+  )
 
   const resetForm = () => {
     setFormData({
@@ -123,6 +138,7 @@ const Departments = () => {
       isActive: true,
       startDate: new Date(),
       endDate: null,
+      createdBy: userData?.userId || 0,
       actual: undefined,
     })
     setIsPopupOpen(false)

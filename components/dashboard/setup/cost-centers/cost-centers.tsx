@@ -1,71 +1,152 @@
-"use client"
+'use client'
 
-import type React from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Popup } from "@/utils/popup"
-import { Building2 } from "lucide-react"
+import type React from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Popup } from '@/utils/popup'
+import { Building2 } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { CreateCostCenterType, GetCostCenterType } from '@/utils/type'
+import { createCostCenter, getAllCostCenters } from '@/utils/api'
+import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
+import { useAtom } from 'jotai'
 
 const CostCenters = () => {
+  const { toast } = useToast()
+
+  useInitializeUser()
+    const [token] = useAtom(tokenAtom)
+    console.log("🚀 ~ CostCenters ~ token:", token)
+    const [userData] = useAtom(userDataAtom)
+
   // State for popup visibility
   const [isPopupOpen, setIsPopupOpen] = useState(false)
 
+  // State for loading indicators
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   // State for form data
-  const [formData, setFormData] = useState({
-    costCenterName: "",
-    costCenterCode: "",
-    description: "",
-    manager: "",
-    budget: "",
+  const [formData, setFormData] = useState<CreateCostCenterType>({
+    costCenterName: '',
+    costCenterDescription: '',
+    budget: 0,
+    actual: 0,
+    companyCode: null,
+    isActive: true,
+    isVehicle: false,
+    startDate: null,
+    endDate: null,
+    createdBy: 1, // Default value, should be replaced with actual user ID
+    createdAt: new Date(),
+    updatedBy: null,
+    updatedAt: null,
   })
 
   // State for table data
-  const [costCenters, setCostCenters] = useState([
-    // Sample data
-    {
-      id: 1,
-      costCenterName: "Marketing",
-      costCenterCode: "MKT-001",
-      description: "Marketing department expenses",
-      manager: "John Smith",
-      budget: "$250,000",
-    },
-  ])
+  const [costCenters, setCostCenters] = useState<GetCostCenterType[]>([])
+
+  // Function to fetch cost centers
+  const fetchCostCenters = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const data = await getAllCostCenters(token)
+      console.log("🚀 ~ fetchCostCenters ~ data:", data)
+      setCostCenters(data.data ?? [])
+    } catch (error) {
+      console.error('Error fetching cost centers:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load cost centers. Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [token])
+
+  // Fetch cost centers on component mount
+  useEffect(() => {
+    fetchCostCenters()
+  }, [fetchCostCenters, token])
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+    const { name, value, type } = e.target
+
+    // Convert numeric fields to numbers
+    if (name === 'budget' || name === 'actual' || name === 'companyCode') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value === '' ? 0 : Number(value),
+      }))
+    } else if (type === 'checkbox') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked,
+      }))
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }))
+    }
   }
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSubmitting(true)
+    try {
+      // Call API to create cost center
+      await createCostCenter(formData, token)
 
-    // Add new cost center to the table
-    setCostCenters((prev) => [
-      ...prev,
-      {
-        id: Date.now(), // Simple unique ID
-        ...formData,
-      },
-    ])
+      // Refresh the cost centers list
+      await fetchCostCenters()
 
-    // Reset form and close popup
-    setFormData({
-      costCenterName: "",
-      costCenterCode: "",
-      description: "",
-      manager: "",
-      budget: "",
-    })
-    setIsPopupOpen(false)
+      // Reset form and close popup
+      setFormData({
+        costCenterName: '',
+        costCenterDescription: '',
+        budget: 0,
+        actual: 0,
+        companyCode: null,
+        isActive: true,
+        isVehicle: false,
+        startDate: null,
+        endDate: null,
+        createdBy: 1, // Default value, should be replaced with actual user ID
+        createdAt: new Date(),
+        updatedBy: null,
+        updatedAt: null,
+      })
+
+      setIsPopupOpen(false)
+
+      toast({
+        title: 'Success',
+        description: 'Cost center created successfully',
+      })
+    } catch (error) {
+      console.error('Error creating cost center:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to create cost center. Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -78,7 +159,10 @@ const CostCenters = () => {
           </div>
           <h2 className="text-lg font-semibold">Cost Centers</h2>
         </div>
-        <Button className="bg-yellow-400 hover:bg-yellow-500 text-black" onClick={() => setIsPopupOpen(true)}>
+        <Button
+          className="bg-yellow-400 hover:bg-yellow-500 text-black"
+          onClick={() => setIsPopupOpen(true)}
+        >
           Add
         </Button>
       </div>
@@ -89,28 +173,51 @@ const CostCenters = () => {
           <TableHeader className="bg-amber-100">
             <TableRow>
               <TableHead>Cost Center Name</TableHead>
-              <TableHead>Code</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Manager</TableHead>
               <TableHead>Budget</TableHead>
+              <TableHead>Actual</TableHead>
+              <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {costCenters.map((costCenter) => (
-              <TableRow key={costCenter.id}>
-                <TableCell>{costCenter.costCenterName}</TableCell>
-                <TableCell>{costCenter.costCenterCode}</TableCell>
-                <TableCell>{costCenter.description}</TableCell>
-                <TableCell>{costCenter.manager}</TableCell>
-                <TableCell>{costCenter.budget}</TableCell>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  Loading cost centers...
+                </TableCell>
               </TableRow>
-            ))}
+            ) : costCenters.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  No cost centers found. Add your first one!
+                </TableCell>
+              </TableRow>
+            ) : (
+              costCenters.map((costCenter) => (
+                <TableRow key={costCenter.costCenterId}>
+                  <TableCell>{costCenter.costCenterName}</TableCell>
+                  <TableCell>
+                    {costCenter.costCenterDescription || '-'}
+                  </TableCell>
+                  <TableCell>${costCenter.budget.toLocaleString()}</TableCell>
+                  <TableCell>${costCenter.actual.toLocaleString()}</TableCell>
+                  <TableCell>
+                    {costCenter.isActive ? 'Active' : 'Inactive'}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
       {/* Popup with form */}
-      <Popup isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)} title="Add Cost Center" size="sm:max-w-md">
+      <Popup
+        isOpen={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+        title="Add Cost Center"
+        size="sm:max-w-md"
+      >
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid gap-4">
             <div className="space-y-2">
@@ -121,49 +228,75 @@ const CostCenters = () => {
                 value={formData.costCenterName}
                 onChange={handleInputChange}
                 required
+                disabled={isSubmitting}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="costCenterCode">Cost Center Code</Label>
+              <Label htmlFor="costCenterDescription">Description</Label>
               <Input
-                id="costCenterCode"
-                name="costCenterCode"
-                value={formData.costCenterCode}
+                id="costCenterDescription"
+                name="costCenterDescription"
+                value={formData.costCenterDescription || ''}
                 onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                required
+                disabled={isSubmitting}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="manager">Manager</Label>
-                <Input id="manager" name="manager" value={formData.manager} onChange={handleInputChange} required />
+                <Label htmlFor="budget">Budget</Label>
+                <Input
+                  id="budget"
+                  name="budget"
+                  type="number"
+                  value={formData.budget}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isSubmitting}
+                />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="budget">Budget</Label>
-                <Input id="budget" name="budget" value={formData.budget} onChange={handleInputChange} required />
+                <Label htmlFor="actual">Actual</Label>
+                <Input
+                  id="actual"
+                  name="actual"
+                  type="number"
+                  value={formData.actual}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isSubmitting}
+                />
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isActive"
+                name="isActive"
+                checked={formData.isActive || false}
+                onChange={handleInputChange}
+                className="h-4 w-4 rounded border-gray-300"
+                disabled={isSubmitting}
+              />
+              <Label htmlFor="isActive">Active</Label>
             </div>
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsPopupOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsPopupOpen(false)}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : 'Save'}
+            </Button>
           </div>
         </form>
       </Popup>
@@ -172,4 +305,3 @@ const CostCenters = () => {
 }
 
 export default CostCenters
-
