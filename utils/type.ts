@@ -2,8 +2,6 @@ import { isLastDayOfMonth } from 'date-fns'
 import { locationSchema } from '@/api/company-api'
 import { z } from 'zod'
 
-
-
 //department
 export const createDepartmentSchema = z.object({
   departmentName: z.string().min(1, 'Department name is required'),
@@ -12,6 +10,7 @@ export const createDepartmentSchema = z.object({
   isActive: z.boolean().optional(),
   startDate: z.coerce.date().optional().nullable(),
   endDate: z.coerce.date().optional().nullable(),
+  createdBy: z.number(),
   actual: z.number().optional(),
 })
 export type CreateDepartmentType = z.infer<typeof createDepartmentSchema>
@@ -24,9 +23,46 @@ export const getDepartmentSchema = z.object({
   isActive: z.boolean().optional(),
   startDate: z.coerce.date().optional().nullable(),
   endDate: z.coerce.date().optional().nullable(),
+  createdBy: z.number(),
   actual: z.number().optional(),
 })
 export type GetDepartmentType = z.infer<typeof getDepartmentSchema>
+
+//cost center
+export const getCostCenterSchema = z.object({
+  costCenterId: z.number(),
+  costCenterName: z.string(),
+  costCenterDescription: z.string().nullable().optional(), // assuming it can be null or missing
+  budget: z.number(),
+  actual: z.number(),
+  companyCode: z.number().nullable().optional(), // in case foreign key is optional
+  isActive: z.boolean().nullable().optional(),
+  isVehicle: z.boolean().nullable().optional(),
+  startDate: z.coerce.date().nullable().optional(),
+  endDate: z.coerce.date().nullable().optional(),
+  createdBy: z.number(),
+  createdAt: z.coerce.date().nullable().optional(),
+  updatedBy: z.number().nullable().optional(),
+  updatedAt: z.coerce.date().nullable().optional(),
+});
+export type GetCostCenterType = z.infer<typeof getCostCenterSchema>;
+
+export const createCostCenterSchema = z.object({
+  costCenterName: z.string(),
+  costCenterDescription: z.string().nullable().optional(), // assuming it can be null or missing
+  budget: z.number(),
+  actual: z.number(),
+  companyCode: z.number().nullable().optional(), // in case foreign key is optional
+  isActive: z.boolean().nullable().optional(),
+  isVehicle: z.boolean().nullable().optional(),
+  startDate: z.coerce.date().nullable().optional(),
+  endDate: z.coerce.date().nullable().optional(),
+  createdBy: z.number(),
+  createdAt: z.coerce.date().nullable().optional(),
+  updatedBy: z.number().nullable().optional(),
+  updatedAt: z.coerce.date().nullable().optional(),
+});
+export type CreateCostCenterType = z.infer<typeof createCostCenterSchema>;
 
 
 
