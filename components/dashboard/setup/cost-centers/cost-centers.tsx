@@ -25,9 +25,8 @@ const CostCenters = () => {
   const { toast } = useToast()
 
   useInitializeUser()
-    const [token] = useAtom(tokenAtom)
-    console.log("🚀 ~ CostCenters ~ token:", token)
-    const [userData] = useAtom(userDataAtom)
+  const [token] = useAtom(tokenAtom)
+  const [userData] = useAtom(userDataAtom)
 
   // State for popup visibility
   const [isPopupOpen, setIsPopupOpen] = useState(false)
@@ -58,18 +57,14 @@ const CostCenters = () => {
 
   // Function to fetch cost centers
   const fetchCostCenters = useCallback(async () => {
+    if (!token) return
     setIsLoading(true)
     try {
-      const data = await getAllCostCenters(token)
-      console.log("🚀 ~ fetchCostCenters ~ data:", data)
-      setCostCenters(data.data ?? [])
+      const response = await getAllCostCenters(token)
+      console.log('🚀 ~ fetchCostCenters ~ response:', response)
+      setCostCenters(response.data ?? [])
     } catch (error) {
       console.error('Error fetching cost centers:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to load cost centers. Please try again.',
-        variant: 'destructive',
-      })
     } finally {
       setIsLoading(false)
     }
@@ -125,7 +120,7 @@ const CostCenters = () => {
         isVehicle: false,
         startDate: null,
         endDate: null,
-        createdBy: 1, // Default value, should be replaced with actual user ID
+        createdBy: userData?.userId || 0,
         createdAt: new Date(),
         updatedBy: null,
         updatedAt: null,
