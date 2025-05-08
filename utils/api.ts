@@ -45,7 +45,7 @@ export async function getAllCompany(token: string) {
 }
 
 export async function createCostCenter(
-  data: CreateDepartmentType,
+  data: CreateCostCenterType,
   token: string
 ) {
   return fetchApi<CreateCostCenterType>({
@@ -64,7 +64,7 @@ export async function getAllCostCenters(token: string) {
     url: 'api/costCenter/getall',
     method: 'GET',
     headers: {
-      Authentication: `${token}`,
+      Authorization: `${token}`,
       'Content-Type': 'application/json',
     },
   })

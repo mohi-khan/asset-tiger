@@ -39,6 +39,8 @@ export async function fetchApi<T>({
   console.log(`${API_BASE_URL}/${url}`)
   console.log(JSON.stringify(body))
 
+  console.log('fetchapi token', headers.Authorization)
+
   const response = await fetch(
     `${API_BASE_URL}/${url}`,
     {
