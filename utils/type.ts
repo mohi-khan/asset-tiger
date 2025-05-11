@@ -64,6 +64,74 @@ export const createCostCenterSchema = z.object({
 });
 export type CreateCostCenterType = z.infer<typeof createCostCenterSchema>;
 
+//company
+export const getCompanySchema = z.object({
+  companyId: z.number().int().positive(), // primary key
+  companyName: z.string().max(100),
+  address: z.string().max(255).nullable().optional(),
+  city: z.string().max(50).nullable().optional(),
+  state: z.string().max(50).nullable().optional(),
+  country: z.string().max(50).nullable().optional(),
+  postalCode: z.string().max(20).nullable().optional(),
+  phone: z.string().max(20).nullable().optional(),
+  email: z.string().email().max(100).nullable().optional(),
+  website: z.string().url().max(100).nullable().optional(),
+  taxId: z.string().max(50).nullable().optional(),
+  logo: z.string().nullable().optional(), // text column
+  parentCompanyId: z.number().int().positive().nullable().optional(),
+  active: z.boolean().optional(), // default is true
+  createdAt: z.string().datetime().optional(), // timestamp
+  updatedAt: z.string().datetime().optional(), // timestamp
+});
+export type GetCompanyType = z.infer<typeof getCompanySchema>;
+
+export const createCompanySchema = z.object({
+  companyName: z.string().max(100),
+  address: z.string().max(255).nullable().optional(),
+  city: z.string().max(50).nullable().optional(),
+  state: z.string().max(50).nullable().optional(),
+  country: z.string().max(50).nullable().optional(),
+  postalCode: z.string().max(20).nullable().optional(),
+  phone: z.string().max(20).nullable().optional(),
+  email: z.string().email().max(100).nullable().optional(),
+  website: z.string().url().max(100).nullable().optional(),
+  taxId: z.string().max(50).nullable().optional(),
+  logo: z.string().nullable().optional(), // text column
+  parentCompanyId: z.number().int().positive().nullable().optional(),
+  active: z.boolean().optional(), // default is true
+  createdAt: z.string().datetime().optional(), // timestamp
+  updatedAt: z.string().datetime().optional(), // timestamp
+});
+export type CreateCompanyType = z.infer<typeof createCompanySchema>;
+
+//asset category
+export const getCategorySchema = z.object({
+  category_id: z.number().int().optional(), // optional for auto-increment on insert
+  category_name: z.string().max(255),
+  depreciation_rate: z.number().nonnegative().nullable().optional(), // allow null if needed
+  account_code: z.string().max(30).nullable().optional(),
+  depreciation_account_code: z.string().max(30).nullable().optional(),
+  parent_cat_code: z.number().int().nullable().optional(),
+  created_by: z.number().int(),
+  created_time: z.date().optional(), // usually set by DB
+  updated_by: z.number().int().nullable().optional(),
+  updated_time: z.date().optional(), // set automatically on update
+});
+export type GetCategoryType = z.infer<typeof getCategorySchema>
+
+export const createCategorySchema = z.object({
+  category_id: z.number().int().optional(), // optional for auto-increment on insert
+  category_name: z.string().max(255),
+  depreciation_rate: z.number().nonnegative().nullable().optional(), // allow null if needed
+  account_code: z.string().max(30).nullable().optional(),
+  depreciation_account_code: z.string().max(30).nullable().optional(),
+  parent_cat_code: z.number().int().nullable().optional(),
+  created_by: z.number().int(),
+  created_time: z.date().optional(), // usually set by DB
+  updated_by: z.number().int().nullable().optional(),
+  updated_time: z.date().optional(), // set automatically on update
+});
+export type CreateCategoryType = z.infer<typeof createCategorySchema>
 
 
 
@@ -663,72 +731,6 @@ export const createAssetSchema = z.object({
 
 export type CreateAssetData = z.infer<typeof createAssetSchema>
 
-export const getAssetSchema = z.object({
-  id: z.bigint(), // For bigint
-  name: z
-    .string()
-    .min(2, 'Asset name must be at least 2 characters.')
-    .max(255, 'Asset name must not exceed 255 characters.'),
-  type: z.number().int('Category ID must be an integer.'),
-  purchaseDate: z.string(),
-  purchaseValue: z
-    .string()
-    .regex(/^\d+(\.\d{1,2})?$/, 'Invalid decimal format for purchase value.'),
-  currentValue: z
-    .string()
-    .regex(/^\d+(\.\d{1,2})?$/, 'Invalid decimal format for current value.')
-    .optional(),
-  salvageValue: z
-    .string()
-    .regex(/^\d+(\.\d{1,2})?$/, 'Invalid decimal format for salvage value.')
-    .optional(),
-  depreciationMethod: z.enum(['Straight Line', 'Diminishing Balance']),
-  usefulLifeYears: z.number().int('Useful life must be an integer.').optional(),
-  status: z.enum(['Active', 'Disposed']).default('Active'),
-  company: z.number().int('Company ID must be an integer.'),
-  location: z.number().int('Location ID must be an integer.').optional(),
-  department: z.number().int('Department ID must be an integer.').optional(),
-  costCenter: z.number().int('Cost Center ID must be an integer.').optional(),
-  depreciationRate: z
-    .string()
-    .regex(/^\d+(\.\d{1,2})?$/, 'Invalid decimal format for depreciation rate.')
-    .optional(),
-  created_by: z.number().int('Created by must be an integer.'),
-})
-
-export type GetAssetData = z.infer<typeof getAssetSchema>
-
-//asset-category
-export const createAssetCategorySchema = z.object({
-  category_name: z
-    .string()
-    .min(2, 'Category name must be at least 2 characters.')
-    .max(255, 'Category name must not exceed 255 characters.'),
-  depreciation_rate: z
-    .string()
-    .regex(/^\d+(\.\d+)?$/, { message: 'Invalid decimal format' }),
-  account_code: z.number().int('Account code must be an integer.'),
-  depreciation_account_code: z
-    .number()
-    .int('Depreciation account code must be an integer.'),
-  created_by: z.number().int('Created by must be an integer.'),
-})
-
-export type CreateAssetCategoryData = z.infer<typeof createAssetCategorySchema>
-
-export interface AssetCategoryType extends CreateAssetCategoryData {
-  category_id: number
-  category_name: string
-  account_code: number
-  depreciation_account_code: number
-  created_by: number
-  account: string
-  depreciation_account: string
-  depreciation_rate: string
-  created_time: string
-  updated_by: number
-  updated_time: string
-}
 
 // Trial Balance type
 export interface TrialBalanceData {

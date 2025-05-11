@@ -16,7 +16,7 @@ import {
 import { Popup } from '@/utils/popup'
 import { Building2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { CreateCostCenterType, GetCostCenterType } from '@/utils/type'
+import type { CreateCostCenterType, GetCostCenterType } from '@/utils/type'
 import { createCostCenter, getAllCostCenters } from '@/utils/api'
 import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
@@ -83,12 +83,18 @@ const CostCenters = () => {
     if (name === 'budget' || name === 'actual' || name === 'companyCode') {
       setFormData((prev) => ({
         ...prev,
-        [name]: value === '' ? 0 : Number(value),
+        [name]:
+          value === '' ? (name === 'companyCode' ? null : 0) : Number(value),
       }))
     } else if (type === 'checkbox') {
       setFormData((prev) => ({
         ...prev,
         [name]: (e.target as HTMLInputElement).checked,
+      }))
+    } else if (type === 'date') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value ? new Date(value) : null,
       }))
     } else {
       setFormData((prev) => ({
@@ -277,6 +283,65 @@ const CostCenters = () => {
                 disabled={isSubmitting}
               />
               <Label htmlFor="isActive">Active</Label>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="companyCode">Company Code</Label>
+            <Input
+              id="companyCode"
+              name="companyCode"
+              type="number"
+              value={formData.companyCode || ''}
+              onChange={handleInputChange}
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div className="flex items-center space-x-2 mt-2">
+            <input
+              type="checkbox"
+              id="isVehicle"
+              name="isVehicle"
+              checked={formData.isVehicle || false}
+              onChange={handleInputChange}
+              className="h-4 w-4 rounded border-gray-300"
+              disabled={isSubmitting}
+            />
+            <Label htmlFor="isVehicle">Is Vehicle</Label>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Start Date</Label>
+              <Input
+                id="startDate"
+                name="startDate"
+                type="date"
+                value={
+                  formData.startDate
+                    ? new Date(formData.startDate).toISOString().split('T')[0]
+                    : ''
+                }
+                onChange={handleInputChange}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endDate">End Date</Label>
+              <Input
+                id="endDate"
+                name="endDate"
+                type="date"
+                value={
+                  formData.endDate
+                    ? new Date(formData.endDate).toISOString().split('T')[0]
+                    : ''
+                }
+                onChange={handleInputChange}
+                disabled={isSubmitting}
+              />
             </div>
           </div>
 

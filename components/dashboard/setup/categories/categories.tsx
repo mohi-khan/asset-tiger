@@ -1,69 +1,136 @@
-"use client"
+'use client'
 
-import type React from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Popup } from "@/utils/popup"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { FolderOpen } from "lucide-react"
-import { Category, initialCategories } from "@/app/type"
+import type React from 'react'
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Popup } from '@/utils/popup'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { FolderOpen } from 'lucide-react'
+import { CreateCategoryType, GetCategoryType } from '@/utils/type'
+import { createCategory, getAllCategories } from '@/utils/api'
+import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
+import { useAtom } from 'jotai'
 
 const Categories = () => {
+  useInitializeUser()
+  const [token] = useAtom(tokenAtom)
+  const [userData] = useAtom(userDataAtom)
+
   // State for popup visibility
   const [isPopupOpen, setIsPopupOpen] = useState(false)
 
-  // State for form data
-  const [formData, setFormData] = useState({
-    categoryName: "",
-    assetAccountingCode: "",
-    depreciationAccountingCode: "",
-    depreciationMethod: "",
+  // State for form data - updated to match the Zod schema
+  const [formData, setFormData] = useState<Partial<CreateCategoryType>>({
+    category_name: '',
+    depreciation_rate: null,
+    account_code: '',
+    depreciation_account_code: '',
+    parent_cat_code: null,
+    created_by: 1, // This should be the current user's ID
   })
 
-  // State for table data
-  const [categories, setCategories] =useState<Category[]>(initialCategories)
+  // State for categories data from API
+  const [categories, setCategories] = useState<GetCategoryType[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsLoading(true)
+        // You'll need to get the token from your auth system
+        const response = await getAllCategories(token)
+        setCategories(response.data || [])
+        setError(null)
+      } catch (err) {
+        setError('Failed to fetch categories')
+        console.error(err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+    const { name, value, type } = e.target
+
+    // Handle different input types
+    if (type === 'number') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value === '' ? null : Number(value),
+      }))
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value === '' ? null : value,
+      }))
+    }
   }
 
-  // Handle select change for depreciation method
-  const handleSelectChange = (value: string) => {
+  // Handle select change for parent category
+  const handleParentCategoryChange = (value: string) => {
     setFormData((prev) => ({
       ...prev,
-      depreciationMethod: value,
+      parent_cat_code: value === '' ? null : Number(value),
     }))
   }
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Add new category to the table
-    setCategories((prev) => [
-      ...prev,
-      {
-        id: Date.now(), // Simple unique ID
-        ...formData,
-      },
-    ])
+    try {
+      setIsLoading(true)
+      // Prepare data for submission
+      const dataToSubmit: CreateCategoryType = {
+        ...(formData as CreateCategoryType),
+        // Add any additional required fields here
+      }
 
-    // Reset form and close popup
-    setFormData({
-      categoryName: "",
-      assetAccountingCode: "",
-      depreciationAccountingCode: "",
-      depreciationMethod: "",
-    })
-    setIsPopupOpen(false)
+      await createCategory(dataToSubmit, token)
+
+      // Refresh the categories list
+      const updatedCategories = await getAllCategories(token)
+      setCategories(updatedCategories.data || [])
+
+      // Reset form and close popup
+      setFormData({
+        category_name: '',
+        depreciation_rate: null,
+        account_code: '',
+        depreciation_account_code: '',
+        parent_cat_code: null,
+        created_by: userData?.userId,
+      })
+      setIsPopupOpen(false)
+      setError(null)
+    } catch (err) {
+      setError('Failed to create category')
+      console.error(err)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -76,7 +143,10 @@ const Categories = () => {
           </div>
           <h2 className="text-lg font-semibold">Categories</h2>
         </div>
-        <Button className="bg-yellow-400 hover:bg-yellow-500 text-black" onClick={() => setIsPopupOpen(true)}>
+        <Button
+          className="bg-yellow-400 hover:bg-yellow-500 text-black"
+          onClick={() => setIsPopupOpen(true)}
+        >
           Add
         </Button>
       </div>
@@ -89,78 +159,148 @@ const Categories = () => {
               <TableHead>Category Name</TableHead>
               <TableHead>Asset Accounting Code</TableHead>
               <TableHead>Depreciation Accounting Code</TableHead>
-              <TableHead>Depreciation Method</TableHead>
+              <TableHead>Depreciation Rate</TableHead>
+              <TableHead>Parent Category</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categories.map((category) => (
-              <TableRow key={category.id}>
-                <TableCell>{category.categoryName}</TableCell>
-                <TableCell>{category.assetAccountingCode}</TableCell>
-                <TableCell>{category.depreciationAccountingCode}</TableCell>
-                <TableCell>{category.depreciationMethod}</TableCell>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4">
+                  Loading categories...
+                </TableCell>
               </TableRow>
-            ))}
+            ) : error ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="text-center py-4 text-red-500"
+                >
+                  {error}
+                </TableCell>
+              </TableRow>
+            ) : categories.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4">
+                  No categories found
+                </TableCell>
+              </TableRow>
+            ) : (
+              categories.map((category) => (
+                <TableRow key={category.category_id}>
+                  <TableCell>{category.category_name}</TableCell>
+                  <TableCell>{category.account_code || '-'}</TableCell>
+                  <TableCell>
+                    {category.depreciation_account_code || '-'}
+                  </TableCell>
+                  <TableCell>
+                    {category.depreciation_rate !== null
+                      ? `${category.depreciation_rate}%`
+                      : '-'}
+                  </TableCell>
+                  <TableCell>{category.parent_cat_code || '-'}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
       {/* Popup with form */}
-      <Popup isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)} title="Add Category" size="sm:max-w-md">
+      <Popup
+        isOpen={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+        title="Add Category"
+        size="sm:max-w-md"
+      >
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid gap-4">
             <div className="space-y-2">
-              <Label htmlFor="categoryName">Category Name</Label>
+              <Label htmlFor="category_name">Category Name</Label>
               <Input
-                id="categoryName"
-                name="categoryName"
-                value={formData.categoryName}
+                id="category_name"
+                name="category_name"
+                value={formData.category_name || ''}
                 onChange={handleInputChange}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="assetAccountingCode">Asset Accounting Code</Label>
+              <Label htmlFor="account_code">Asset Accounting Code</Label>
               <Input
-                id="assetAccountingCode"
-                name="assetAccountingCode"
-                value={formData.assetAccountingCode}
+                id="account_code"
+                name="account_code"
+                value={formData.account_code || ''}
                 onChange={handleInputChange}
-                required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="depreciationAccountingCode">Depreciation Accounting Code</Label>
+              <Label htmlFor="depreciation_account_code">
+                Depreciation Accounting Code
+              </Label>
               <Input
-                id="depreciationAccountingCode"
-                name="depreciationAccountingCode"
-                value={formData.depreciationAccountingCode}
+                id="depreciation_account_code"
+                name="depreciation_account_code"
+                value={formData.depreciation_account_code || ''}
                 onChange={handleInputChange}
-                required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="depreciationMethod">Depreciation Method</Label>
-              <Select value={formData.depreciationMethod} onValueChange={handleSelectChange} required>
-                <SelectTrigger id="depreciationMethod">
-                  <SelectValue placeholder="Select depreciation method" />
+              <Label htmlFor="depreciation_rate">Depreciation Rate (%)</Label>
+              <Input
+                id="depreciation_rate"
+                name="depreciation_rate"
+                type="number"
+                min="0"
+                step="0.01"
+                value={
+                  formData.depreciation_rate === null
+                    ? ''
+                    : formData.depreciation_rate
+                }
+                onChange={handleInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="parent_cat_code">Parent Category</Label>
+              <Select
+                value={formData.parent_cat_code?.toString() || ''}
+                onValueChange={handleParentCategoryChange}
+              >
+                <SelectTrigger id="parent_cat_code">
+                  <SelectValue placeholder="Select parent category (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Reducing Balance Method">Reducing Balance Method</SelectItem>
-                  <SelectItem value="Straight Line Method">Straight Line Method</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem
+                      key={category.category_id}
+                      value={category.category_id?.toString() || ''}
+                    >
+                      {category.category_name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsPopupOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsPopupOpen(false)}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Saving...' : 'Save'}
+            </Button>
           </div>
         </form>
       </Popup>
@@ -169,4 +309,3 @@ const Categories = () => {
 }
 
 export default Categories
-

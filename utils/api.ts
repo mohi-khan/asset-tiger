@@ -1,8 +1,12 @@
 import { fetchApi } from '@/utils/http'
 import { CompanyType } from '../api/company-api'
 import {
+  CreateCategoryType,
+  CreateCompanyType,
   CreateCostCenterType,
   CreateDepartmentType,
+  GetCategoryType,
+  GetCompanyType,
   GetCostCenterType,
   GetDepartmentType,
 } from '@/utils/type'
@@ -62,6 +66,58 @@ export async function createCostCenter(
 export async function getAllCostCenters(token: string) {
   return fetchApi<GetCostCenterType[]>({
     url: 'api/costCenter/getall',
+    method: 'GET',
+    headers: {
+      Authorization: `${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createCompany(
+  data: CreateCostCenterType,
+  token: string
+) {
+  return fetchApi<CreateCompanyType>({
+    url: 'api/company/create-company',
+    method: 'POST',
+    body: data,
+    headers: {
+      Authorization: `${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllCompanies(token: string) {
+  return fetchApi<GetCompanyType[]>({
+    url: 'api/company/get-all-companies',
+    method: 'GET',
+    headers: {
+      Authorization: `${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createCategory(
+  data: CreateCategoryType,
+  token: string
+) {
+  return fetchApi<CreateCategoryType>({
+    url: 'api/category/create',
+    method: 'POST',
+    body: data,
+    headers: {
+      Authorization: `${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllCategories(token: string) {
+  return fetchApi<GetCategoryType[]>({
+    url: 'api/category/getall',
     method: 'GET',
     headers: {
       Authorization: `${token}`,

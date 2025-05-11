@@ -1,5 +1,10 @@
-import type React from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import type React from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 interface PopupProps {
   isOpen: boolean
@@ -12,7 +17,9 @@ interface PopupProps {
 export function Popup({ isOpen, onClose, title, children, size }: PopupProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`${size} max-h-[30vh] overflow-y-auto`}>
+      <DialogContent
+        className={`overflow-y-auto ${size}`}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -21,4 +28,3 @@ export function Popup({ isOpen, onClose, title, children, size }: PopupProps) {
     </Dialog>
   )
 }
-
