@@ -1,10 +1,12 @@
 import { fetchApi } from '@/utils/http'
 import { CompanyType } from '../api/company-api'
 import {
+  CreateAssetType,
   CreateCategoryType,
   CreateCompanyType,
   CreateCostCenterType,
   CreateDepartmentType,
+  GetAssetType,
   GetCategoryType,
   GetCompanyType,
   GetCostCenterType,
@@ -118,6 +120,32 @@ export async function createCategory(
 export async function getAllCategories(token: string) {
   return fetchApi<GetCategoryType[]>({
     url: 'api/category/getall',
+    method: 'GET',
+    headers: {
+      Authorization: `${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createAsset(
+  data: CreateAssetType,
+  token: string
+) {
+  return fetchApi<CreateAssetType>({
+    url: 'api/asset/create',
+    method: 'POST',
+    body: data,
+    headers: {
+      Authorization: `${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllAssets(token: string) {
+  return fetchApi<GetAssetType[]>({
+    url: 'api/asset/getall',
     method: 'GET',
     headers: {
       Authorization: `${token}`,

@@ -133,6 +133,73 @@ export const createCategorySchema = z.object({
 });
 export type CreateCategoryType = z.infer<typeof createCategorySchema>
 
+// asset
+export const createAsset = z.object({
+  assetCode: z.string().max(100),
+  assetName: z.string().max(255),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  purDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  categoryId: z.number().int(),
+  supplierId: z.number().int().nullable().optional(),
+  user: z.string().max(100).nullable().optional(),
+  locationId: z.number().int().nullable().optional(),
+  sectionId: z.number().int().nullable().optional(),
+  departmentId: z.number().int().nullable().optional(),
+  assetValue: z.number(),
+  currentValue: z.number().nullable().optional(),
+  depRate: z.number().nullable().optional(),
+  salvageValue: z.number().nullable().optional(),
+  status: z.string().max(50).nullable().optional(),
+  soldDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  soldValue: z.number().nullable().optional(),
+  mfgCode: z.number().int().nullable().optional(),
+  mfgYear: z.number().int().nullable().optional(),
+  countryCode: z.number().int().nullable().optional(),
+  model: z.string().max(255).nullable().optional(),
+  slNo: z.string().max(255).nullable().optional(),
+  costCenterId: z.number().int().nullable().optional(),
+  assetGlCode: z.string().max(100).nullable().optional(),
+  createdBy: z.number().int().nullable().optional(),
+  createdAt: z.string().optional(), // Normally comes from DB
+  updatedBy: z.number().int().nullable().optional(),
+  updatedAt: z.string().optional(), // Normally comes from DB
+});
+export type CreateAssetType = z.infer<typeof createAsset>;
+
+export const getAsset = z.object({
+  id: z.number().int().optional(), // optional because it's autoincrement
+  assetCode: z.string().max(100),
+  assetName: z.string().max(255),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  purDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  categoryId: z.number().int(),
+  supplierId: z.number().int().nullable().optional(),
+  user: z.string().max(100).nullable().optional(),
+  locationId: z.number().int().nullable().optional(),
+  sectionId: z.number().int().nullable().optional(),
+  departmentId: z.number().int().nullable().optional(),
+  assetValue: z.number(),
+  currentValue: z.number().nullable().optional(),
+  depRate: z.number().nullable().optional(),
+  salvageValue: z.number().nullable().optional(),
+  status: z.string().max(50).nullable().optional(),
+  soldDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  soldValue: z.number().nullable().optional(),
+  mfgCode: z.number().int().nullable().optional(),
+  mfgYear: z.number().int().nullable().optional(),
+  countryCode: z.number().int().nullable().optional(),
+  model: z.string().max(255).nullable().optional(),
+  slNo: z.string().max(255).nullable().optional(),
+  costCenterId: z.number().int().nullable().optional(),
+  assetGlCode: z.string().max(100).nullable().optional(),
+  createdBy: z.number().int().nullable().optional(),
+  createdAt: z.string().optional(), // Normally comes from DB
+  updatedBy: z.number().int().nullable().optional(),
+  updatedAt: z.string().optional(), // Normally comes from DB
+});
+export type GetAssetType = z.infer<typeof getAsset>;
+
+
 
 
 
