@@ -247,6 +247,32 @@ export const createSupplierSchema = z.object({
 });
 export type CreateSupplierType = z.infer<typeof createSupplierSchema>;
 
+//location
+export const getLocationSchema = z.object({
+  id: z.number().int().optional(), // auto-increment primary key
+  name: z.string().max(255),
+});
+export type GetLocationType = z.infer<typeof getLocationSchema>;
+
+export const createLocationSchema = z.object({
+  id: z.number().int().optional(), // auto-increment primary key
+  name: z.string().max(255),
+});
+export type CreateLocationType = z.infer<typeof createLocationSchema>;
+
+//section(sites)
+export const getSiteSchema = z.object({
+  id: z.number().int().optional(), // auto-increment primary key
+  name: z.string().max(255),
+});
+export type GetSiteType = z.infer<typeof getSiteSchema>;
+
+export const createSiteSchema = z.object({
+  id: z.number().int().optional(), // auto-increment primary key
+  name: z.string().max(255),
+});
+export type CreateSiteType = z.infer<typeof createSiteSchema>;
+
 
 
 

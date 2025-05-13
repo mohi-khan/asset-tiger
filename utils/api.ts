@@ -6,12 +6,16 @@ import {
   CreateCompanyType,
   CreateCostCenterType,
   CreateDepartmentType,
+  CreateLocationType,
+  CreateSiteType,
   CreateSupplierType,
   GetAssetType,
   GetCategoryType,
   GetCompanyType,
   GetCostCenterType,
   GetDepartmentType,
+  GetLocationType,
+  GetSiteType,
   GetSupplierType,
 } from '@/utils/type'
 
@@ -174,6 +178,58 @@ export async function createSupplier(
 export async function getAllSuppliers(token: string) {
   return fetchApi<GetSupplierType[]>({
     url: 'api/supplier/getall',
+    method: 'GET',
+    headers: {
+      Authorization: `${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createLocation(
+  data: CreateLocationType,
+  token: string
+) {
+  return fetchApi<CreateLocationType>({
+    url: 'api/location/create',
+    method: 'POST',
+    body: data,
+    headers: {
+      Authorization: `${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllLocations(token: string) {
+  return fetchApi<GetLocationType[]>({
+    url: 'api/location/getall',
+    method: 'GET',
+    headers: {
+      Authorization: `${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createSite(
+  data: CreateSiteType,
+  token: string
+) {
+  return fetchApi<CreateSiteType>({
+    url: 'api/section/create',
+    method: 'POST',
+    body: data,
+    headers: {
+      Authorization: `${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllSites(token: string) {
+  return fetchApi<GetSiteType[]>({
+    url: 'api/section/getall',
     method: 'GET',
     headers: {
       Authorization: `${token}`,
