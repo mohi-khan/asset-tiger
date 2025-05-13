@@ -6,11 +6,13 @@ import {
   CreateCompanyType,
   CreateCostCenterType,
   CreateDepartmentType,
+  CreateSupplierType,
   GetAssetType,
   GetCategoryType,
   GetCompanyType,
   GetCostCenterType,
   GetDepartmentType,
+  GetSupplierType,
 } from '@/utils/type'
 
 export async function getAllDepartments(token: string) {
@@ -146,6 +148,32 @@ export async function createAsset(
 export async function getAllAssets(token: string) {
   return fetchApi<GetAssetType[]>({
     url: 'api/asset/getall',
+    method: 'GET',
+    headers: {
+      Authorization: `${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createSupplier(
+  data: CreateSupplierType,
+  token: string
+) {
+  return fetchApi<CreateSupplierType>({
+    url: 'api/supplier/create',
+    method: 'POST',
+    body: data,
+    headers: {
+      Authorization: `${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllSuppliers(token: string) {
+  return fetchApi<GetSupplierType[]>({
+    url: 'api/supplier/getall',
     method: 'GET',
     headers: {
       Authorization: `${token}`,

@@ -199,6 +199,54 @@ export const getAsset = z.object({
 });
 export type GetAssetType = z.infer<typeof getAsset>;
 
+//supplier
+export const getSupplierSchema = z.object({
+  id: z.number().int().optional(), // auto-increment primary key
+  name: z.string().max(255),
+  displayName: z.string().max(255).nullable().optional(),
+  companyName: z.string().max(255).nullable().optional(),
+  type: z.enum(["Supplier", "Manufacturer"]),
+  email: z.string().max(100).email().nullable().optional(),
+  phone: z.string().max(20).nullable().optional(),
+  mobile: z.string().max(20),
+  website: z.string().max(255).url().nullable().optional(),
+  isCompany: z.boolean().default(true),
+  vat: z.string().max(100).nullable().optional(),
+  street: z.string().max(255).nullable().optional(),
+  city: z.string().max(100),
+  zip: z.string().max(20).nullable().optional(),
+  active: z.boolean().default(true),
+  comment: z.string().nullable().optional(),
+  createdBy: z.number().int().nullable().optional(),
+  createdAt: z.date().optional(), // You might parse this with new Date() if needed
+  updatedBy: z.number().int().nullable().optional(),
+  updatedAt: z.date().optional(),
+});
+export type GetSupplierType = z.infer<typeof getSupplierSchema>;
+
+export const createSupplierSchema = z.object({
+  name: z.string().max(255),
+  displayName: z.string().max(255).nullable().optional(),
+  companyName: z.string().max(255).nullable().optional(),
+  type: z.enum(["Supplier", "Manufacturer"]),
+  email: z.string().max(100).email().nullable().optional(),
+  phone: z.string().max(20).nullable().optional(),
+  mobile: z.string().max(20),
+  website: z.string().max(255).url().nullable().optional(),
+  isCompany: z.boolean().default(true),
+  vat: z.string().max(100).nullable().optional(),
+  street: z.string().max(255).nullable().optional(),
+  city: z.string().max(100),
+  zip: z.string().max(20).nullable().optional(),
+  active: z.boolean().default(true),
+  comment: z.string().nullable().optional(),
+  createdBy: z.number().int().nullable().optional(),
+  createdAt: z.date().optional(), // You might parse this with new Date() if needed
+  updatedBy: z.number().int().nullable().optional(),
+  updatedAt: z.date().optional(),
+});
+export type CreateSupplierType = z.infer<typeof createSupplierSchema>;
+
 
 
 
