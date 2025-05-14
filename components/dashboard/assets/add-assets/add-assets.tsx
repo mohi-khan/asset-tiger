@@ -2,89 +2,82 @@
 
 import type React from 'react'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus } from 'lucide-react'
 import { Popup } from '@/utils/popup'
+import {
+  CreateAssetType,
+  GetCategoryType,
+  GetCostCenterType,
+  GetDepartmentType,
+  GetLocationType,
+  GetSiteType,
+  GetSupplierType,
+} from '@/utils/type'
+import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
+import { useAtom } from 'jotai'
+import {
+  createAsset,
+  getAllCategories,
+  getAllCompanies,
+  getAllCostCenters,
+  getAllDepartments,
+  getAllLocations,
+  getAllSites,
+  getAllSuppliers,
+} from '@/utils/api'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { format } from 'date-fns'
 
-// Sample data
-const initialDepartments = [
-  {
-    departmentName: 'Finance',
-    departmentCode: 'FIN',
-    location: 'New York',
-    manager: 'John Doe',
-    employeeCount: '15',
-  },
-  {
-    departmentName: 'HR',
-    departmentCode: 'HR',
-    location: 'Chicago',
-    manager: 'Jane Smith',
-    employeeCount: '8',
-  },
-  {
-    departmentName: 'IT',
-    departmentCode: 'IT',
-    location: 'San Francisco',
-    manager: 'Mike Johnson',
-    employeeCount: '25',
-  },
+const countries = [
+  { id: 1, name: 'Bangladesh' },
+  { id: 2, name: 'USA' },
+  { id: 3, name: 'Canada' },
 ]
-
-const initialCategories = [
-  { categoryName: 'Operations', categoryCode: 'OPS' },
-  { categoryName: 'Marketing', categoryCode: 'MKT' },
-  { categoryName: 'Research', categoryCode: 'RND' },
-]
-
-const departments = initialDepartments
-const categories = initialCategories
-const siteOptions = Array.from(
-  new Set(departments.map((dept) => dept.location))
-)
-const locationOptions = ['Building A', 'Building B', 'Floor 1', 'Floor 2'] // Defaults
-const deprectypeOptions = [
-  'Straigth Line',
-  'Reducing Balnce Method',
-  'Double Reducing Method',
-] // Defaults
-
-const departmentOptions = departments.map((dept) => dept.departmentName)
-const costCenterOptions = categories.map((cat) => cat.categoryName)
-
-interface AssetFormData {
-  assetName: string
-  description: string
-  assetTagId: string
-  company: string
-  purchaseDate: string
-  cost: string
-  purchaseFrom: string
-  brand: string
-  model: string
-  serialNo: string
-  attachment: File | null
-  depreciableCost: number
-}
 
 const AddAssets = () => {
+  useInitializeUser()
+  const [token] = useAtom(tokenAtom)
+  const [userData] = useAtom(userDataAtom)
+
   // Main form state
-  const [formData, setFormData] = useState<AssetFormData>({
+  const [formData, setFormData] = useState<CreateAssetType>({
+    assetCode: '',
     assetName: '',
-    description: '',
-    assetTagId: '',
-    company: '',
-    purchaseDate: '',
-    cost: '',
-    purchaseFrom: '',
-    brand: '',
-    model: '',
-    serialNo: '',
-    attachment: null,
-    depreciableCost: 0.0,
+    startDate: '',
+    purDate: '',
+    categoryId: 0,
+    supplierId: null,
+    user: null,
+    locationId: null,
+    sectionId: null,
+    departmentId: null,
+    assetValue: 0,
+    currentValue: 0,
+    depRate: 0,
+    salvageValue: 0,
+    status: '',
+    soldDate: null,
+    soldValue: null,
+    mfgCode: null,
+    mfgYear: null,
+    countryCode: null,
+    model: null,
+    slNo: null,
+    costCenterId: null,
+    assetGlCode: null,
+    createdBy: userData?.userId || 0,
+    updatedBy: null,
   })
 
   // Popup states
@@ -94,6 +87,15 @@ const AddAssets = () => {
   const [activePopupType, setActivePopupType] = useState<
     'site' | 'location' | null
   >(null)
+
+  // API data states
+  const [departments, setDepartments] = useState<GetDepartmentType[]>([])
+  const [categories, setCategories] = useState<GetCategoryType[]>([])
+  const [locations, setLocations] = useState<GetLocationType[]>([])
+  const [sites, setSites] = useState<GetSiteType[]>([])
+  const [suppliers, setSuppliers] = useState<GetSupplierType[]>([])
+  const [costCenters, setCostCenters] = useState<GetCostCenterType[]>([])
+  const [loading, setLoading] = useState(true)
 
   // Form data for each popup
   const [siteLocationFormData, setSiteLocationFormData] = useState({
@@ -116,6 +118,46 @@ const AddAssets = () => {
     manager: '',
     budget: '',
   })
+
+  // Fetch data from APIs
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!token) return
+
+      try {
+        setLoading(true)
+        const [
+          departmentsData,
+          categoriesData,
+          locationsData,
+          sitesData,
+          suppliersData,
+          costCentersData,
+        ] = await Promise.all([
+          getAllDepartments(token),
+          getAllCategories(token),
+          getAllLocations(token),
+          getAllSites(token),
+          getAllSuppliers(token),
+          getAllCostCenters(token),
+        ])
+        setDepartments(departmentsData.data || [])
+        setCategories(categoriesData.data || [])
+        setLocations(locationsData.data || [])
+        setSites(sitesData.data || [])
+        setSuppliers(suppliersData.data || [])
+        setCostCenters(costCentersData.data || [])
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (token) {
+      fetchData()
+    }
+  }, [token])
 
   // Handle main form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,11 +210,29 @@ const AddAssets = () => {
   }
 
   // Handle main form submission
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    console.log('Form submitted:', formData)
-    // Here you would typically send the data to your API
-  }
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      console.log(formData)
+      e.preventDefault()
+      try {
+        const processedData = {
+          ...formData,
+          mfgYear: Number(formData.mfgYear || '0'),
+          mfgCode: Number(formData.mfgCode || '0'),
+          assetValue: Number(formData.assetValue || 0),
+          currentValue: Number(formData.currentValue || 0),
+          depRate: Number(formData.depRate || 0),
+          salvageValue: Number(formData.salvageValue || 0),
+          soldValue: Number(formData.soldValue || 0),
+          status: formData.status || '',
+        }
+        await createAsset(processedData, token)
+      } catch (error) {
+        console.error('Error creating asset:', error)
+      }
+    },
+    [formData, userData, token]
+  )
 
   // Handle site/location form submission
   const handleSiteLocationSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -207,49 +267,29 @@ const AddAssets = () => {
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-4 py-4">
-        <div className="grid gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="assetName">Asset Name(*)</Label>
-            <Input
-              id="assetName"
-              name="assetName"
-              value={formData.assetName}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
+        <div className="grid gap-2">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="assetName">Asset Name(*)</Label>
+              <Input
+                id="assetName"
+                name="assetName"
+                value={formData.assetName}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description(*)</Label>
-            <Input
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="assetTagId">Asset Tag(*)</Label>
-            <Input
-              id="assetTagId"
-              name="assetTagId"
-              value={formData.assetTagId}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="company">Company(*)</Label>
-            <Input
-              id="company"
-              name="company"
-              value={formData.company}
-              onChange={handleInputChange}
-              required
-            />
+            <div className="space-y-2">
+              <Label htmlFor="assetCode">Asset Code(*)</Label>
+              <Input
+                id="assetCode"
+                name="assetCode"
+                value={formData.assetCode}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -257,75 +297,224 @@ const AddAssets = () => {
               <Label htmlFor="purchaseDate">Purchase Date</Label>
               <Input
                 id="purchaseDate"
-                name="purchaseDate"
+                name="purDate"
                 type="date"
-                value={formData.purchaseDate}
+                value={formData.purDate || ''}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="soldDate">Sold Date</Label>
+              <Input
+                id="soldDate"
+                name="soldDate"
+                type="date"
+                value={formData.soldDate || ''}
                 onChange={handleInputChange}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cost">Cost</Label>
+              <Label htmlFor="startDate">Start Date</Label>
               <Input
-                id="cost"
-                name="cost"
-                type="number"
-                step="0.01"
-                value={formData.cost}
+                id="startDate"
+                name="startDate"
+                type="date"
+                value={formData.startDate || ''}
                 onChange={handleInputChange}
                 required
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="purchaseFrom">Purchase From</Label>
-            <Input
-              id="purchaseFrom"
-              name="purchaseFrom"
-              value={formData.purchaseFrom}
-              onChange={handleInputChange}
-              required
-            />
+            <div className="space-y-2">
+              <Label htmlFor="assetGlCode">Asset Gl Code</Label>
+              <Input
+                id="assetGlCode"
+                name="assetGlCode"
+                value={formData.purDate}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="brand">Brand</Label>
-              <Input
-                id="brand"
-                name="brand"
-                value={formData.brand}
-                onChange={handleInputChange}
-                required
-              />
+              <Label htmlFor="site">Supplier</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={formData.supplierId?.toString() || ''}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      supplierId: value ? Number.parseInt(value) : null,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a Supplier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map((supplier) => (
+                      <SelectItem
+                        key={supplier.id}
+                        value={supplier.id?.toString() ?? ''}
+                      >
+                        {supplier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  title="Add new site"
+                  onClick={() => openSiteLocationPopup('site')}
+                  type="button"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-
+            <div className="space-y-2">
+              <Label htmlFor="site">Category</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={formData.categoryId?.toString() || ''}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      categoryId: value ? Number.parseInt(value) : 0,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories
+                      .filter((category) => category.category_id !== undefined)
+                      .map((category) => (
+                        <SelectItem
+                          key={category.category_id}
+                          value={category.category_id!.toString()}
+                        >
+                          {category.category_name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  title="Add new site"
+                  onClick={() => openSiteLocationPopup('site')}
+                  type="button"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="site">Country</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={formData.countryCode?.toString() || ''}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      countryCode: value ? Number.parseInt(value) : null,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a Country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map((country) => (
+                      <SelectItem
+                        key={country.id}
+                        value={country.id!.toString()}
+                      >
+                        {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="model">Model</Label>
               <Input
                 id="model"
                 name="model"
-                value={formData.model}
+                value={formData.model || ''}
                 onChange={handleInputChange}
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="slNo">Serial No</Label>
+              <Input
+                id="slNo"
+                name="slNo"
+                value={formData.slNo || ''}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="user">User</Label>
+              <Input
+                id="user"
+                name="user"
+                value={formData.user || ''}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mfgCode">Manufacture Code</Label>
+              <Input
+                id="mfgCode"
+                name="mfgCode"
+                type="number"
+                value={formData.mfgCode || 0}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mfgYear">Manufacture Year</Label>
+              <Input
+                id="mfgYear"
+                name="mfgYear"
+                type="number"
+                value={formData.mfgYear || 0}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="status">Active Status</Label>
+                <Switch
+                  id="status"
+                  name="status"
+                  onChange={(checked) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      status: checked ? 'active' : 'inactive',
+                    }))
+                  }
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="serialNo">Serial No</Label>
-            <Input
-              id="serialNo"
-              name="serialNo"
-              value={formData.serialNo}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
-          <div className="p-6 border rounded-lg shadow-sm bg-white">
+          <div className="p-6 my-5 border rounded-lg shadow-sm bg-white">
             {/* Header */}
             <div className="mb-4 pb-2 border-b">
               <h3 className="font-semibold">
@@ -338,16 +527,29 @@ const AddAssets = () => {
               <div className="space-y-2">
                 <Label htmlFor="site">Site</Label>
                 <div className="flex gap-2">
-                  <select
-                    id="site"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  <Select
+                    value={formData.sectionId?.toString() || ''}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        sectionId: value ? Number.parseInt(value) : null,
+                      }))
+                    }
                   >
-                    {siteOptions.map((site) => (
-                      <option key={site} value={site}>
-                        {site}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a Site" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sites.map((site) => (
+                        <SelectItem
+                          key={site.id}
+                          value={site.id?.toString() ?? ''}
+                        >
+                          {site.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button
                     variant="outline"
                     size="icon"
@@ -363,16 +565,29 @@ const AddAssets = () => {
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
                 <div className="flex gap-2">
-                  <select
-                    id="location"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  <Select
+                    value={formData.locationId?.toString() || ''}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        locationId: value ? Number.parseInt(value) : null,
+                      }))
+                    }
                   >
-                    {locationOptions.map((loc) => (
-                      <option key={loc} value={loc}>
-                        {loc}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map((location) => (
+                        <SelectItem
+                          key={location.id}
+                          value={location.id?.toString() ?? ''}
+                        >
+                          {location.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button
                     variant="outline"
                     size="icon"
@@ -391,16 +606,29 @@ const AddAssets = () => {
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
                 <div className="flex gap-2">
-                  <select
-                    id="department"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  <Select
+                    value={formData.departmentId?.toString() || ''}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        departmentId: value ? Number.parseInt(value) : null,
+                      }))
+                    }
                   >
-                    {departmentOptions.map((dept) => (
-                      <option key={dept} value={dept}>
-                        {dept}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map((department) => (
+                        <SelectItem
+                          key={department.departmentID}
+                          value={department.departmentID.toString()}
+                        >
+                          {department.departmentName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button
                     variant="outline"
                     size="icon"
@@ -416,16 +644,29 @@ const AddAssets = () => {
               <div className="space-y-2">
                 <Label htmlFor="costCenter">Cost Center</Label>
                 <div className="flex gap-2">
-                  <select
-                    id="costCenter"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  <Select
+                    value={formData.costCenterId?.toString() || ''}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        costCenterId: value ? Number.parseInt(value) : null,
+                      }))
+                    }
                   >
-                    {costCenterOptions.map((cc) => (
-                      <option key={cc} value={cc}>
-                        {cc}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {costCenters.map((costCenter) => (
+                        <SelectItem
+                          key={costCenter.costCenterId}
+                          value={costCenter.costCenterId.toString()}
+                        >
+                          {costCenter.costCenterName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button
                     variant="outline"
                     size="icon"
@@ -440,37 +681,71 @@ const AddAssets = () => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="attachment">Attachment</Label>
-            <Input
-              id="attachment"
-              name="attachment"
-              type="file"
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="mb-4 pb-2 border-b">
-            <h3 className="font-semibold">Depreciation Info</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <Label htmlFor="depreciableCost">Depreciable Cost</Label>
+          <div className="p-6 mb-5 border rounded-lg shadow-sm bg-white">
+            {/* Header */}
+            <div className="mb-4 pb-2 border-b">
+              <h3 className="font-semibold">Depreciation Info</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-4 items-center mb-5">
+              <Label htmlFor="assetValue">Asset Value</Label>
               <div className="relative flex items-center">
                 <div className="absolute left-3 pointer-events-none">
                   <span className="text-gray-500">$</span>
                 </div>
                 <Input
-                  id="depreciableCost"
+                  id="assetValue"
                   type="number"
-                  min={0}
-                  max={10000}
-                  step={0.01}
+                 name='assetValue'
                   placeholder="0.00"
                   className="pl-9"
+                  value={formData.assetValue || ''}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 items-center mb-5">
+              <Label htmlFor="currentValue">Current Value</Label>
+              <div className="relative flex items-center">
+                <div className="absolute left-3 pointer-events-none">
+                  <span className="text-gray-500">$</span>
+                </div>
+                <Input
+                  id="currentValue"
+                  type="number"
+                  name='currentValue'
+                  placeholder="0.00"
+                  className="pl-9"
+                  value={formData.currentValue || ''}
+                  onChange={handleInputChange}
+                />
+                {/* <Input
+                id="mfgCode"
+                type="number"
+                name="mfgCode"
+                value={formData.mfgCode || 0}
+                onChange={handleInputChange}
+                required
+              /> */}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 items-center mb-5">
+              <Label htmlFor="soldValue">Sold Value</Label>
+              <div className="relative flex items-center">
+                <div className="absolute left-3 pointer-events-none">
+                  <span className="text-gray-500">$</span>
+                </div>
+                <Input
+                  id="soldValue"
+                  type="number"
+                  name='soldValue'
+                  placeholder="0.00"
+                  className="pl-9"
+                  value={formData.soldValue || ''}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 items-center mb-5">
               <Label htmlFor="salvageValue">Salvage Value</Label>
               <div className="relative flex items-center">
                 <div className="absolute left-3 pointer-events-none">
@@ -479,53 +754,28 @@ const AddAssets = () => {
                 <Input
                   id="salvageValue"
                   type="number"
-                  min={0}
-                  max={10000}
-                  step={0.01}
+                  name='salvageValue'
                   placeholder="0.00"
                   className="pl-9"
+                  value={formData.salvageValue || ''}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Label htmlFor="assetLife">Asset Life(Months)</Label>
+            <div className="grid grid-cols-2 gap-4 items-center">
+              <Label htmlFor="depRate">Depreciation Rate</Label>
               <div className="relative flex items-center">
+                <div className="absolute left-3 pointer-events-none">
+                  <span className="text-gray-500">%</span>
+                </div>
                 <Input
-                  id="assetLife"
+                  id="depRate"
                   type="number"
-                  min={0}
-                  max={100}
-                  step={0.01}
+                  name='depRate'
                   placeholder="0.00"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Label htmlFor="depreciationType">Depreciation Type</Label>
-              <div className="relative flex items-center">
-                <select
-                  id="depreciationType"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                >
-                  {deprectypeOptions.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Label htmlFor="dateAcquired">Date Acquired</Label>
-              <div className="relative flex items-center">
-                <Input
-                  id="dateAcquired"
-                  name="dateAcquired"
-                  type="date"
-                  required
+                  className="pl-9"
+                  value={formData.depRate || ''}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -751,5 +1001,4 @@ const AddAssets = () => {
     </div>
   )
 }
-
 export default AddAssets

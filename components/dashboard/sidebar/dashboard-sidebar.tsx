@@ -90,6 +90,10 @@ export function DashboardSidebar() {
           href: '/dashboard/setup/locations-sites',
         },
         {
+          title: 'Suppliers',
+          href: '/dashboard/setup/suppliers',
+        },
+        {
           title: 'Categories',
           href: '/dashboard/setup/categories',
         },
