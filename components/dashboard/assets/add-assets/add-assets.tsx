@@ -63,10 +63,10 @@ const AddAssets = () => {
     sectionId: null,
     departmentId: null,
     assetValue: 0,
-    currentValue: null,
-    depRate: null,
-    salvageValue: null,
-    status: null,
+    currentValue: 0,
+    depRate: 0,
+    salvageValue: 0,
+    status: '',
     soldDate: null,
     soldValue: null,
     mfgCode: null,
@@ -215,7 +215,18 @@ const AddAssets = () => {
       console.log(formData)
       e.preventDefault()
       try {
-        await createAsset(formData, token)
+        const processedData = {
+          ...formData,
+          mfgYear: Number(formData.mfgYear || '0'),
+          mfgCode: Number(formData.mfgCode || '0'),
+          assetValue: Number(formData.assetValue || 0),
+          currentValue: Number(formData.currentValue || 0),
+          depRate: Number(formData.depRate || 0),
+          salvageValue: Number(formData.salvageValue || 0),
+          soldValue: Number(formData.soldValue || 0),
+          status: formData.status || '',
+        }
+        await createAsset(processedData, token)
       } catch (error) {
         console.error('Error creating asset:', error)
       }
@@ -251,11 +262,6 @@ const AddAssets = () => {
   const openSiteLocationPopup = (type: 'site' | 'location') => {
     setActivePopupType(type)
     setSiteLocationPopupOpen(true)
-  }
-
-  const formatDate = (date: Date | null | undefined) => {
-    if (!date) return '-'
-    return format(new Date(date), 'MMM dd, yyyy')
   }
 
   return (
@@ -411,7 +417,6 @@ const AddAssets = () => {
                 </Button>
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="site">Country</Label>
               <div className="flex gap-2">
@@ -440,7 +445,6 @@ const AddAssets = () => {
                 </Select>
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="model">Model</Label>
               <Input
@@ -451,7 +455,6 @@ const AddAssets = () => {
                 required
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="slNo">Serial No</Label>
               <Input
@@ -467,7 +470,7 @@ const AddAssets = () => {
               <Input
                 id="user"
                 name="user"
-                value={formData.slNo || ''}
+                value={formData.user || ''}
                 onChange={handleInputChange}
                 required
               />
@@ -477,7 +480,8 @@ const AddAssets = () => {
               <Input
                 id="mfgCode"
                 name="mfgCode"
-                value={formData.slNo || ''}
+                type="number"
+                value={formData.mfgCode || 0}
                 onChange={handleInputChange}
                 required
               />
@@ -487,7 +491,8 @@ const AddAssets = () => {
               <Input
                 id="mfgYear"
                 name="mfgYear"
-                value={formData.slNo || ''}
+                type="number"
+                value={formData.mfgYear || 0}
                 onChange={handleInputChange}
                 required
               />
@@ -499,7 +504,10 @@ const AddAssets = () => {
                   id="status"
                   name="status"
                   onChange={(checked) =>
-                    setFormData((prev) => ({ ...prev, active: checked }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      status: checked ? 'active' : 'inactive',
+                    }))
                   }
                 />
               </div>
@@ -687,10 +695,11 @@ const AddAssets = () => {
                 <Input
                   id="assetValue"
                   type="number"
-                  min={0}
-                  step={0.01}
+                 name='assetValue'
                   placeholder="0.00"
                   className="pl-9"
+                  value={formData.assetValue || ''}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -703,11 +712,20 @@ const AddAssets = () => {
                 <Input
                   id="currentValue"
                   type="number"
-                  min={0}
-                  step={0.01}
+                  name='currentValue'
                   placeholder="0.00"
                   className="pl-9"
+                  value={formData.currentValue || ''}
+                  onChange={handleInputChange}
                 />
+                {/* <Input
+                id="mfgCode"
+                type="number"
+                name="mfgCode"
+                value={formData.mfgCode || 0}
+                onChange={handleInputChange}
+                required
+              /> */}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 items-center mb-5">
@@ -719,10 +737,11 @@ const AddAssets = () => {
                 <Input
                   id="soldValue"
                   type="number"
-                  min={0}
-                  step={0.01}
+                  name='soldValue'
                   placeholder="0.00"
                   className="pl-9"
+                  value={formData.soldValue || ''}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -735,11 +754,11 @@ const AddAssets = () => {
                 <Input
                   id="salvageValue"
                   type="number"
-                  min={0}
-                  max={10000}
-                  step={0.01}
+                  name='salvageValue'
                   placeholder="0.00"
                   className="pl-9"
+                  value={formData.salvageValue || ''}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -752,11 +771,11 @@ const AddAssets = () => {
                 <Input
                   id="depRate"
                   type="number"
-                  min={0}
-                  max={100}
-                  step={0.01}
+                  name='depRate'
                   placeholder="0.00"
                   className="pl-9"
+                  value={formData.depRate || ''}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -982,5 +1001,4 @@ const AddAssets = () => {
     </div>
   )
 }
-
 export default AddAssets
