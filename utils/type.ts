@@ -288,7 +288,6 @@ export const getLocationSchema = z.object({
 export type GetLocationType = z.infer<typeof getLocationSchema>;
 
 export const createLocationSchema = z.object({
-  id: z.number().int().optional(), // auto-increment primary key
   name: z.string().max(255),
 });
 export type CreateLocationType = z.infer<typeof createLocationSchema>;
@@ -301,10 +300,32 @@ export const getSiteSchema = z.object({
 export type GetSiteType = z.infer<typeof getSiteSchema>;
 
 export const createSiteSchema = z.object({
-  id: z.number().int().optional(), // auto-increment primary key
   name: z.string().max(255),
 });
 export type CreateSiteType = z.infer<typeof createSiteSchema>;
+
+//depreciation book
+export const getDepreciationBookSchema = z.object({
+  id: z.number(),
+  name: z.string().max(100),
+  description: z.string().nullable(), // assuming text can be null
+  isActive: z.boolean().default(true),
+  createdBy: z.number().nullable(), // assuming it can be null if not set
+  createdAt: z.string(), // or z.coerce.date() if parsed as Date
+  updatedAt: z.string(), // same here
+});
+
+export type GetDepreciationBookType = z.infer<typeof getDepreciationBookSchema>;
+
+export const createDepreciationBookSchema = z.object({
+  name: z.string().max(100),
+  description: z.string().nullable(), // assuming text can be null
+  isActive: z.boolean().default(true),
+  createdBy: z.number().nullable(), // assuming it can be null if not set
+  createdAt: z.string(), // or z.coerce.date() if parsed as Date
+  updatedAt: z.string(), // same here
+});
+export type CreateDepreciationBookType = z.infer<typeof createDepreciationBookSchema>;
 
 
 

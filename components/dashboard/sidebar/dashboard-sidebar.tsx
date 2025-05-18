@@ -94,6 +94,10 @@ export function DashboardSidebar() {
           href: '/dashboard/setup/suppliers',
         },
         {
+          title: 'Depreciation Book',
+          href: '/dashboard/setup/depreciation-book',
+        },
+        {
           title: 'Categories',
           href: '/dashboard/setup/categories',
         },
