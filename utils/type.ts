@@ -199,6 +199,39 @@ export const getAsset = z.object({
 });
 export type GetAssetType = z.infer<typeof getAsset>;
 
+export const assetDetailsSchema = z.object({
+  id: z.number(),
+  assetCode: z.string(),
+  assetName: z.string(),
+  startDate: z.string(), // use z.coerce.date() if it's a date string you want to convert
+  purDate: z.string(),
+  categoryName: z.string(),
+  user: z.string(), // assuming user is a username or similar string; change if it's an object
+  locationName: z.string(),
+  sectionName: z.string(),
+  departmentName: z.string(),
+  assetValue: z.number(),
+  currentValue: z.number(),
+  depRate: z.number(),
+  salvageValue: z.number(),
+  status: z.string(),
+  soldDate: z.string().nullable(), // assuming soldDate can be null
+  soldValue: z.string().nullable(), // likely a typo, same as soldDate — adjust as needed
+  manufacure: z.string(),
+  mfgYear: z.number(),
+  country: z.string(),
+  model: z.string(),
+  slNo: z.string(),
+  costCenter: z.string(),
+  assetGlCode: z.string(),
+  createdBy: z.string(),
+  createdAt: z.string(),
+  assetDepStartValue: z.number(),
+});
+
+export type GetAssetDetailsType = z.infer<typeof assetDetailsSchema>;
+
+
 //supplier
 export const getSupplierSchema = z.object({
   id: z.number().int().optional(), // auto-increment primary key
@@ -255,7 +288,6 @@ export const getLocationSchema = z.object({
 export type GetLocationType = z.infer<typeof getLocationSchema>;
 
 export const createLocationSchema = z.object({
-  id: z.number().int().optional(), // auto-increment primary key
   name: z.string().max(255),
 });
 export type CreateLocationType = z.infer<typeof createLocationSchema>;
@@ -268,10 +300,32 @@ export const getSiteSchema = z.object({
 export type GetSiteType = z.infer<typeof getSiteSchema>;
 
 export const createSiteSchema = z.object({
-  id: z.number().int().optional(), // auto-increment primary key
   name: z.string().max(255),
 });
 export type CreateSiteType = z.infer<typeof createSiteSchema>;
+
+//depreciation book
+export const getDepreciationBookSchema = z.object({
+  id: z.number(),
+  name: z.string().max(100),
+  description: z.string().nullable(), // assuming text can be null
+  isActive: z.boolean().default(true),
+  createdBy: z.number().nullable(), // assuming it can be null if not set
+  createdAt: z.string(), // or z.coerce.date() if parsed as Date
+  updatedAt: z.string(), // same here
+});
+
+export type GetDepreciationBookType = z.infer<typeof getDepreciationBookSchema>;
+
+export const createDepreciationBookSchema = z.object({
+  name: z.string().max(100),
+  description: z.string().nullable(), // assuming text can be null
+  isActive: z.boolean().default(true),
+  createdBy: z.number().nullable(), // assuming it can be null if not set
+  createdAt: z.string(), // or z.coerce.date() if parsed as Date
+  updatedAt: z.string(), // same here
+});
+export type CreateDepreciationBookType = z.infer<typeof createDepreciationBookSchema>;
 
 
 

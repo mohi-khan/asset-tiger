@@ -6,14 +6,17 @@ import {
   CreateCompanyType,
   CreateCostCenterType,
   CreateDepartmentType,
+  CreateDepreciationBookType,
   CreateLocationType,
   CreateSiteType,
   CreateSupplierType,
+  GetAssetDetailsType,
   GetAssetType,
   GetCategoryType,
   GetCompanyType,
   GetCostCenterType,
   GetDepartmentType,
+  GetDepreciationBookType,
   GetLocationType,
   GetSiteType,
   GetSupplierType,
@@ -24,7 +27,7 @@ export async function getAllDepartments(token: string) {
     url: 'api/department/getall',
     method: 'GET',
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -39,7 +42,7 @@ export async function createDepartment(
     method: 'POST',
     body: data,
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -50,7 +53,7 @@ export async function getAllCompany(token: string) {
     url: 'api/company/get-all-companies',
     method: 'GET',
     headers: {
-      Authentication: `${token}`,
+      Authentication: token,
       'Content-Type': 'application/json',
     },
   })
@@ -65,7 +68,7 @@ export async function createCostCenter(
     method: 'POST',
     body: data,
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -76,7 +79,7 @@ export async function getAllCostCenters(token: string) {
     url: 'api/costCenter/getall',
     method: 'GET',
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -91,7 +94,7 @@ export async function createCompany(
     method: 'POST',
     body: data,
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -102,7 +105,7 @@ export async function getAllCompanies(token: string) {
     url: 'api/company/get-all-companies',
     method: 'GET',
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -117,7 +120,7 @@ export async function createCategory(
     method: 'POST',
     body: data,
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -128,7 +131,7 @@ export async function getAllCategories(token: string) {
     url: 'api/category/getall',
     method: 'GET',
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -143,7 +146,7 @@ export async function createAsset(
     method: 'POST',
     body: data,
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -154,7 +157,18 @@ export async function getAllAssets(token: string) {
     url: 'api/asset/getall',
     method: 'GET',
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllAssetDetails(token: string, id: number) {
+  return fetchApi<GetAssetDetailsType[]>({
+    url: `api/asset/getDetails/${id}`,
+    method: 'GET',
+    headers: {
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -169,7 +183,7 @@ export async function createSupplier(
     method: 'POST',
     body: data,
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -180,7 +194,7 @@ export async function getAllSuppliers(token: string) {
     url: 'api/supplier/getall',
     method: 'GET',
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -195,7 +209,7 @@ export async function createLocation(
     method: 'POST',
     body: data,
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -206,7 +220,7 @@ export async function getAllLocations(token: string) {
     url: 'api/location/getall',
     method: 'GET',
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -221,7 +235,7 @@ export async function createSite(
     method: 'POST',
     body: data,
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })
@@ -232,7 +246,33 @@ export async function getAllSites(token: string) {
     url: 'api/section/getall',
     method: 'GET',
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createDepreciationBook(
+  data: CreateDepreciationBookType,
+  token: string
+) {
+  return fetchApi<CreateDepreciationBookType>({
+    url: 'api/depBook/create',
+    method: 'POST',
+    body: data,
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllDepreciationBook(token: string) {
+  return fetchApi<GetDepreciationBookType[]>({
+    url: 'api/depBook/getall',
+    method: 'GET',
+    headers: {
+      Authorization: token,
       'Content-Type': 'application/json',
     },
   })

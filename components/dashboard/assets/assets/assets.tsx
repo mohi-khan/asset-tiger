@@ -1,10 +1,7 @@
 'use client'
 
-import type React from 'react'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -13,94 +10,44 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Popup } from '@/utils/popup'
 import { Eye } from 'lucide-react'
 import Link from 'next/link'
+import { useToast } from '@/hooks/use-toast'
+import { GetAssetType } from '@/utils/type'
+import { getAllAssets } from '@/utils/api'
+import { tokenAtom, useInitializeUser } from '@/utils/user'
+import { useAtom } from 'jotai'
 
 const Assets = () => {
-  // State for popup visibility
-  const [isPopupOpen, setIsPopupOpen] = useState(false)
+  useInitializeUser()
+  const [token] = useAtom(tokenAtom)
 
-  // State for form data
-  const [formData, setFormData] = useState({
-    description: '',
-    assetTagId: '',
-    company: '',
-    purchaseDate: '',
-    cost: '',
-    purchaseFrom: '',
-    brand: '',
-    model: '',
-    serialNo: '',
-    assetName: '',
-    attachment: null as File | null,
-  })
+  // State for assets data
+  const [assets, setAssets] = useState<GetAssetType[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
 
-  // State for table data
-  const [assets, setAssets] = useState([
-    // Sample data, you can start with an empty array if preferred
-    {
-      id: 1,
-      description: 'Office Laptop',
-      assetTagId: 'AST001',
-      company: 'Acme Inc',
-      purchaseDate: '2023-05-15',
-      cost: '1200.00',
-      purchaseFrom: 'TechStore',
-      brand: 'Dell',
-      model: 'XPS 13',
-      serialNo: 'DL12345678',
-      assetName: 'Developer Laptop',
-    },
-  ])
-
-  // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, files } = e.target
-
-    if (type === 'file' && files) {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: files[0],
-      }))
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }))
+  // Fetch assets on component mount
+  const fetchAssets = useCallback(async () => {
+    try {
+      const data = await getAllAssets(token)
+      console.log("🚀 ~ fetchAssets ~ data:", data)
+      setAssets(data.data || [])
+    } catch (error) {
+      console.error('Failed to fetch assets:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load assets. Please try again later.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsLoading(false)
     }
-  }
+  }, [toast, token])
 
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    // Add new asset to the table
-    setAssets((prev) => [
-      ...prev,
-      {
-        id: Date.now(), // Simple unique ID
-        ...formData,
-        attachment: formData.attachment ? formData.attachment.name : null,
-      },
-    ])
-
-    // Reset form and close popup
-    setFormData({
-      description: '',
-      assetTagId: '',
-      company: '',
-      purchaseDate: '',
-      cost: '',
-      purchaseFrom: '',
-      brand: '',
-      model: '',
-      serialNo: '',
-      assetName: '',
-      attachment: null,
-    })
-    setIsPopupOpen(false)
-  }
+  useEffect(() => {
+    fetchAssets()
+  }, [fetchAssets])
 
   return (
     <div className="p-6 space-y-6">
@@ -127,199 +74,70 @@ const Assets = () => {
           </div>
           <h2 className="text-lg font-semibold">Asset Details</h2>
         </div>
-        <Button
-          className="bg-yellow-400 hover:bg-yellow-500 text-black"
-          onClick={() => setIsPopupOpen(true)}
-        >
-          Add
-        </Button>
+        <Link href={'/dashboard/assets/add-assets'}>
+          <Button className="bg-yellow-400 hover:bg-yellow-500 text-black">
+            Add
+          </Button>
+        </Link>
       </div>
 
-      {/* Table for asset data */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader className="bg-amber-100">
-            <TableRow>
-              <TableHead>Asset Name</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Asset Tag ID</TableHead>
-              <TableHead>Company</TableHead>
-              <TableHead>Purchase Date</TableHead>
-              <TableHead>Cost</TableHead>
-              <TableHead>Brand</TableHead>
-              <TableHead>Model</TableHead>
-              <TableHead>Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {assets.map((asset) => (
-              <TableRow key={asset.id}>
-                <TableCell>{asset.assetName}</TableCell>
-                <TableCell>{asset.description}</TableCell>
-                <TableCell>{asset.assetTagId}</TableCell>
-                <TableCell>{asset.company}</TableCell>
-                <TableCell>{asset.purchaseDate}</TableCell>
-                <TableCell>{asset.cost}</TableCell>
-                <TableCell>{asset.brand}</TableCell>
-                <TableCell>{asset.model}</TableCell>
-                <TableCell>
-                  <Link href={'/dashboard/assets/assets/asset-details/1'}><Eye /></Link>
-                </TableCell>
+      {/* Loading state */}
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+        </div>
+      ) : (
+        /* Table for asset data */
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader className="bg-amber-100">
+              <TableRow>
+                <TableHead>Asset Code</TableHead>
+                <TableHead>Asset Name</TableHead>
+                <TableHead>Purchase Date</TableHead>
+                <TableHead>Asset Value</TableHead>
+                <TableHead>Current Value</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Model</TableHead>
+                <TableHead>Serial No.</TableHead>
+                <TableHead>Action</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Popup with form */}
-      <Popup
-        isOpen={isPopupOpen}
-        onClose={() => setIsPopupOpen(false)}
-        title="Add Asset"
-        size="max-w-4xl"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="grid gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="assetName">Asset Name</Label>
-              <Input
-                id="assetName"
-                name="assetName"
-                value={formData.assetName}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="assetTagId">Asset Tag ID</Label>
-              <Input
-                id="assetTagId"
-                name="assetTagId"
-                value={formData.assetTagId}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="company">Company</Label>
-              <Input
-                id="company"
-                name="company"
-                value={formData.company}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="purchaseDate">Purchase Date</Label>
-                <Input
-                  id="purchaseDate"
-                  name="purchaseDate"
-                  type="date"
-                  value={formData.purchaseDate}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cost">Cost</Label>
-                <Input
-                  id="cost"
-                  name="cost"
-                  type="number"
-                  step="0.01"
-                  value={formData.cost}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="purchaseFrom">Purchase From</Label>
-              <Input
-                id="purchaseFrom"
-                name="purchaseFrom"
-                value={formData.purchaseFrom}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="brand">Brand</Label>
-                <Input
-                  id="brand"
-                  name="brand"
-                  value={formData.brand}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="model">Model</Label>
-                <Input
-                  id="model"
-                  name="model"
-                  value={formData.model}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="serialNo">Serial No</Label>
-              <Input
-                id="serialNo"
-                name="serialNo"
-                value={formData.serialNo}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="attachment">Attachment</Label>
-              <Input
-                id="attachment"
-                name="attachment"
-                type="file"
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsPopupOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit">Save</Button>
-          </div>
-        </form>
-      </Popup>
+            </TableHeader>
+            <TableBody>
+              {assets.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={9}
+                    className="text-center py-6 text-gray-500"
+                  >
+                    No assets found. Add your first asset to get started.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                assets.map((asset) => (
+                  <TableRow key={asset.id}>
+                    <TableCell>{asset.assetCode}</TableCell>
+                    <TableCell>{asset.assetName}</TableCell>
+                    <TableCell>{asset.purDate}</TableCell>
+                    <TableCell>{asset.assetValue}</TableCell>
+                    <TableCell>{asset.currentValue || 'N/A'}</TableCell>
+                    <TableCell>{asset.status || 'Active'}</TableCell>
+                    <TableCell>{asset.model || 'N/A'}</TableCell>
+                    <TableCell>{asset.slNo || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/dashboard/assets/assets/asset-details/${asset.id}`}
+                      >
+                        <Eye className="h-5 w-5 cursor-pointer text-amber-600 hover:text-amber-800" />
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   )
 }

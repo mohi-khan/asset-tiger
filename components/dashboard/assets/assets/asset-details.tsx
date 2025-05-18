@@ -1,8 +1,9 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { format } from 'date-fns';
+import { useCallback, useEffect, useState } from "react"
+import { useParams } from "next/navigation"
 import Image from "next/image"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -13,156 +14,220 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronDown, FileText, Pencil, Plus, Printer } from "lucide-react"
+import { tokenAtom, useInitializeUser } from "@/utils/user"
+import { useAtom } from "jotai"
+import { useToast } from "@/hooks/use-toast"
+import { getAllAssetDetails } from "@/utils/api"
+import { GetAssetDetailsType } from "@/utils/type"
 
-// Dummy data for the asset
-const assetData = {
-  name: "Chair",
-  tagId: "CH1038",
-  purchaseDate: "03/28/2025",
-  cost: "₹120,000.00",
-  brand: "Toshiba",
-  model: "MEO39844",
-  site: "Headquarters",
-  location: "Floor 3, Room 302",
-  category: "Equipment",
-  department: "Administration",
-  assignedTo: "John Smith",
-  status: "Available",
-  serialNo: "384848485858",
-  purchasedFrom: "Business Test Limited",
-  assetName: "Executive Chair",
-  depreciableCost: "₹110,000.00",
-  salvageValue: "₹10,000.00",
-  dateAcquired: "03/28/2025",
-  assetLife: "120",
-  deprMethod: "Declining Balance",
-  dateCreated: "03/28/2025 06:08 AM",
-  createdBy: "Mohiuddin Khan",
+// Types for additional data
+type EventData = {
+  id: number
+  date: string
+  event: string
+  description: string
+  performedBy: string
 }
 
-// Dummy data for events
-const eventsData = [
-  {
-    id: 1,
-    date: "04/02/2025",
-    event: "Maintenance Check",
-    description: "Regular maintenance check performed",
-    performedBy: "Tech Support",
-  },
-  {
-    id: 2,
-    date: "03/30/2025",
-    event: "Assigned",
-    description: "Asset assigned to John Smith",
-    performedBy: "HR Department",
-  },
-  {
-    id: 3,
-    date: "03/28/2025",
-    event: "Purchased",
-    description: "Asset purchased and added to inventory",
-    performedBy: "Procurement",
-  },
-]
+type PhotoData = {
+  id: number
+  url: string
+  caption: string
+}
 
-// Dummy data for photos
-const photosData = [
-  { id: 1, url: "/placeholder.svg?height=200&width=200", caption: "Front view" },
-  { id: 2, url: "/placeholder.svg?height=200&width=200", caption: "Side view" },
-  { id: 3, url: "/placeholder.svg?height=200&width=200", caption: "Back view" },
-]
+type DocData = {
+  id: number
+  fileName: string
+  description: string
+  fileType: string
+  uploadDate: string
+  uploadedBy: string
+}
 
-// Dummy data for documents
-const docsData = [
-  {
-    id: 1,
-    fileName: "Invoice.pdf",
-    description: "Purchase invoice",
-    fileType: "PDF",
-    uploadDate: "03/28/2025",
-    uploadedBy: "Finance Dept",
-  },
-  {
-    id: 2,
-    fileName: "Warranty.pdf",
-    description: "Warranty certificate",
-    fileType: "PDF",
-    uploadDate: "03/28/2025",
-    uploadedBy: "Admin",
-  },
-  {
-    id: 3,
-    fileName: "Manual.pdf",
-    description: "User manual",
-    fileType: "PDF",
-    uploadDate: "03/29/2025",
-    uploadedBy: "Tech Support",
-  },
-]
+type DepreciationData = {
+  id: number
+  period: string
+  depreciationAmount: string
+  accumulatedDepreciation: string
+  bookValue: string
+}
 
-// Dummy data for depreciation
-const depreciationData = [
-  {
-    id: 1,
-    period: "2025-2026",
-    depreciationAmount: "₹24,000.00",
-    accumulatedDepreciation: "₹24,000.00",
-    bookValue: "₹96,000.00",
-  },
-  {
-    id: 2,
-    period: "2026-2027",
-    depreciationAmount: "₹19,200.00",
-    accumulatedDepreciation: "₹43,200.00",
-    bookValue: "₹76,800.00",
-  },
-  {
-    id: 3,
-    period: "2027-2028",
-    depreciationAmount: "₹15,360.00",
-    accumulatedDepreciation: "₹58,560.00",
-    bookValue: "₹61,440.00",
-  },
-]
+type WarrantyData = {
+  id: number
+  type: string
+  startDate: string
+  endDate: string
+  provider: string
+  description: string
+}
 
-// Dummy data for warranty
-const warrantyData = [
-  {
-    id: 1,
-    type: "Standard Warranty",
-    startDate: "03/28/2025",
-    endDate: "03/28/2027",
-    provider: "Toshiba",
-    description: "2 year standard warranty",
-  },
-]
-
-// Dummy data for maintenance
-const maintenanceData = [
-  {
-    id: 1,
-    date: "06/28/2025",
-    type: "Preventive",
-    cost: "₹2,000.00",
-    description: "Regular maintenance check",
-    performedBy: "Tech Support",
-  },
-  {
-    id: 2,
-    date: "09/28/2025",
-    type: "Preventive",
-    cost: "₹2,000.00",
-    description: "Regular maintenance check",
-    performedBy: "Tech Support",
-  },
-]
+type MaintenanceData = {
+  id: number
+  date: string
+  type: string
+  cost: string
+  description: string
+  performedBy: string
+}
 
 export default function AssetDetails() {
-  const [photos, setPhotos] = useState(photosData)
-  const [docs, setDocs] = useState(docsData)
-  const [depreciation, setDepreciation] = useState(depreciationData)
-  const [warranty, setWarranty] = useState(warrantyData)
-  const [maintenance, setMaintenance] = useState(maintenanceData)
+  useInitializeUser()
+  const [token] = useAtom(tokenAtom)
+  const params = useParams()
+  const { toast } = useToast()
+
+  const [assetData, setAssetData] = useState<GetAssetDetailsType | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Dummy data for additional tabs (would be replaced with API calls in a real implementation)
+  const [eventsData] = useState<EventData[]>([
+    {
+      id: 1,
+      date: "04/02/2025",
+      event: "Maintenance Check",
+      description: "Regular maintenance check performed",
+      performedBy: "Tech Support",
+    },
+    {
+      id: 2,
+      date: "03/30/2025",
+      event: "Assigned",
+      description: "Asset assigned to John Smith",
+      performedBy: "HR Department",
+    },
+    {
+      id: 3,
+      date: "03/28/2025",
+      event: "Purchased",
+      description: "Asset purchased and added to inventory",
+      performedBy: "Procurement",
+    },
+  ])
+
+  const [photos, setPhotos] = useState<PhotoData[]>([
+    { id: 1, url: "/placeholder.svg?height=200&width=200", caption: "Front view" },
+    { id: 2, url: "/placeholder.svg?height=200&width=200", caption: "Side view" },
+    { id: 3, url: "/placeholder.svg?height=200&width=200", caption: "Back view" },
+  ])
+
+  const [docs, setDocs] = useState<DocData[]>([
+    {
+      id: 1,
+      fileName: "Invoice.pdf",
+      description: "Purchase invoice",
+      fileType: "PDF",
+      uploadDate: "03/28/2025",
+      uploadedBy: "Finance Dept",
+    },
+    {
+      id: 2,
+      fileName: "Warranty.pdf",
+      description: "Warranty certificate",
+      fileType: "PDF",
+      uploadDate: "03/28/2025",
+      uploadedBy: "Admin",
+    },
+    {
+      id: 3,
+      fileName: "Manual.pdf",
+      description: "User manual",
+      fileType: "PDF",
+      uploadDate: "03/29/2025",
+      uploadedBy: "Tech Support",
+    },
+  ])
+
+  const [depreciation, setDepreciation] = useState<DepreciationData[]>([
+    {
+      id: 1,
+      period: "2025-2026",
+      depreciationAmount: "₹24,000.00",
+      accumulatedDepreciation: "₹24,000.00",
+      bookValue: "₹96,000.00",
+    },
+    {
+      id: 2,
+      period: "2026-2027",
+      depreciationAmount: "₹19,200.00",
+      accumulatedDepreciation: "₹43,200.00",
+      bookValue: "₹76,800.00",
+    },
+    {
+      id: 3,
+      period: "2027-2028",
+      depreciationAmount: "₹15,360.00",
+      accumulatedDepreciation: "₹58,560.00",
+      bookValue: "₹61,440.00",
+    },
+  ])
+
+  const [warranty, setWarranty] = useState<WarrantyData[]>([
+    {
+      id: 1,
+      type: "Standard Warranty",
+      startDate: "03/28/2025",
+      endDate: "03/28/2027",
+      provider: "Toshiba",
+      description: "2 year standard warranty",
+    },
+  ])
+
+  const [maintenance, setMaintenance] = useState<MaintenanceData[]>([
+    {
+      id: 1,
+      date: "06/28/2025",
+      type: "Preventive",
+      cost: "₹2,000.00",
+      description: "Regular maintenance check",
+      performedBy: "Tech Support",
+    },
+    {
+      id: 2,
+      date: "09/28/2025",
+      type: "Preventive",
+      cost: "₹2,000.00",
+      description: "Regular maintenance check",
+      performedBy: "Tech Support",
+    },
+  ])
+
+  // Fetch asset details
+  const fetchAssetDetails = useCallback(async () => {
+    if (!token) {
+      toast({
+        title: "Authentication Error",
+        description: "You need to be logged in to view asset details",
+        variant: "destructive",
+      })
+      setIsLoading(false)
+      setError("Authentication error")
+      return
+    }
+
+    try {
+      const assetId = Number(params.id)
+      if (isNaN(assetId)) {
+        throw new Error("Invalid asset ID")
+      }
+      const data = await getAllAssetDetails(token, assetId)
+      setAssetData(data.data || null)
+    } catch (err) {
+      console.error("Failed to fetch asset details:", err)
+      setError(err instanceof Error ? err.message : "Failed to load asset details")
+      toast({
+        title: "Error",
+        description: "Failed to load asset details. Please try again later.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [params.id, token, toast])
+
+  useEffect(() => {
+    fetchAssetDetails()
+  }, [fetchAssetDetails])
 
   // Add new photo
   const handleAddPhoto = (photoData: { url: string; caption: string }) => {
@@ -214,6 +279,27 @@ export default function AssetDetails() {
     setMaintenance([...maintenance, { id: maintenance.length + 1, ...maintenanceData }])
   }
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4 flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error || !assetData) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{error || "Asset not found"}</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto p-4">
       {/* Header */}
@@ -248,7 +334,7 @@ export default function AssetDetails() {
 
       {/* Asset Title and Actions */}
       <div className="flex justify-between items-center mb-4 border-b pb-4">
-        <h2 className="text-xl font-medium">{assetData.name}</h2>
+        <h2 className="text-xl font-medium">{assetData.assetName}</h2>
         <div className="flex gap-2">
           <Button variant="outline" className="flex items-center gap-1">
             <Printer className="h-4 w-4" />
@@ -278,49 +364,48 @@ export default function AssetDetails() {
         </div>
         <div className="col-span-2 grid grid-cols-2 gap-x-4 gap-y-2">
           <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Asset Tag ID</div>
-            <div className="p-1 border">{assetData.tagId}</div>
-          </div>
-          <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Site</div>
-            <div className="p-1 border">{assetData.site}</div>
-          </div>
-          <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Purchase Date</div>
-            <div className="p-1 border">{assetData.purchaseDate}</div>
+            <div className="p-1 text-sm border text-muted-foreground">Asset Code</div>
+            <div className="p-1 border">{assetData.assetCode}</div>
           </div>
           <div className="grid grid-cols-2">
             <div className="p-1 text-sm border text-muted-foreground">Location</div>
-            <div className="p-1 border">{assetData.location}</div>
+            <div className="p-1 border">{assetData.locationName ? assetData.locationName : "N/A"}</div>
           </div>
           <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Cost</div>
-            <div className="p-1 border">{assetData.cost}</div>
-          </div>
-          <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Category</div>
-            <div className="p-1 border">{assetData.category}</div>
-          </div>
-          <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Brand</div>
-            <div className="p-1 border">{assetData.brand}</div>
+            <div className="p-1 text-sm border text-muted-foreground">Purchase Date</div>
+            <div className="p-1 border">{format(new Date(assetData.purDate), 'dd/MM/yyyy')}</div>
           </div>
           <div className="grid grid-cols-2">
             <div className="p-1 text-sm border text-muted-foreground">Department</div>
-            <div className="p-1 border">{assetData.department}</div>
+            <div className="p-1 border">{assetData.departmentName ? assetData.departmentName : "N/A"}</div>
+          </div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">Asset Value</div>
+            <div className="p-1 border">{assetData.assetValue.toLocaleString()}</div>
+          </div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">Category</div>
+            <div className="p-1 border">Category {assetData.categoryName}</div>
           </div>
           <div className="grid grid-cols-2">
             <div className="p-1 text-sm border text-muted-foreground">Model</div>
-            <div className="p-1 border">{assetData.model}</div>
+            <div className="p-1 border">{assetData.model || "N/A"}</div>
           </div>
           <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Assigned to</div>
-            <div className="p-1 border">{assetData.assignedTo}</div>
+            <div className="p-1 text-sm border text-muted-foreground">User</div>
+            <div className="p-1 border">{assetData.user || "N/A"}</div>
           </div>
-          <div className="col-span-1"></div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">Current Value</div>
+            <div className="p-1 border">
+              {assetData.currentValue ? `${assetData.currentValue.toLocaleString()}` : "N/A"}
+            </div>
+          </div>
           <div className="grid grid-cols-2">
             <div className="text-sm border p-1 text-muted-foreground">Status</div>
-            <div className="text-green-600 p-1 border">{assetData.status}</div>
+            <div className={`p-1 border ${assetData.status === "Active" ? "text-green-600" : ""}`}>
+              {assetData.status || "Active"}
+            </div>
           </div>
         </div>
       </div>
@@ -381,11 +466,11 @@ export default function AssetDetails() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid grid-cols-2">
                 <div className="p-1 border text-sm text-muted-foreground">Serial No</div>
-                <div className="border p-1">{assetData.serialNo}</div>
+                <div className="border p-1">{assetData.slNo || "N/A"}</div>
               </div>
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Purchased from</div>
-                <div className="border p-1">{assetData.purchasedFrom}</div>
+                <div className="p-1 border text-sm text-muted-foreground">Supplier</div>
+                <div className="border p-1">{assetData.manufacure ? `Supplier ${assetData.manufacure}` : "N/A"}</div>
               </div>
             </div>
           </div>
@@ -397,6 +482,10 @@ export default function AssetDetails() {
                 <div className="p-1 border text-sm text-muted-foreground">Asset Name</div>
                 <div className="border p-1">{assetData.assetName}</div>
               </div>
+              <div className="grid grid-cols-2">
+                <div className="p-1 border text-sm text-muted-foreground">Asset Code</div>
+                <div className="border p-1">{assetData.assetCode}</div>
+              </div>
             </div>
           </div>
 
@@ -404,24 +493,28 @@ export default function AssetDetails() {
             <h4 className="text-primary font-medium mb-2">Depreciation</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Depreciable Cost</div>
-                <div className="border p-1">{assetData.depreciableCost}</div>
+                <div className="p-1 border text-sm text-muted-foreground">Asset Value</div>
+                <div className="border p-1">{assetData.assetValue.toLocaleString()}</div>
               </div>
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Asset Life (months)</div>
-                <div className="border p-1">{assetData.assetLife}</div>
+                <div className="p-1 border text-sm text-muted-foreground">Depreciation Rate</div>
+                <div className="border p-1">{assetData.depRate ? `${assetData.depRate}%` : "N/A"}</div>
               </div>
               <div className="grid grid-cols-2">
                 <div className="p-1 border text-sm text-muted-foreground">Salvage Value</div>
-                <div className="border p-1">{assetData.salvageValue}</div>
+                <div className="border p-1">
+                  {assetData.salvageValue ? `${assetData.salvageValue.toLocaleString()}` : "N/A"}
+                </div>
               </div>
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Depr. Method</div>
-                <div className="border p-1">{assetData.deprMethod}</div>
+                <div className="p-1 border text-sm text-muted-foreground">Current Value</div>
+                <div className="border p-1">
+                  {assetData.currentValue ? `${assetData.currentValue.toLocaleString()}` : "N/A"}
+                </div>
               </div>
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Date Acquired</div>
-                <div className="border p-1">{assetData.dateAcquired}</div>
+                <div className="p-1 border text-sm text-muted-foreground">Start Date</div>
+                <div className="p-1 border">{format(new Date(assetData.startDate), 'dd/MM/yyyy')}</div>
               </div>
             </div>
           </div>
@@ -430,12 +523,12 @@ export default function AssetDetails() {
             <h4 className="text-primary font-medium mb-2">Creation</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Date Created</div>
-                <div className="border p-1">{assetData.dateCreated}</div>
+                <div className="p-1 border text-sm text-muted-foreground">Created At</div>
+                <div className="p-1 border">{format(new Date(assetData.createdAt), 'dd/MM/yyyy')}</div>
               </div>
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Created by</div>
-                <div className="border p-1">{assetData.createdBy}</div>
+                <div className="p-1 border text-sm text-muted-foreground">Created By</div>
+                <div className="border p-1">{assetData.createdBy ? assetData.createdBy : "N/A"}</div>
               </div>
             </div>
           </div>
@@ -456,14 +549,22 @@ export default function AssetDetails() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {eventsData.map((event) => (
-                <TableRow key={event.id}>
-                  <TableCell>{event.date}</TableCell>
-                  <TableCell>{event.event}</TableCell>
-                  <TableCell>{event.description}</TableCell>
-                  <TableCell>{event.performedBy}</TableCell>
+              {eventsData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-6 text-gray-500">
+                    No events found for this asset.
+                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                eventsData.map((event) => (
+                  <TableRow key={event.id}>
+                    <TableCell>{event.date}</TableCell>
+                    <TableCell>{event.event}</TableCell>
+                    <TableCell>{event.description}</TableCell>
+                    <TableCell>{event.performedBy}</TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </TabsContent>
@@ -474,20 +575,32 @@ export default function AssetDetails() {
             <h3 className="text-lg font-medium">Photos</h3>
             <AddPhotoDialog onAddPhoto={handleAddPhoto} />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {photos.map((photo) => (
-              <div key={photo.id} className="border rounded-md overflow-hidden">
-                <Image
-                  src={photo.url || "/placeholder.svg"}
-                  alt={photo.caption}
-                  width={200}
-                  height={200}
-                  className="w-full h-40 object-cover"
-                />
-                <div className="p-2 text-sm">{photo.caption}</div>
-              </div>
-            ))}
-          </div>
+          {photos.length === 0 ? (
+            <div className="text-center py-12 border rounded-md">
+              <p className="text-gray-500">No photos available for this asset.</p>
+              <Button
+                className="mt-4"
+                onClick={() => document.querySelector<HTMLButtonElement>("[data-add-photo]")?.click()}
+              >
+                Add First Photo
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {photos.map((photo) => (
+                <div key={photo.id} className="border rounded-md overflow-hidden">
+                  <Image
+                    src={photo.url || "/placeholder.svg"}
+                    alt={photo.caption}
+                    width={200}
+                    height={200}
+                    className="w-full h-40 object-cover"
+                  />
+                  <div className="p-2 text-sm">{photo.caption}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         {/* Docs Tab Content */}
@@ -508,23 +621,31 @@ export default function AssetDetails() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {docs.map((doc) => (
-                <TableRow key={doc.id}>
-                  <TableCell className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    {doc.fileName}
-                  </TableCell>
-                  <TableCell>{doc.description}</TableCell>
-                  <TableCell>{doc.fileType}</TableCell>
-                  <TableCell>{doc.uploadDate}</TableCell>
-                  <TableCell>{doc.uploadedBy}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm">
-                      View
-                    </Button>
+              {docs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                    No documents found for this asset.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                docs.map((doc) => (
+                  <TableRow key={doc.id}>
+                    <TableCell className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      {doc.fileName}
+                    </TableCell>
+                    <TableCell>{doc.description}</TableCell>
+                    <TableCell>{doc.fileType}</TableCell>
+                    <TableCell>{doc.uploadDate}</TableCell>
+                    <TableCell>{doc.uploadedBy}</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm">
+                        View
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </TabsContent>
@@ -545,14 +666,22 @@ export default function AssetDetails() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {depreciation.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.period}</TableCell>
-                  <TableCell>{item.depreciationAmount}</TableCell>
-                  <TableCell>{item.accumulatedDepreciation}</TableCell>
-                  <TableCell>{item.bookValue}</TableCell>
+              {depreciation.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-6 text-gray-500">
+                    No depreciation data found for this asset.
+                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                depreciation.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.period}</TableCell>
+                    <TableCell>{item.depreciationAmount}</TableCell>
+                    <TableCell>{item.accumulatedDepreciation}</TableCell>
+                    <TableCell>{item.bookValue}</TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </TabsContent>
@@ -574,15 +703,23 @@ export default function AssetDetails() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {warranty.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.type}</TableCell>
-                  <TableCell>{item.startDate}</TableCell>
-                  <TableCell>{item.endDate}</TableCell>
-                  <TableCell>{item.provider}</TableCell>
-                  <TableCell>{item.description}</TableCell>
+              {warranty.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-6 text-gray-500">
+                    No warranty information found for this asset.
+                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                warranty.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.type}</TableCell>
+                    <TableCell>{item.startDate}</TableCell>
+                    <TableCell>{item.endDate}</TableCell>
+                    <TableCell>{item.provider}</TableCell>
+                    <TableCell>{item.description}</TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </TabsContent>
@@ -604,15 +741,23 @@ export default function AssetDetails() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {maintenance.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.date}</TableCell>
-                  <TableCell>{item.type}</TableCell>
-                  <TableCell>{item.cost}</TableCell>
-                  <TableCell>{item.description}</TableCell>
-                  <TableCell>{item.performedBy}</TableCell>
+              {maintenance.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-6 text-gray-500">
+                    No maintenance records found for this asset.
+                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                maintenance.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.date}</TableCell>
+                    <TableCell>{item.type}</TableCell>
+                    <TableCell>{item.cost}</TableCell>
+                    <TableCell>{item.description}</TableCell>
+                    <TableCell>{item.performedBy}</TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </TabsContent>
@@ -639,7 +784,7 @@ function AddPhotoDialog({ onAddPhoto }: { onAddPhoto: (data: any) => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-1">
+        <Button className="flex items-center gap-1" data-add-photo>
           <Plus className="h-4 w-4" />
           Add Photo
         </Button>
@@ -1063,4 +1208,3 @@ function AddMaintenanceDialog({ onAddMaintenance }: { onAddMaintenance: (data: a
     </Dialog>
   )
 }
-
