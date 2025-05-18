@@ -9,6 +9,7 @@ import {
   CreateLocationType,
   CreateSiteType,
   CreateSupplierType,
+  GetAssetDetailsType,
   GetAssetType,
   GetCategoryType,
   GetCompanyType,
@@ -152,6 +153,17 @@ export async function createAsset(
 export async function getAllAssets(token: string) {
   return fetchApi<GetAssetType[]>({
     url: 'api/asset/getall',
+    method: 'GET',
+    headers: {
+      Authorization: `${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllAssetDetails(token: string, id: number) {
+  return fetchApi<GetAssetDetailsType[]>({
+    url: `api/asset/getDetails/${id}`,
     method: 'GET',
     headers: {
       Authorization: `${token}`,

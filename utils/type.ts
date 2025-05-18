@@ -199,6 +199,39 @@ export const getAsset = z.object({
 });
 export type GetAssetType = z.infer<typeof getAsset>;
 
+export const assetDetailsSchema = z.object({
+  id: z.number(),
+  assetCode: z.string(),
+  assetName: z.string(),
+  startDate: z.string(), // use z.coerce.date() if it's a date string you want to convert
+  purDate: z.string(),
+  categoryName: z.string(),
+  user: z.string(), // assuming user is a username or similar string; change if it's an object
+  locationName: z.string(),
+  sectionName: z.string(),
+  departmentName: z.string(),
+  assetValue: z.number(),
+  currentValue: z.number(),
+  depRate: z.number(),
+  salvageValue: z.number(),
+  status: z.string(),
+  soldDate: z.string().nullable(), // assuming soldDate can be null
+  soldValue: z.string().nullable(), // likely a typo, same as soldDate — adjust as needed
+  manufacure: z.string(),
+  mfgYear: z.number(),
+  country: z.string(),
+  model: z.string(),
+  slNo: z.string(),
+  costCenter: z.string(),
+  assetGlCode: z.string(),
+  createdBy: z.string(),
+  createdAt: z.string(),
+  assetDepStartValue: z.number(),
+});
+
+export type GetAssetDetailsType = z.infer<typeof assetDetailsSchema>;
+
+
 //supplier
 export const getSupplierSchema = z.object({
   id: z.number().int().optional(), // auto-increment primary key
