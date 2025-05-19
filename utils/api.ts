@@ -7,6 +7,7 @@ import {
   CreateCostCenterType,
   CreateDepartmentType,
   CreateDepreciationBookType,
+  CreateDepreciationInfoType,
   CreateLocationType,
   CreateSiteType,
   CreateSupplierType,
@@ -271,6 +272,21 @@ export async function getAllDepreciationBook(token: string) {
   return fetchApi<GetDepreciationBookType[]>({
     url: 'api/depBook/getall',
     method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createDepreciationInfo(
+  data: CreateDepreciationInfoType,
+  token: string
+) {
+  return fetchApi<CreateDepreciationInfoType>({
+    url: 'api/depInfo/create',
+    method: 'POST',
+    body: data,
     headers: {
       Authorization: token,
       'Content-Type': 'application/json',

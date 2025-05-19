@@ -327,6 +327,50 @@ export const createDepreciationBookSchema = z.object({
 });
 export type CreateDepreciationBookType = z.infer<typeof createDepreciationBookSchema>;
 
+//depreciation info
+export const createDepreciationInfoSchema = z.object({
+  assetId: z.number().int(),
+  bookId: z.number().int(),
+  depreciationMethod: z.enum(['Straight Line', 'Declining Balance']),
+  depreciationRate: z.number().optional(), // optional if nullable in DB
+  usefulLifeMonths: z.number().int().optional(), // optional if nullable in DB
+  residualValue: z.number().optional(), // optional if nullable in DB
+  effectiveDate: z.string().or(z.date()), // can accept either string or Date object
+  startingValue: z.number(),
+  createdBy: z.number().int().optional(), // optional if set by backend
+});
+
+export type CreateDepreciationInfoType = z.infer<typeof createDepreciationInfoSchema>;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
