@@ -59,6 +59,10 @@ export function DashboardSidebar() {
           title: 'Dispose',
           href: '/dashboard/assets/dispose',
         },
+        {
+          title: 'Asset Depreciation',
+          href: '/dashboard/assets/asset-depreciation',
+        },
       ],
     },
     {
