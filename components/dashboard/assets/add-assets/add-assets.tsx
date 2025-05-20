@@ -10,6 +10,11 @@ import { Plus } from 'lucide-react'
 import { Popup } from '@/utils/popup'
 import {
   CreateAssetType,
+  CreateCategoryType,
+  CreateCostCenterType,
+  CreateDepartmentType,
+  CreateLocationType,
+  CreateSupplierType,
   GetCategoryType,
   GetCostCenterType,
   GetDepartmentType,
@@ -21,6 +26,12 @@ import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
 import {
   createAsset,
+  createCategory,
+  createCostCenter,
+  createDepartment,
+  createLocation,
+  createSite,
+  createSupplier,
   getAllCategories,
   getAllCompanies,
   getAllCostCenters,
@@ -37,7 +48,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { format } from 'date-fns'
+import { format, set } from 'date-fns'
+import { Checkbox } from '@/components/ui/checkbox'
+import { toast } from '@/hooks/use-toast'
 
 const countries = [
   { id: 1, name: 'Bangladesh' },
@@ -81,12 +94,12 @@ const AddAssets = () => {
   })
 
   // Popup states
-  const [siteLocationPopupOpen, setSiteLocationPopupOpen] = useState(false)
+  const [locationPopupOpen, setLocationPopupOpen] = useState(false)
+  const [sitePopupOpen, setSitePopupOpen] = useState(false)
   const [departmentPopupOpen, setDepartmentPopupOpen] = useState(false)
   const [costCenterPopupOpen, setCostCenterPopupOpen] = useState(false)
-  const [activePopupType, setActivePopupType] = useState<
-    'site' | 'location' | null
-  >(null)
+  const [categoryPopupOpen, setCategoryPopupOpen] = useState(false)
+  const [supplierPopupOpen, setSupplierPopupOpen] = useState(false)
 
   // API data states
   const [departments, setDepartments] = useState<GetDepartmentType[]>([])
@@ -98,66 +111,110 @@ const AddAssets = () => {
   const [loading, setLoading] = useState(true)
 
   // Form data for each popup
-  const [siteLocationFormData, setSiteLocationFormData] = useState({
-    site: '',
-    location: '',
+  const [locationFormData, setLocationFormData] = useState<CreateLocationType>({
+    name: '',
   })
 
-  const [departmentFormData, setDepartmentFormData] = useState({
-    departmentName: '',
-    departmentCode: '',
-    location: '',
-    manager: '',
-    employeeCount: '',
+  // Site form state
+  const [siteFormData, setSiteFormData] = useState({
+    name: '',
   })
 
-  const [costCenterFormData, setCostCenterFormData] = useState({
-    costCenterName: '',
-    costCenterCode: '',
-    description: '',
-    manager: '',
-    budget: '',
+  const [departmentFormData, setDepartmentFormData] =
+    useState<CreateDepartmentType>({
+      departmentName: '',
+      budget: undefined,
+      companyCode: undefined,
+      isActive: true,
+      startDate: new Date(),
+      endDate: null,
+      createdBy: userData?.userId || 0,
+      actual: undefined,
+    })
+
+  const [costCenterFormData, setCostCenterFormData] =
+    useState<CreateCostCenterType>({
+      costCenterName: '',
+      costCenterDescription: '',
+      budget: 0,
+      actual: 0,
+      companyCode: null,
+      isActive: true,
+      isVehicle: false,
+      startDate: null,
+      endDate: null,
+      createdBy: userData?.userId || 1, // Default value, should be replaced with actual user ID
+      createdAt: new Date(),
+      updatedBy: null,
+      updatedAt: null,
+    })
+
+  const [supplierFormData, setSupplierFormData] = useState<CreateSupplierType>({
+    name: '',
+    displayName: '',
+    companyName: '',
+    type: 'Supplier',
+    email: '',
+    phone: '',
+    mobile: '',
+    website: '',
+    isCompany: true,
+    vat: '',
+    street: '',
+    city: '',
+    zip: '',
+    active: true,
+    comment: '',
+    createdBy: userData?.userId || 0,
+    createdAt: new Date(),
+  })
+
+  const [categoryFormData, setCategoryFormData] = useState<CreateCategoryType>({
+    category_name: '',
+    depreciation_rate: null,
+    account_code: '',
+    depreciation_account_code: '',
+    parent_cat_code: null,
+    created_by: userData?.userId || 0,
   })
 
   // Fetch data from APIs
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!token) return
+  const fetchData = useCallback(async () => {
+    if (!token) return
 
-      try {
-        setLoading(true)
-        const [
-          departmentsData,
-          categoriesData,
-          locationsData,
-          sitesData,
-          suppliersData,
-          costCentersData,
-        ] = await Promise.all([
-          getAllDepartments(token),
-          getAllCategories(token),
-          getAllLocations(token),
-          getAllSites(token),
-          getAllSuppliers(token),
-          getAllCostCenters(token),
-        ])
-        setDepartments(departmentsData.data || [])
-        setCategories(categoriesData.data || [])
-        setLocations(locationsData.data || [])
-        setSites(sitesData.data || [])
-        setSuppliers(suppliersData.data || [])
-        setCostCenters(costCentersData.data || [])
-      } catch (error) {
-        console.error('Error fetching data:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (token) {
-      fetchData()
+    try {
+      setLoading(true)
+      const [
+        departmentsData,
+        categoriesData,
+        locationsData,
+        sitesData,
+        suppliersData,
+        costCentersData,
+      ] = await Promise.all([
+        getAllDepartments(token),
+        getAllCategories(token),
+        getAllLocations(token),
+        getAllSites(token),
+        getAllSuppliers(token),
+        getAllCostCenters(token),
+      ])
+      setDepartments(departmentsData.data || [])
+      setCategories(categoriesData.data || [])
+      setLocations(locationsData.data || [])
+      setSites(sitesData.data || [])
+      setSuppliers(suppliersData.data || [])
+      setCostCenters(costCentersData.data || [])
+    } catch (error) {
+      console.error('Error fetching data:', error)
+    } finally {
+      setLoading(false)
     }
   }, [token])
+
+  useEffect(() => {
+    fetchData()
+  }, [token, fetchData])
 
   // Handle main form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,36 +233,95 @@ const AddAssets = () => {
     }
   }
 
-  // Handle site/location form input changes
-  const handleSiteLocationInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { name, value } = e.target
-    setSiteLocationFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-  }
-
   // Handle department form input changes
   const handleDepartmentInputChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const { name, value } = e.target
-    setDepartmentFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+    const { name, value, type } = e.target
+
+    if (type === 'number') {
+      setDepartmentFormData((prev) => ({
+        ...prev,
+        [name]: value ? Number(value) : undefined,
+      }))
+    } else if (type === 'date') {
+      setDepartmentFormData((prev) => ({
+        ...prev,
+        [name]: value ? new Date(value) : null,
+      }))
+    } else {
+      setDepartmentFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }))
+    }
   }
 
   // Handle cost center form input changes
   const handleCostCenterInputChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
+    const { name, value, type } = e.target
+
+    // Convert numeric fields to numbers
+    if (name === 'budget' || name === 'actual' || name === 'companyCode') {
+      setCostCenterFormData((prev) => ({
+        ...prev,
+        [name]:
+          value === '' ? (name === 'companyCode' ? null : 0) : Number(value),
+      }))
+    } else if (type === 'checkbox') {
+      setCostCenterFormData((prev) => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked,
+      }))
+    } else if (type === 'date') {
+      setCostCenterFormData((prev) => ({
+        ...prev,
+        [name]: value ? new Date(value) : null,
+      }))
+    } else {
+      setCostCenterFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }))
+    }
+  }
+
+  const handleLocationInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const { name, value } = e.target
-    setCostCenterFormData((prev) => ({
+    setLocationFormData((prev) => ({
       ...prev,
       [name]: value,
+    }))
+  }
+
+  const handleSupplierInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value, type, checked } = e.target
+    setSupplierFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }))
+  }
+
+  const handleCategoryInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target
+    setCategoryFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
+  const handleParentCategoryChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      parent_cat_code: value === '' ? null : Number(value),
     }))
   }
 
@@ -234,34 +350,276 @@ const AddAssets = () => {
     [formData, userData, token]
   )
 
-  // Handle site/location form submission
-  const handleSiteLocationSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    console.log('Site/Location form submitted:', siteLocationFormData)
-    // Here you would typically update your site/location options
-    setSiteLocationPopupOpen(false)
+  const handleCheckboxChange = (checked: boolean) => {
+    setDepartmentFormData((prev) => ({
+      ...prev,
+      isActive: checked,
+    }))
+  }
+
+  const resetDepartmentForm = () => {
+    setDepartmentFormData({
+      departmentName: '',
+      budget: undefined,
+      companyCode: undefined,
+      isActive: true,
+      startDate: new Date(),
+      endDate: null,
+      createdBy: userData?.userId || 0,
+      actual: undefined,
+    })
+    setDepartmentPopupOpen(false)
+    fetchData()
+  }
+
+  const resetCostCenterForm = () => {
+    setCostCenterFormData({
+      costCenterName: '',
+      costCenterDescription: '',
+      budget: 0,
+      actual: 0,
+      companyCode: null,
+      isActive: true,
+      isVehicle: false,
+      startDate: null,
+      endDate: null,
+      createdBy: userData?.userId || 0,
+      createdAt: new Date(),
+      updatedBy: null,
+      updatedAt: null,
+    })
+    setCostCenterPopupOpen(false)
+    fetchData()
+  }
+
+  const resetLocationForm = () => {
+    setLocationFormData({
+      name: '',
+    })
+    setLocationPopupOpen(false)
+    fetchData()
+  }
+
+  const resetCateogryForm = () => {
+    setCategoryFormData({
+      category_name: '',
+      depreciation_rate: null,
+      account_code: '',
+      depreciation_account_code: '',
+      parent_cat_code: null,
+      created_by: userData?.userId || 0,
+    })
+    setCategoryPopupOpen(false)
+    fetchData()
   }
 
   // Handle department form submission
-  const handleDepartmentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleDepartmentSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault()
-    console.log('Department form submitted:', departmentFormData)
-    // Here you would typically update your department options
-    setDepartmentPopupOpen(false)
+
+    try {
+      // Convert Date objects to 'YYYY-MM-DD' strings
+      const payload = {
+        ...departmentFormData,
+        startDate: departmentFormData.startDate
+          ? new Date(departmentFormData.startDate)
+          : null,
+        endDate: departmentFormData.endDate
+          ? new Date(departmentFormData.endDate)
+          : null,
+      }
+
+      await createDepartment(payload, token)
+
+      // Reset form and close popup
+      resetDepartmentForm()
+    } catch (error) {
+      console.error('Error creating department:', error)
+    }
   }
 
   // Handle cost center form submission
-  const handleCostCenterSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCostCenterSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault()
-    console.log('Cost Center form submitted:', costCenterFormData)
-    // Here you would typically update your cost center options
-    setCostCenterPopupOpen(false)
+    try {
+      // Call API to create cost center
+      await createCostCenter(costCenterFormData, token)
+
+      // Reset form and close popup
+      setCostCenterFormData({
+        costCenterName: '',
+        costCenterDescription: '',
+        budget: 0,
+        actual: 0,
+        companyCode: null,
+        isActive: true,
+        isVehicle: false,
+        startDate: null,
+        endDate: null,
+        createdBy: userData?.userId || 0,
+        createdAt: new Date(),
+        updatedBy: null,
+        updatedAt: null,
+      })
+
+      setCostCenterPopupOpen(false)
+      resetCostCenterForm()
+      toast({
+        title: 'Success',
+        description: 'Cost center created successfully',
+      })
+    } catch (error) {
+      console.error('Error creating cost center:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to create cost center. Please try again.',
+        variant: 'destructive',
+      })
+    }
   }
 
-  // Open the appropriate popup based on button clicked
-  const openSiteLocationPopup = (type: 'site' | 'location') => {
-    setActivePopupType(type)
-    setSiteLocationPopupOpen(true)
+  // Handle location form submission
+  const handleLocationSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    console.log('site/location form submitted:', locationFormData)
+    // Here you would typically update your department options
+    try {
+      await createLocation(locationFormData, token)
+      setLocationFormData({
+        name: '',
+      })
+      setLocationPopupOpen(false)
+      toast({
+        title: 'Success',
+        description: 'Location created successfully',
+      })
+      resetLocationForm()
+    } catch (error) {
+      console.log(error)
+    }
+    setDepartmentPopupOpen(false)
+  }
+
+  // Reset site form
+  const resetSiteForm = () => {
+    setSiteFormData({ name: '' })
+  }
+
+  // Handle site input change
+  const handleSiteInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSiteFormData({ ...siteFormData, [e.target.name]: e.target.value })
+  }
+
+  // Handle site form submission
+  const handleSiteSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    console.log('site form submitted:', siteFormData)
+    try {
+      await createSite(siteFormData, token)
+      setSiteFormData({ name: '' })
+      setSitePopupOpen(false)
+      toast({
+        title: 'Success',
+        description: 'Site created successfully',
+      })
+      resetSiteForm()
+    } catch (error) {
+      console.error('Error creating site:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to create site. Please try again.',
+        variant: 'destructive',
+      })
+    }
+  }
+  // Handle category form submission
+  const handleCategorySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    try {
+      await createCategory(categoryFormData, token)
+      setCategoryFormData({
+        category_name: '',
+        depreciation_rate: null,
+        account_code: '',
+        depreciation_account_code: '',
+        parent_cat_code: null,
+        created_by: userData?.userId || 0,
+      })
+      setCategoryPopupOpen(false)
+      toast({
+        title: 'Success',
+        description: 'Category created successfully',
+      })
+      resetCateogryForm()
+    } catch (error) {
+      console.error('Error creating category:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to create category. Please try again.',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const resetSupplierForm = () => {
+    setSupplierFormData({
+      name: '',
+      displayName: '',
+      companyName: '',
+      type: 'Supplier',
+      email: '',
+      phone: '',
+      mobile: '',
+      website: '',
+      isCompany: true,
+      vat: '',
+      street: '',
+      city: '',
+      zip: '',
+      active: true,
+      comment: '',
+      createdBy: userData?.userId || 0,
+      createdAt: new Date(),
+    })
+    setSupplierPopupOpen(false)
+    fetchData()
+  }
+
+  const handleSupplierSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
+
+      try {
+        const payload = {
+          ...supplierFormData,
+          createdBy: userData?.userId || 0,
+          createdAt: new Date(),
+        }
+
+        await createSupplier(payload, token)
+        // Reset form and close popup
+        resetSupplierForm()
+      } catch (error) {
+        console.error('Error creating supplier:', error)
+      }
+    },
+    [formData, userData, token]
+  )
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+
+    setSupplierFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
   }
 
   return (
@@ -370,8 +728,8 @@ const AddAssets = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  title="Add new site"
-                  onClick={() => openSiteLocationPopup('site')}
+                  title="Add new Supplier"
+                  onClick={() => setSupplierPopupOpen(true)}
                   type="button"
                 >
                   <Plus className="h-4 w-4" />
@@ -410,7 +768,7 @@ const AddAssets = () => {
                   variant="outline"
                   size="icon"
                   title="Add new site"
-                  onClick={() => openSiteLocationPopup('site')}
+                  onClick={() => setCategoryPopupOpen(true)}
                   type="button"
                 >
                   <Plus className="h-4 w-4" />
@@ -554,7 +912,7 @@ const AddAssets = () => {
                     variant="outline"
                     size="icon"
                     title="Add new site"
-                    onClick={() => openSiteLocationPopup('site')}
+                    onClick={() => setSitePopupOpen(true)}
                     type="button"
                   >
                     <Plus className="h-4 w-4" />
@@ -592,7 +950,7 @@ const AddAssets = () => {
                     variant="outline"
                     size="icon"
                     title="Add new location"
-                    onClick={() => openSiteLocationPopup('location')}
+                    onClick={() => setLocationPopupOpen(true)}
                     type="button"
                   >
                     <Plus className="h-4 w-4" />
@@ -654,7 +1012,7 @@ const AddAssets = () => {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a department" />
+                      <SelectValue placeholder="Select a cost center" />
                     </SelectTrigger>
                     <SelectContent>
                       {costCenters.map((costCenter) => (
@@ -695,7 +1053,7 @@ const AddAssets = () => {
                 <Input
                   id="assetValue"
                   type="number"
-                 name='assetValue'
+                  name="assetValue"
                   placeholder="0.00"
                   className="pl-9"
                   value={formData.assetValue || ''}
@@ -712,7 +1070,7 @@ const AddAssets = () => {
                 <Input
                   id="currentValue"
                   type="number"
-                  name='currentValue'
+                  name="currentValue"
                   placeholder="0.00"
                   className="pl-9"
                   value={formData.currentValue || ''}
@@ -737,7 +1095,7 @@ const AddAssets = () => {
                 <Input
                   id="soldValue"
                   type="number"
-                  name='soldValue'
+                  name="soldValue"
                   placeholder="0.00"
                   className="pl-9"
                   value={formData.soldValue || ''}
@@ -754,7 +1112,7 @@ const AddAssets = () => {
                 <Input
                   id="salvageValue"
                   type="number"
-                  name='salvageValue'
+                  name="salvageValue"
                   placeholder="0.00"
                   className="pl-9"
                   value={formData.salvageValue || ''}
@@ -771,7 +1129,7 @@ const AddAssets = () => {
                 <Input
                   id="depRate"
                   type="number"
-                  name='depRate'
+                  name="depRate"
                   placeholder="0.00"
                   className="pl-9"
                   value={formData.depRate || ''}
@@ -789,38 +1147,23 @@ const AddAssets = () => {
           </div>
         </div>
       </form>
-
-      {/* Site/Location Popup */}
+      {/* Site Popup */}
       <Popup
-        isOpen={siteLocationPopupOpen}
-        onClose={() => setSiteLocationPopupOpen(false)}
-        title={
-          activePopupType === 'site' ? 'Add Site' : 'Add Location and Site'
-        }
+        isOpen={sitePopupOpen}
+        onClose={() => setSitePopupOpen(false)}
+        title="Add Site"
         size="sm:max-w-md"
       >
-        <form onSubmit={handleSiteLocationSubmit} className="space-y-4 py-4">
+        <form onSubmit={handleSiteSubmit} className="space-y-4 py-4">
           <div className="grid gap-4">
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="siteName">Site Name</Label>
               <Input
-                id="location"
-                name="location"
-                value={siteLocationFormData.location}
-                onChange={handleSiteLocationInputChange}
-                placeholder="Enter location"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="site">Site</Label>
-              <Input
-                id="site"
-                name="site"
-                value={siteLocationFormData.site}
-                onChange={handleSiteLocationInputChange}
-                placeholder="Enter site"
+                id="name"
+                name="name"
+                value={siteFormData.name}
+                onChange={handleSiteInputChange}
+                placeholder="Enter Site Name"
                 required
               />
             </div>
@@ -830,7 +1173,7 @@ const AddAssets = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setSiteLocationPopupOpen(false)}
+              onClick={() => setSitePopupOpen(false)}
             >
               Cancel
             </Button>
@@ -838,71 +1181,153 @@ const AddAssets = () => {
           </div>
         </form>
       </Popup>
+      {/* Location Popup */}
+      <Popup
+        isOpen={locationPopupOpen}
+        onClose={() => setLocationPopupOpen(false)}
+        title="Add Location"
+        size="sm:max-w-md"
+      >
+        <form onSubmit={handleLocationSubmit} className="space-y-4 py-4">
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="name"
+                name="name"
+                value={locationFormData.name}
+                onChange={handleLocationInputChange}
+                placeholder="Enter Location"
+                required
+              />
+            </div>
+          </div>
 
+          <div className="flex justify-end gap-2 mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setLocationPopupOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">Save</Button>
+          </div>
+        </form>
+      </Popup>
       {/* Department Popup */}
       <Popup
         isOpen={departmentPopupOpen}
-        onClose={() => setDepartmentPopupOpen(false)}
+        onClose={resetDepartmentForm}
         title="Add Department"
         size="sm:max-w-md"
       >
         <form onSubmit={handleDepartmentSubmit} className="space-y-4 py-4">
           <div className="grid gap-4">
             <div className="space-y-2">
-              <Label htmlFor="departmentName">Department Name</Label>
+              <Label htmlFor="departmentName">Department Name*</Label>
               <Input
                 id="departmentName"
                 name="departmentName"
-                value={departmentFormData.departmentName}
+                value={departmentFormData.departmentName || ''}
                 onChange={handleDepartmentInputChange}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="departmentCode">Department Code</Label>
+              <Label htmlFor="budget">Budget</Label>
               <Input
-                id="departmentCode"
-                name="departmentCode"
-                value={departmentFormData.departmentCode}
+                id="budget"
+                name="budget"
+                type="number"
+                value={
+                  departmentFormData.budget !== undefined &&
+                  departmentFormData.budget !== null
+                    ? departmentFormData.budget
+                    : ''
+                }
                 onChange={handleDepartmentInputChange}
-                required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="companyCode">Company Code</Label>
               <Input
-                id="location"
-                name="location"
-                value={departmentFormData.location}
+                id="companyCode"
+                name="companyCode"
+                type="number"
+                value={
+                  departmentFormData.companyCode !== undefined &&
+                  departmentFormData.companyCode !== null
+                    ? departmentFormData.companyCode
+                    : ''
+                }
                 onChange={handleDepartmentInputChange}
-                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="actual">Actual</Label>
+              <Input
+                id="actual"
+                name="actual"
+                type="number"
+                value={
+                  departmentFormData.actual !== undefined &&
+                  departmentFormData.actual !== null
+                    ? departmentFormData.actual
+                    : ''
+                }
+                onChange={handleDepartmentInputChange}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="manager">Manager</Label>
+                <Label htmlFor="startDate">Start Date</Label>
                 <Input
-                  id="manager"
-                  name="manager"
-                  value={departmentFormData.manager}
+                  id="startDate"
+                  name="startDate"
+                  type="date"
+                  value={
+                    departmentFormData.startDate
+                      ? format(
+                          new Date(departmentFormData.startDate),
+                          'yyyy-MM-dd'
+                        )
+                      : ''
+                  }
                   onChange={handleDepartmentInputChange}
-                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="employeeCount">Employee Count</Label>
+                <Label htmlFor="endDate">End Date</Label>
                 <Input
-                  id="employeeCount"
-                  name="employeeCount"
-                  value={departmentFormData.employeeCount}
+                  id="endDate"
+                  name="endDate"
+                  type="date"
+                  value={
+                    departmentFormData.endDate
+                      ? format(
+                          new Date(departmentFormData.endDate),
+                          'yyyy-MM-dd'
+                        )
+                      : ''
+                  }
                   onChange={handleDepartmentInputChange}
-                  required
                 />
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isActive"
+                checked={departmentFormData.isActive ?? false}
+                onCheckedChange={handleCheckboxChange}
+              />
+              <Label htmlFor="isActive">Active</Label>
             </div>
           </div>
 
@@ -910,15 +1335,14 @@ const AddAssets = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setDepartmentPopupOpen(false)}
+              onClick={resetDepartmentForm}
             >
               Cancel
             </Button>
             <Button type="submit">Save</Button>
           </div>
         </form>
-      </Popup>
-
+      </Popup>{' '}
       {/* Cost Center Popup */}
       <Popup
         isOpen={costCenterPopupOpen}
@@ -940,49 +1364,110 @@ const AddAssets = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="costCenterCode">Cost Center Code</Label>
+              <Label htmlFor="costCenterDescription">Description</Label>
               <Input
-                id="costCenterCode"
-                name="costCenterCode"
-                value={costCenterFormData.costCenterCode}
+                id="costCenterDescription"
+                name="costCenterDescription"
+                value={costCenterFormData.costCenterDescription || ''}
                 onChange={handleCostCenterInputChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                name="description"
-                value={costCenterFormData.description}
-                onChange={handleCostCenterInputChange}
-                required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="manager">Manager</Label>
+                <Label htmlFor="budget">Budget</Label>
                 <Input
-                  id="manager"
-                  name="manager"
-                  value={costCenterFormData.manager}
+                  id="budget"
+                  name="budget"
+                  type="number"
+                  value={costCenterFormData.budget}
                   onChange={handleCostCenterInputChange}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="budget">Budget</Label>
+                <Label htmlFor="actual">Actual</Label>
                 <Input
-                  id="budget"
-                  name="budget"
-                  value={costCenterFormData.budget}
+                  id="actual"
+                  name="actual"
+                  type="number"
+                  value={costCenterFormData.actual}
                   onChange={handleCostCenterInputChange}
                   required
                 />
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isActive"
+                name="isActive"
+                checked={costCenterFormData.isActive || false}
+                onChange={handleCostCenterInputChange}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="isActive">Active</Label>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="companyCode">Company Code</Label>
+            <Input
+              id="companyCode"
+              name="companyCode"
+              type="number"
+              value={costCenterFormData.companyCode || ''}
+              onChange={handleCostCenterInputChange}
+            />
+          </div>
+
+          <div className="flex items-center space-x-2 mt-2">
+            <input
+              type="checkbox"
+              id="isVehicle"
+              name="isVehicle"
+              checked={costCenterFormData.isVehicle || false}
+              onChange={handleCostCenterInputChange}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="isVehicle">Is Vehicle</Label>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Start Date</Label>
+              <Input
+                id="startDate"
+                name="startDate"
+                type="date"
+                value={
+                  costCenterFormData.startDate
+                    ? new Date(costCenterFormData.startDate)
+                        .toISOString()
+                        .split('T')[0]
+                    : ''
+                }
+                onChange={handleCostCenterInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endDate">End Date</Label>
+              <Input
+                id="endDate"
+                name="endDate"
+                type="date"
+                value={
+                  costCenterFormData.endDate
+                    ? new Date(costCenterFormData.endDate)
+                        .toISOString()
+                        .split('T')[0]
+                    : ''
+                }
+                onChange={handleCostCenterInputChange}
+              />
             </div>
           </div>
 
@@ -998,7 +1483,284 @@ const AddAssets = () => {
           </div>
         </form>
       </Popup>
+      {/* supplier popup */}
+      <Popup
+        isOpen={supplierPopupOpen}
+        onClose={resetSupplierForm}
+        title="Add Supplier"
+        size="sm:max-w-2xl"
+      >
+        <form onSubmit={handleSupplierSubmit} className="space-y-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name*</Label>
+              <Input
+                id="name"
+                name="name"
+                value={supplierFormData.name}
+                onChange={handleSupplierInputChange}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input
+                id="displayName"
+                name="displayName"
+                value={supplierFormData.displayName || ''}
+                onChange={handleSupplierInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="type">Type*</Label>
+              <Select
+                name="type"
+                value={supplierFormData.type || ''}
+                onValueChange={(value) => handleSelectChange('type', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Supplier">Supplier</SelectItem>
+                  <SelectItem value="Manufacturer">Manufacturer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="companyName">Company Name</Label>
+              <Input
+                id="companyName"
+                name="companyName"
+                value={supplierFormData.companyName || ''}
+                onChange={handleSupplierInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mobile">Mobile*</Label>
+              <Input
+                id="mobile"
+                name="mobile"
+                value={supplierFormData.mobile}
+                onChange={handleSupplierInputChange}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                name="phone"
+                value={supplierFormData.phone || ''}
+                onChange={handleSupplierInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={supplierFormData.email || ''}
+                onChange={handleSupplierInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="website">Website</Label>
+              <Input
+                id="website"
+                name="website"
+                value={supplierFormData.website || ''}
+                onChange={handleSupplierInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="city">City*</Label>
+              <Input
+                id="city"
+                name="city"
+                value={supplierFormData.city}
+                onChange={handleSupplierInputChange}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="street">Street</Label>
+              <Input
+                id="street"
+                name="street"
+                value={supplierFormData.street || ''}
+                onChange={handleSupplierInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="zip">ZIP Code</Label>
+              <Input
+                id="zip"
+                name="zip"
+                value={supplierFormData.zip || ''}
+                onChange={handleSupplierInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="vat">VAT</Label>
+              <Input
+                id="vat"
+                name="vat"
+                value={supplierFormData.vat || ''}
+                onChange={handleSupplierInputChange}
+              />
+            </div>
+
+            <div className="col-span-2 space-y-2">
+              <Label htmlFor="comment">Comment</Label>
+              <Input
+                id="comment"
+                name="comment"
+                value={supplierFormData.comment || ''}
+                onChange={handleSupplierInputChange}
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isCompany"
+                name="isCompany"
+                checked={supplierFormData.isCompany || false}
+                onChange={handleSupplierInputChange}
+              />
+              <Label htmlFor="isCompany">Is Company</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="active"
+                name="active"
+                checked={supplierFormData.active || false}
+                onChange={handleSupplierInputChange}
+              />
+              <Label htmlFor="active">Active</Label>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={resetSupplierForm}>
+              Cancel
+            </Button>
+            <Button type="submit">Save</Button>
+          </div>
+        </form>
+      </Popup>
+      {/* category popup */}
+      <Popup
+        isOpen={categoryPopupOpen}
+        onClose={() => setCategoryPopupOpen(false)}
+        title="Add Category"
+        size="sm:max-w-md"
+      >
+        <form onSubmit={handleCategorySubmit} className="space-y-4 py-4">
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category_name">Category Name</Label>
+              <Input
+                id="category_name"
+                name="category_name"
+                value={categoryFormData.category_name || ''}
+                onChange={handleCategoryInputChange}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="account_code">Asset Accounting Code</Label>
+              <Input
+                id="account_code"
+                name="account_code"
+                value={categoryFormData.account_code || ''}
+                onChange={handleCategoryInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="depreciation_account_code">
+                Depreciation Accounting Code
+              </Label>
+              <Input
+                id="depreciation_account_code"
+                name="depreciation_account_code"
+                value={categoryFormData.depreciation_account_code || ''}
+                onChange={handleCategoryInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="depreciation_rate">Depreciation Rate (%)</Label>
+              <Input
+                id="depreciation_rate"
+                name="depreciation_rate"
+                type="number"
+                min="0"
+                step="0.01"
+                value={
+                  categoryFormData.depreciation_rate === null
+                    ? ''
+                    : categoryFormData.depreciation_rate
+                }
+                onChange={handleCategoryInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="parent_cat_code">Parent Category</Label>
+              <Select
+                value={categoryFormData.parent_cat_code?.toString() || ''}
+                onValueChange={handleParentCategoryChange}
+              >
+                <SelectTrigger id="parent_cat_code">
+                  <SelectValue placeholder="Select parent category (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem
+                      key={category.category_id}
+                      value={category.category_id?.toString() || ''}
+                    >
+                      {category.category_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSitePopupOpen(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </form>
+      </Popup>
     </div>
   )
 }
+
 export default AddAssets
