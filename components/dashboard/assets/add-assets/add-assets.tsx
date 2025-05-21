@@ -176,6 +176,7 @@ const AddAssets = () => {
     depreciation_account_code: '',
     parent_cat_code: null,
     created_by: userData?.userId || 0,
+    created_time: new Date(),
   })
 
   // Fetch data from APIs
@@ -408,6 +409,7 @@ const AddAssets = () => {
       depreciation_account_code: '',
       parent_cat_code: null,
       created_by: userData?.userId || 0,
+      created_time: new Date(),
     })
     setCategoryPopupOpen(false)
     fetchData()
@@ -541,6 +543,7 @@ const AddAssets = () => {
     e.preventDefault()
     try {
       await createCategory(categoryFormData, token)
+      console.log('category form submitted:', categoryFormData)
       setCategoryFormData({
         category_name: '',
         depreciation_rate: null,
@@ -548,6 +551,7 @@ const AddAssets = () => {
         depreciation_account_code: '',
         parent_cat_code: null,
         created_by: userData?.userId || 0,
+        created_time: new Date(),
       })
       setCategoryPopupOpen(false)
       toast({
@@ -1714,9 +1718,19 @@ const AddAssets = () => {
                 value={
                   categoryFormData.depreciation_rate === null
                     ? ''
-                    : categoryFormData.depreciation_rate
+                    : Number(categoryFormData.depreciation_rate)
                 }
-                onChange={handleCategoryInputChange}
+                onChange={(e) => {
+                  const value = e.target.value === undefined ? null : Number(e.target.value)
+                  handleCategoryInputChange({
+                    ...e,
+                    target: {
+                      ...e.target,
+                      name: 'depreciation_rate',
+                      value,
+                    }
+                  })
+                }}
               />
             </div>
 
@@ -1724,10 +1738,16 @@ const AddAssets = () => {
               <Label htmlFor="parent_cat_code">Parent Category</Label>
               <Select
                 value={categoryFormData.parent_cat_code?.toString() || ''}
-                onValueChange={handleParentCategoryChange}
+                onValueChange={(value) => {
+                  handleParentCategoryChange(value)
+                  setCategoryFormData((prev) => ({
+                    ...prev,
+                    parent_cat_code: value === 'none' ? null : Number(value),
+                  }))
+                }}
               >
                 <SelectTrigger id="parent_cat_code">
-                  <SelectValue placeholder="Select parent category (optional)" />
+                  <SelectValue placeholder="Select parent category" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None</SelectItem>
