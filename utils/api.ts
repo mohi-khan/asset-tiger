@@ -1,6 +1,6 @@
 import { fetchApi } from '@/utils/http'
-import { CompanyType } from '../api/company-api'
 import {
+  CreateAssetDepreciationType,
   CreateAssetType,
   CreateCategoryType,
   CreateCompanyType,
@@ -18,6 +18,7 @@ import {
   GetCostCenterType,
   GetDepartmentType,
   GetDepreciationBookType,
+  GetDepTranType,
   GetLocationType,
   GetSiteType,
   GetSupplierType,
@@ -50,7 +51,7 @@ export async function createDepartment(
 }
 
 export async function getAllCompany(token: string) {
-  return fetchApi<CompanyType[]>({
+  return fetchApi<GetCompanyType[]>({
     url: 'api/company/get-all-companies',
     method: 'GET',
     headers: {
@@ -285,6 +286,32 @@ export async function createDepreciationInfo(
 ) {
   return fetchApi<CreateDepreciationInfoType>({
     url: 'api/depInfo/create',
+    method: 'POST',
+    body: data,
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllDepreciationTransactions(token: string) {
+  return fetchApi<GetDepTranType[]>({
+    url: 'api/depBook/getall',
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createAssetDepreciation(
+  data: CreateAssetDepreciationType,
+  token: string
+) {
+  return fetchApi<CreateAssetDepreciationType>({
+    url: 'api/depCalculation/calculate',
     method: 'POST',
     body: data,
     headers: {

@@ -18,7 +18,7 @@ import { tokenAtom, useInitializeUser } from "@/utils/user"
 import { useAtom } from "jotai"
 import { useToast } from "@/hooks/use-toast"
 import { getAllAssetDetails } from "@/utils/api"
-import { GetAssetDetailsType } from "@/utils/type"
+import { GetAssetDetailsType, GetDepTranType } from "@/utils/type"
 
 // Types for additional data
 type EventData = {
@@ -77,6 +77,7 @@ export default function AssetDetails() {
   const { toast } = useToast()
 
   const [assetData, setAssetData] = useState<GetAssetDetailsType | null>(null)
+  const [depreciation, setDepreciation] = useState<GetDepTranType[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -138,29 +139,29 @@ export default function AssetDetails() {
     },
   ])
 
-  const [depreciation, setDepreciation] = useState<DepreciationData[]>([
-    {
-      id: 1,
-      period: "2025-2026",
-      depreciationAmount: "₹24,000.00",
-      accumulatedDepreciation: "₹24,000.00",
-      bookValue: "₹96,000.00",
-    },
-    {
-      id: 2,
-      period: "2026-2027",
-      depreciationAmount: "₹19,200.00",
-      accumulatedDepreciation: "₹43,200.00",
-      bookValue: "₹76,800.00",
-    },
-    {
-      id: 3,
-      period: "2027-2028",
-      depreciationAmount: "₹15,360.00",
-      accumulatedDepreciation: "₹58,560.00",
-      bookValue: "₹61,440.00",
-    },
-  ])
+  // const [depreciation, setDepreciation] = useState<DepreciationData[]>([
+  //   {
+  //     id: 1,
+  //     period: "2025-2026",
+  //     depreciationAmount: "₹24,000.00",
+  //     accumulatedDepreciation: "₹24,000.00",
+  //     bookValue: "₹96,000.00",
+  //   },
+  //   {
+  //     id: 2,
+  //     period: "2026-2027",
+  //     depreciationAmount: "₹19,200.00",
+  //     accumulatedDepreciation: "₹43,200.00",
+  //     bookValue: "₹76,800.00",
+  //   },
+  //   {
+  //     id: 3,
+  //     period: "2027-2028",
+  //     depreciationAmount: "₹15,360.00",
+  //     accumulatedDepreciation: "₹58,560.00",
+  //     bookValue: "₹61,440.00",
+  //   },
+  // ])
 
   const [warranty, setWarranty] = useState<WarrantyData[]>([
     {
@@ -194,16 +195,30 @@ export default function AssetDetails() {
 
   // Fetch asset details
   const fetchAssetDetails = useCallback(async () => {
-    if (!token) {
+    if (!token) return
+
+    try {
+      const assetId = Number(params.id)
+      if (isNaN(assetId)) {
+        throw new Error("Invalid asset ID")
+      }
+      const data = await getAllAssetDetails(token, assetId)
+      setAssetData(data.data || null)
+    } catch (err) {
+      console.error("Failed to fetch asset details:", err)
+      setError(err instanceof Error ? err.message : "Failed to load asset details")
       toast({
-        title: "Authentication Error",
-        description: "You need to be logged in to view asset details",
+        title: "Error",
+        description: "Failed to load asset details. Please try again later.",
         variant: "destructive",
       })
+    } finally {
       setIsLoading(false)
-      setError("Authentication error")
-      return
     }
+  }, [params.id, token, toast])
+
+  const fetchDepreciations = useCallback(async () => {
+    if (!token) return
 
     try {
       const assetId = Number(params.id)
