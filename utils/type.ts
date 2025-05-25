@@ -366,6 +366,57 @@ export const createAssetDepreciationSchema = z.object({
 
 export type CreateAssetDepreciationType = z.infer<typeof createAssetDepreciationSchema>;
 
+//maintenance
+export const getMaintenanceSchema = z.object({
+  id: z.number().optional(), // serial PK, usually auto-generated
+  assetId: z.number().int().nonnegative(),
+  maintDate: z.string().date(), // assuming input as ISO string; adjust if using Date object directly
+  type: z.enum(["Preventive", "Corrective", "Condition-based"]),
+  cost: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, { message: "Invalid cost format" }), // for form input as string
+  description: z.string().optional(),
+  performedBy: z.string().min(1),
+});
+
+export type GetMaintenanceType = z.infer<typeof getMaintenanceSchema>;
+
+export const createMaintenanceSchema = z.object({
+  assetId: z.number().int().nonnegative(),
+  maintDate: z.string().date(), // assuming input as ISO string; adjust if using Date object directly
+  type: z.enum(["Preventive", "Corrective", "Condition-based"]),
+  cost: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, { message: "Invalid cost format" }), // for form input as string
+  description: z.string().optional(),
+  performedBy: z.string().min(1),
+});
+
+export type CreateMaintenanceType = z.infer<typeof createMaintenanceSchema>;
+
+//warrenty
+export const getWarrantySchema = z.object({
+  id: z.number().optional(), // Auto-increment primary key
+  asset_id: z.number().int().nonnegative(),
+  type: z.enum(["Standard Warranty", "Extended Warranty"]),
+  start_date: z.string().date(), // ISO date string (adjust to `z.coerce.date()` if needed)
+  end_date: z.string().date(),
+  warranty_provider: z.string().min(1), // text field with address + phone + email
+  description: z.string().max(500).optional(),
+});
+
+export type GetWarrantyType = z.infer<typeof getWarrantySchema>;
+
+export const createWarrantySchema = z.object({
+  asset_id: z.number().int().nonnegative(),
+  type: z.enum(["Standard Warranty", "Extended Warranty"]),
+  start_date: z.string().date(), // ISO date string (adjust to `z.coerce.date()` if needed)
+  end_date: z.string().date(),
+  warranty_provider: z.string().min(1), // text field with address + phone + email
+  description: z.string().max(500).optional(),
+});
+
+export type CreateWarrantyType = z.infer<typeof createWarrantySchema>;
 
 
 
