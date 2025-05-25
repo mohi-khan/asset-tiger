@@ -8,6 +8,7 @@ import {
   CreateDepartmentType,
   CreateDepreciationBookType,
   CreateDepreciationInfoType,
+  CreateDisposeType,
   CreateLocationType,
   CreateMaintenanceType,
   CreateSiteType,
@@ -21,6 +22,7 @@ import {
   GetDepartmentType,
   GetDepreciationBookType,
   GetDepTranType,
+  GetDisposeType,
   GetLocationType,
   GetMaintenanceType,
   GetSiteType,
@@ -381,6 +383,32 @@ export async function createWarranty(
     url: 'api/warranty/create',
     method: 'POST',
     body: data,
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createDispose(
+  data: CreateDisposeType,
+  token: string
+) {
+  return fetchApi<CreateDisposeType>({
+    url: 'api/dispose/create',
+    method: 'POST',
+    body: data,
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllDispose(token: string) {
+  return fetchApi<GetDisposeType[]>({
+    url: 'api/dispose/getall',
+    method: 'GET',
     headers: {
       Authorization: token,
       'Content-Type': 'application/json',
