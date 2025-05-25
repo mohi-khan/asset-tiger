@@ -16,9 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ChevronDown, FileText, Pencil, Plus, Printer } from "lucide-react"
 import { tokenAtom, useInitializeUser } from "@/utils/user"
 import { useAtom } from "jotai"
-import { useToast } from "@/hooks/use-toast"
-import { getAllAssetDetails } from "@/utils/api"
-import { GetAssetDetailsType, GetDepTranType } from "@/utils/type"
+import { toast, useToast } from "@/hooks/use-toast"
+import { createMaintenance, createWarranty, getAllAssetDetails, getAllAssetMaintenance, getAssetMaintenanceById, getAssetWarrantyeById } from "@/utils/api"
+import { createMaintenanceSchema, CreateMaintenanceType, createWarrantySchema, CreateWarrantyType, GetAssetDetailsType, GetDepTranType, GetMaintenanceType, GetWarrantyType } from "@/utils/type"
 
 // Types for additional data
 type EventData = {
@@ -44,32 +44,6 @@ type DocData = {
   uploadedBy: string
 }
 
-type DepreciationData = {
-  id: number
-  period: string
-  depreciationAmount: string
-  accumulatedDepreciation: string
-  bookValue: string
-}
-
-type WarrantyData = {
-  id: number
-  type: string
-  startDate: string
-  endDate: string
-  provider: string
-  description: string
-}
-
-type MaintenanceData = {
-  id: number
-  date: string
-  type: string
-  cost: string
-  description: string
-  performedBy: string
-}
-
 export default function AssetDetails() {
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
@@ -78,6 +52,8 @@ export default function AssetDetails() {
 
   const [assetData, setAssetData] = useState<GetAssetDetailsType | null>(null)
   const [depreciation, setDepreciation] = useState<GetDepTranType[]>([])
+  const [maintenanceData, setMaintenanceData] = useState<GetMaintenanceType | null>(null)
+  const [warranty, setWarranty] = useState<GetWarrantyType | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -163,35 +139,35 @@ export default function AssetDetails() {
   //   },
   // ])
 
-  const [warranty, setWarranty] = useState<WarrantyData[]>([
-    {
-      id: 1,
-      type: "Standard Warranty",
-      startDate: "03/28/2025",
-      endDate: "03/28/2027",
-      provider: "Toshiba",
-      description: "2 year standard warranty",
-    },
-  ])
+  // const [warranty, setWarranty] = useState<WarrantyData[]>([
+  //   {
+  //     id: 1,
+  //     type: "Standard Warranty",
+  //     startDate: "03/28/2025",
+  //     endDate: "03/28/2027",
+  //     provider: "Toshiba",
+  //     description: "2 year standard warranty",
+  //   },
+  // ])
 
-  const [maintenance, setMaintenance] = useState<MaintenanceData[]>([
-    {
-      id: 1,
-      date: "06/28/2025",
-      type: "Preventive",
-      cost: "₹2,000.00",
-      description: "Regular maintenance check",
-      performedBy: "Tech Support",
-    },
-    {
-      id: 2,
-      date: "09/28/2025",
-      type: "Preventive",
-      cost: "₹2,000.00",
-      description: "Regular maintenance check",
-      performedBy: "Tech Support",
-    },
-  ])
+  // const [maintenance, setMaintenance] = useState<MaintenanceData>([
+  //   {
+  //     id: 1,
+  //     date: "06/28/2025",
+  //     type: "Preventive",
+  //     cost: "₹2,000.00",
+  //     description: "Regular maintenance check",
+  //     performedBy: "Tech Support",
+  //   },
+  //   {
+  //     id: 2,
+  //     date: "09/28/2025",
+  //     type: "Preventive",
+  //     cost: "₹2,000.00",
+  //     description: "Regular maintenance check",
+  //     performedBy: "Tech Support",
+  //   },
+  // ])
 
   // Fetch asset details
   const fetchAssetDetails = useCallback(async () => {
@@ -240,8 +216,63 @@ export default function AssetDetails() {
     }
   }, [params.id, token, toast])
 
-  useEffect(() => {
+  const fetchMaintenance = useCallback(async () => {
+      try {
+        const response = await getAssetMaintenanceById(token, params.id)
+        if (response.data) {
+        setMaintenanceData(response.data)
+        console.log('🚀 ~ fetchCompanies ~ response.data:', response.data)
+      } else {
+        setMaintenanceData(null)
+        if (response.error) {
+          toast({
+            title: 'Error',
+            description: response.error.message,
+            variant: 'destructive',
+          })
+        }
+      }
+      } catch (error) {
+        console.error('Error fetching maintenance records:', error)
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch maintenance records',
+          variant: 'destructive',
+        })
+      }
+    }, [token])
+
+  const fetchAssetWarranty = useCallback(async () => {
+      try {
+        const response = await getAssetWarrantyeById(token, params.id)
+        if (response.data) {
+        setWarranty(response.data)
+        console.log('🚀 ~ fetchCompanies ~ response.data:', response.data)
+      } else {
+        setWarranty(null)
+        if (response.error) {
+          toast({
+            title: 'Error',
+            description: response.error.message,
+            variant: 'destructive',
+          })
+        }
+      }
+      } catch (error) {
+        console.error('Error fetching maintenance records:', error)
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch maintenance records',
+          variant: 'destructive',
+        })
+      }
+    }, [token])
+    
+    useEffect(() => {
+    fetchMaintenance()
     fetchAssetDetails()
+    fetchDepreciations()
+    fetchAssetWarranty()
   }, [fetchAssetDetails])
 
   // Add new photo
@@ -284,14 +315,15 @@ export default function AssetDetails() {
   }
 
   // Add new maintenance
-  const handleAddMaintenance = (maintenanceData: {
-    date: string
-    type: string
-    cost: string
-    description: string
-    performedBy: string
-  }) => {
-    setMaintenance([...maintenance, { id: maintenance.length + 1, ...maintenanceData }])
+  const handleAddMaintenance = (maintenanceData: CreateMaintenanceType) => {
+    setMaintenance([...maintenance, { 
+      id: maintenance.length + 1, 
+      date: maintenanceData.maintDate,
+      type: maintenanceData.type,
+      cost: maintenanceData.cost,
+      description: maintenanceData.description || '',
+      performedBy: maintenanceData.performedBy
+    }])
   }
 
   // Loading state
@@ -718,23 +750,14 @@ export default function AssetDetails() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {warranty.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-gray-500">
-                    No warranty information found for this asset.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                warranty.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.type}</TableCell>
-                    <TableCell>{item.startDate}</TableCell>
-                    <TableCell>{item.endDate}</TableCell>
-                    <TableCell>{item.provider}</TableCell>
-                    <TableCell>{item.description}</TableCell>
-                  </TableRow>
-                ))
-              )}
+              {warranty ? <TableRow>
+                  <TableCell>{warranty?.type}</TableCell>
+                  <TableCell>{warranty?.start_date}</TableCell>
+                  <TableCell>{warranty?.end_date}</TableCell>
+                  <TableCell>{warranty?.warranty_provider}</TableCell>
+                  <TableCell>{warranty?.description}</TableCell>                  
+                </TableRow>: 
+               <TableCell>No maintenance found</TableCell>}
             </TableBody>
           </Table>
         </TabsContent>
@@ -756,23 +779,14 @@ export default function AssetDetails() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {maintenance.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-gray-500">
-                    No maintenance records found for this asset.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                maintenance.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.date}</TableCell>
-                    <TableCell>{item.type}</TableCell>
-                    <TableCell>{item.cost}</TableCell>
-                    <TableCell>{item.description}</TableCell>
-                    <TableCell>{item.performedBy}</TableCell>
-                  </TableRow>
-                ))
-              )}
+              {maintenanceData? <TableRow key={maintenanceData.id}>
+                    <TableCell>{maintenanceData.maintDate}</TableCell>
+                    <TableCell>{maintenanceData.type}</TableCell>
+                    <TableCell>{maintenanceData.cost}</TableCell>
+                    <TableCell>{maintenanceData.description}</TableCell>
+                    <TableCell>{maintenanceData.performedBy}</TableCell>
+                  </TableRow> :
+                  <TableCell>No maintenance found</TableCell>}
             </TableBody>
           </Table>
         </TabsContent>
@@ -1027,29 +1041,43 @@ function AddDepreciationDialog({ onAddDepreciation }: { onAddDepreciation: (data
 }
 
 // Add Warranty Dialog Component
-function AddWarrantyDialog({ onAddWarranty }: { onAddWarranty: (data: any) => void }) {
+function AddWarrantyDialog({ onAddWarranty }: { onAddWarranty: (data: CreateWarrantyType) => void }) {
+  const [token] = useAtom(tokenAtom)
+  const params = useParams()
   const [open, setOpen] = useState(false)
-  const [type, setType] = useState("")
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
-  const [provider, setProvider] = useState("")
-  const [description, setDescription] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onAddWarranty({
-      type,
-      startDate,
-      endDate,
-      provider,
-      description,
-    })
-    setType("")
-    setStartDate("")
-    setEndDate("")
-    setProvider("")
-    setDescription("")
-    setOpen(false)
+  const form = useForm<CreateWarrantyType>({
+    resolver: zodResolver(createWarrantySchema),
+    defaultValues: {
+      type: undefined,
+      start_date: "",
+      end_date: "",
+      warranty_provider: "",
+      description: "",
+      asset_id: Number(params.id),
+    },
+  })
+
+  const onSubmit = async (data: CreateWarrantyType) => {
+    try {
+      await createWarranty(data, token)
+      
+      form.reset()
+      setOpen(false)
+      onAddWarranty(data)
+
+      toast({
+        title: 'Success',
+        description: 'Warranty record created successfully',
+      })
+    } catch (error) {
+      console.error('Error creating warranty record:', error)
+      toast({
+        title: 'Error', 
+        description: 'Failed to create warranty record. Please try again.',
+        variant: 'destructive',
+      })
+    }
   }
 
   return (
@@ -1064,94 +1092,147 @@ function AddWarrantyDialog({ onAddWarranty }: { onAddWarranty: (data: any) => vo
         <DialogHeader>
           <DialogTitle>Add Warranty Information</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="type">Warranty Type</Label>
-            <Input
-              id="type"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              placeholder="e.g. Standard, Extended"
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Warranty Type</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select warranty type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Standard Warranty">Standard Warranty</SelectItem>
+                        <SelectItem value="Extended Warranty">Extended Warranty</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="startDate">Start Date</Label>
-            <Input
-              id="startDate"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              placeholder="MM/DD/YYYY"
-              required
+            <FormField
+              control={form.control}
+              name="start_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="endDate">End Date</Label>
-            <Input
-              id="endDate"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              placeholder="MM/DD/YYYY"
-              required
+            <FormField
+              control={form.control}
+              name="end_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>End Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="provider">Provider</Label>
-            <Input
-              id="provider"
-              value={provider}
-              onChange={(e) => setProvider(e.target.value)}
-              placeholder="e.g. Manufacturer name"
-              required
+            <FormField
+              control={form.control}
+              name="warranty_provider"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Provider Details</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      {...field} 
+                      placeholder="Enter provider details (address, phone, email)"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter warranty details"
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      {...field} 
+                      placeholder="Enter warranty details (optional)"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">Add Warranty</Button>
-          </div>
-        </form>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Add Warranty</Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )
 }
-
 // Add Maintenance Dialog Component
-function AddMaintenanceDialog({ onAddMaintenance }: { onAddMaintenance: (data: any) => void }) {
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
+
+export function AddMaintenanceDialog({
+  onAddMaintenance,
+}: {
+  onAddMaintenance: (data: CreateMaintenanceType) => void
+}) {
+  const [token] = useAtom(tokenAtom)
+  const params = useParams()
   const [open, setOpen] = useState(false)
-  const [date, setDate] = useState("")
-  const [type, setType] = useState("")
-  const [cost, setCost] = useState("")
-  const [description, setDescription] = useState("")
-  const [performedBy, setPerformedBy] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onAddMaintenance({
-      date,
-      type,
-      cost,
-      description,
-      performedBy,
-    })
-    setDate("")
-    setType("")
-    setCost("")
-    setDescription("")
-    setPerformedBy("")
-    setOpen(false)
+  const form = useForm<CreateMaintenanceType>({
+    resolver: zodResolver(createMaintenanceSchema),
+    defaultValues: {
+      maintDate: "",
+      type: undefined,
+      cost: "",
+      description: "",
+      performedBy: "",
+      assetId: Number(params.id),
+    },
+  })
+
+  const onSubmit = async (data: CreateMaintenanceType) => {
+    try {
+      await createMaintenance(data, token)
+      
+      // Reset form and close dialog
+      form.reset()
+      setOpen(false)
+      onAddMaintenance(data)
+
+      toast({
+        title: 'Success',
+        description: 'Maintenance record created successfully',
+      })
+    } catch (error) {
+      console.error('Error creating maintenance record:', error)
+      toast({
+        title: 'Error', 
+        description: 'Failed to create maintenance record. Please try again.',
+        variant: 'destructive',
+      })
+    }
   }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -1164,61 +1245,96 @@ function AddMaintenanceDialog({ onAddMaintenance }: { onAddMaintenance: (data: a
         <DialogHeader>
           <DialogTitle>Add Maintenance Record</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
-            <Input id="date" value={date} onChange={(e) => setDate(e.target.value)} placeholder="MM/DD/YYYY" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="type">Type</Label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select maintenance type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Preventive">Preventive</SelectItem>
-                <SelectItem value="Corrective">Corrective</SelectItem>
-                <SelectItem value="Condition-based">Condition-based</SelectItem>
-                <SelectItem value="Predictive">Predictive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="cost">Cost</Label>
-            <Input
-              id="cost"
-              value={cost}
-              onChange={(e) => setCost(e.target.value)}
-              placeholder="e.g. ₹2,000.00"
-              required
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              name="maintDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter maintenance details"
+
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select maintenance type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Preventive">Preventive</SelectItem>
+                      <SelectItem value="Corrective">Corrective</SelectItem>
+                      <SelectItem value="Condition-based">Condition-based</SelectItem>
+                      <SelectItem value="Predictive">Predictive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="performedBy">Performed By</Label>
-            <Input
-              id="performedBy"
-              value={performedBy}
-              onChange={(e) => setPerformedBy(e.target.value)}
-              placeholder="e.g. Tech Support"
-              required
+
+            <FormField
+              control={form.control}
+              name="cost"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cost</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. ₹2,000.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">Add Record</Button>
-          </div>
-        </form>
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Enter maintenance details" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="performedBy"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Performed By</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Tech Support" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Add Record</Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

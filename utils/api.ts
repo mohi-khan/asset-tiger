@@ -9,8 +9,10 @@ import {
   CreateDepreciationBookType,
   CreateDepreciationInfoType,
   CreateLocationType,
+  CreateMaintenanceType,
   CreateSiteType,
   CreateSupplierType,
+  CreateWarrantyType,
   GetAssetDetailsType,
   GetAssetType,
   GetCategoryType,
@@ -20,8 +22,10 @@ import {
   GetDepreciationBookType,
   GetDepTranType,
   GetLocationType,
+  GetMaintenanceType,
   GetSiteType,
   GetSupplierType,
+  GetWarrantyType,
 } from '@/utils/type'
 
 export async function getAllDepartments(token: string) {
@@ -312,6 +316,69 @@ export async function createAssetDepreciation(
 ) {
   return fetchApi<CreateAssetDepreciationType>({
     url: 'api/depCalculation/calculate',
+    method: 'POST',
+    body: data,
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllAssetMaintenance(token: string,) {
+  return fetchApi<GetMaintenanceType[]>({
+    url: 'api/maintenance/getall',
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAssetMaintenanceById(token: string, assetId: string) {
+  return fetchApi<GetMaintenanceType[]>({
+    url: `api/maintenance/getDetails/${assetId}`,
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createMaintenance(
+  data: CreateMaintenanceType,
+  token: string
+) {
+  return fetchApi<CreateMaintenanceType>({
+    url: 'api/maintenance/create',
+    method: 'POST',
+    body: data,
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAssetWarrantyeById(token: string, assetId: string) {
+  return fetchApi<GetWarrantyType[]>({
+    url: `api/warranty/getDetails/${assetId}`,
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createWarranty(
+  data: CreateWarrantyType,
+  token: string
+) {
+  return fetchApi<CreateWarrantyType>({
+    url: 'api/warranty/create',
     method: 'POST',
     body: data,
     headers: {
