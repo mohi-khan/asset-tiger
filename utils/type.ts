@@ -418,8 +418,41 @@ export const createWarrantySchema = z.object({
 
 export type CreateWarrantyType = z.infer<typeof createWarrantySchema>;
 
+//dispose
+export const getDisposeSchema = z.object({
+  id: z.number().int().optional(), // optional if auto-incremented
+  asset_id: z.number().int().nonnegative(),
+  dispose_date: z.string().refine(
+    (val) => !isNaN(Date.parse(val)),
+    { message: "Invalid date format" }
+  ),
+  reason: z.string().min(1, { message: "Reason is required" }),
+  method: z.enum(["Sell", "Scrap", "Donate", "Transfer"]),
+  value: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid decimal with up to 2 digits after decimal"),
+  remarks: z.string().optional(),
+  performed_by: z.string().min(1, { message: "Performed by is required" }),
+});
 
+export type GetDisposeType = z.infer<typeof getDisposeSchema>;
 
+export const createDisposeSchema = z.object({
+  asset_id: z.number().int().nonnegative(),
+  dispose_date: z.string().refine(
+    (val) => !isNaN(Date.parse(val)),
+    { message: "Invalid date format" }
+  ),
+  reason: z.string().min(1, { message: "Reason is required" }),
+  method: z.enum(["Sell", "Scrap", "Donate", "Transfer"]),
+  value: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid decimal with up to 2 digits after decimal"),
+  remarks: z.string().optional(),
+  performed_by: z.string().min(1, { message: "Performed by is required" }),
+});
+
+export type CreateDisposeType = z.infer<typeof createDisposeSchema>;
 
 
 
