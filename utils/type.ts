@@ -228,7 +228,6 @@ export const assetDetailsSchema = z.object({
   createdAt: z.string(),
   assetDepStartValue: z.number(),
 });
-
 export type GetAssetDetailsType = z.infer<typeof assetDetailsSchema>;
 
 
@@ -314,7 +313,6 @@ export const getDepreciationBookSchema = z.object({
   createdAt: z.string(), // or z.coerce.date() if parsed as Date
   updatedAt: z.string(), // same here
 });
-
 export type GetDepreciationBookType = z.infer<typeof getDepreciationBookSchema>;
 
 export const createDepreciationBookSchema = z.object({
@@ -339,7 +337,6 @@ export const createDepreciationInfoSchema = z.object({
   startingValue: z.number(),
   createdBy: z.number().int().optional(), // optional if set by backend
 });
-
 export type CreateDepreciationInfoType = z.infer<typeof createDepreciationInfoSchema>;
 
 //depreciation transaction
@@ -356,7 +353,6 @@ export const getDepTranSchema = z.object({
   created_by: z.number().int().nullable(),
   created_at: z.string().datetime().nullable(), // Or use z.coerce.date().nullable() if date object is desired
 });
-
 export type GetDepTranType = z.infer<typeof getDepTranSchema>;
 
 export const createAssetDepreciationSchema = z.object({
@@ -365,7 +361,6 @@ export const createAssetDepreciationSchema = z.object({
   book_id: z.number().int(),
   saveToDatabase: z.boolean()
 });
-
 export type CreateAssetDepreciationType = z.infer<typeof createAssetDepreciationSchema>;
 
 //maintenance
@@ -380,7 +375,6 @@ export const getMaintenanceSchema = z.object({
   description: z.string().optional(),
   performedBy: z.string().min(1),
 });
-
 export type GetMaintenanceType = z.infer<typeof getMaintenanceSchema>;
 
 export const createMaintenanceSchema = z.object({
@@ -393,7 +387,6 @@ export const createMaintenanceSchema = z.object({
   description: z.string().optional(),
   performedBy: z.string().min(1),
 });
-
 export type CreateMaintenanceType = z.infer<typeof createMaintenanceSchema>;
 
 //warrenty
@@ -406,7 +399,6 @@ export const getWarrantySchema = z.object({
   warranty_provider: z.string().min(1), // text field with address + phone + email
   description: z.string().max(500).optional(),
 });
-
 export type GetWarrantyType = z.infer<typeof getWarrantySchema>;
 
 export const createWarrantySchema = z.object({
@@ -417,7 +409,6 @@ export const createWarrantySchema = z.object({
   warranty_provider: z.string().min(1), // text field with address + phone + email
   description: z.string().max(500).optional(),
 });
-
 export type CreateWarrantyType = z.infer<typeof createWarrantySchema>;
 
 //dispose
@@ -436,7 +427,6 @@ export const getDisposeSchema = z.object({
   remarks: z.string().optional(),
   performed_by: z.string().min(1, { message: "Performed by is required" }),
 });
-
 export type GetDisposeType = z.infer<typeof getDisposeSchema>;
 
 export const createDisposeSchema = z.object({
@@ -453,9 +443,55 @@ export const createDisposeSchema = z.object({
   remarks: z.string().optional(),
   performed_by: z.string().min(1, { message: "Performed by is required" }),
 });
-
 export type CreateDisposeType = z.infer<typeof createDisposeSchema>;
 
+//asset partial retirement
+export const getAssetPartialRetirementSchema = z.object({
+  id: z.number().int().optional(), // Optional because it's auto-incremented
+  assetId: z.number().int().nonnegative(),
+  retirementDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (expected YYYY-MM-DD)"),
+  retiredValue: z.number().nonnegative(),
+  reason: z.string().optional(),
+  updatedBookValue: z.number().nonnegative().optional(),
+  createdBy: z.number().int().optional(),
+  createdAt: z.string().datetime().optional() // auto-generated timestamp
+});
+export type GetAssetPartialRetirementType = z.infer<typeof getAssetPartialRetirementSchema>;
+
+export const createAssetPartialRetirementSchema = z.object({
+  assetId: z.number().int().nonnegative(),
+  retirementDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (expected YYYY-MM-DD)"),
+  retiredValue: z.number().nonnegative(),
+  reason: z.string().optional(),
+  updatedBookValue: z.number().nonnegative().optional(),
+  createdBy: z.number().int().optional(),
+  createdAt: z.string().datetime().optional() // auto-generated timestamp
+});
+export type CreateAssetPartialRetirementType = z.infer<typeof createAssetPartialRetirementSchema>;
+
+//asset capex addition
+export const getAssetCapexAdditionSchema = z.object({
+  id: z.number().int().optional(), // auto-incremented
+  assetId: z.number().int().nonnegative(),
+  additionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (expected YYYY-MM-DD)"),
+  addedValue: z.number().nonnegative(),
+  description: z.string().optional(),
+  newBookValue: z.number().nonnegative().optional(),
+  createdBy: z.number().int().optional(),
+  createdAt: z.string().datetime().optional() // set automatically by DB
+});
+export type GetAssetCapexAdditionType = z.infer<typeof getAssetCapexAdditionSchema>;
+
+export const createAssetCapexAdditionSchema = z.object({
+  assetId: z.number().int().nonnegative(),
+  additionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (expected YYYY-MM-DD)"),
+  addedValue: z.number().nonnegative(),
+  description: z.string().optional(),
+  newBookValue: z.number().nonnegative().optional(),
+  createdBy: z.number().int().optional(),
+  createdAt: z.string().datetime().optional() // set automatically by DB
+});
+export type CreateAssetCapexAdditionType = z.infer<typeof createAssetCapexAdditionSchema>;
 
 
 
