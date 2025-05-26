@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronDown, FileText, Home, Settings } from 'lucide-react'
+import { ChevronDown, Home, Settings } from 'lucide-react'
 
 import {
   Collapsible,
@@ -33,11 +33,6 @@ export function DashboardSidebar() {
       icon: Home,
       href: '/dashboard/dashboard-overview',
     },
-    // {
-    //   title: 'Assets',
-    //   icon: Home,
-    //   href: '/dashboard/assets',
-    // },
     {
       title: 'Alerts',
       icon: Settings,
@@ -54,6 +49,14 @@ export function DashboardSidebar() {
         {
           title: 'Add Assets',
           href: '/dashboard/assets/add-assets',
+        },
+        {
+          title: 'Asset Addition',
+          href: '/dashboard/assets/asset-addition',
+        },
+        {
+          title: 'Asset Retirement',
+          href: '/dashboard/assets/asset-retirement',
         },
         {
           title: 'Dispose',

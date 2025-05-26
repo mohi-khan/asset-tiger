@@ -1,6 +1,8 @@
 import { fetchApi } from '@/utils/http'
 import {
+  CreateAssetCapexAdditionType,
   CreateAssetDepreciationType,
+  CreateAssetPartialRetirementType,
   CreateAssetType,
   CreateCategoryType,
   CreateCompanyType,
@@ -14,7 +16,9 @@ import {
   CreateSiteType,
   CreateSupplierType,
   CreateWarrantyType,
+  GetAssetCapexAdditionType,
   GetAssetDetailsType,
+  GetAssetPartialRetirementType,
   GetAssetType,
   GetCategoryType,
   GetCompanyType,
@@ -301,17 +305,6 @@ export async function createDepreciationInfo(
   })
 }
 
-export async function getAllDepreciationTransactions(token: string) {
-  return fetchApi<GetDepTranType[]>({
-    url: 'api/depBook/getall',
-    method: 'GET',
-    headers: {
-      Authorization: token,
-      'Content-Type': 'application/json',
-    },
-  })
-}
-
 export async function createAssetDepreciation(
   data: CreateAssetDepreciationType,
   token: string
@@ -408,6 +401,80 @@ export async function createDispose(
 export async function getAllDispose(token: string) {
   return fetchApi<GetDisposeType[]>({
     url: 'api/dispose/getall',
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getDepreciationByAssetId(token: string, assetId: number) {
+  return fetchApi<GetDepTranType[]>({
+    url: `api/depCalculation/getDepByAssetId/${assetId}`,
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllDepreciationTransactions(token: string) {
+  return fetchApi<GetDepTranType[]>({
+    url: 'api/depBook/getall',
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createRetirement(
+  data: CreateAssetPartialRetirementType,
+  token: string
+) {
+  return fetchApi<CreateAssetPartialRetirementType>({
+    url: 'api/assetRetirement/create',
+    method: 'POST',
+    body: data,
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllRetirements(token: string) {
+  return fetchApi<GetAssetPartialRetirementType[]>({
+    url: 'api/assetRetirement/getall',
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function createAddition(
+  data: CreateAssetCapexAdditionType,
+  token: string
+) {
+  return fetchApi<CreateAssetCapexAdditionType>({
+    url: 'api/assetAddition/create',
+    method: 'POST',
+    body: data,
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAllAditions(token: string) {
+  return fetchApi<GetAssetCapexAdditionType[]>({
+    url: 'api/assetAddition/getall',
     method: 'GET',
     headers: {
       Authorization: token,
