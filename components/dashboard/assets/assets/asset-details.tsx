@@ -17,7 +17,7 @@ import { ChevronDown, FileText, Pencil, Plus, Printer } from "lucide-react"
 import { tokenAtom, useInitializeUser } from "@/utils/user"
 import { useAtom } from "jotai"
 import { toast, useToast } from "@/hooks/use-toast"
-import { createMaintenance, createWarranty, getAllAssetDetails, getAllAssetMaintenance, getAssetMaintenanceById, getAssetWarrantyeById } from "@/utils/api"
+import { createMaintenance, createWarranty, getAllAssetDetails, getAllAssetMaintenance, getAssetMaintenanceById, getAssetWarrantyeById, getDepreciationByAssetId } from "@/utils/api"
 import { createMaintenanceSchema, CreateMaintenanceType, createWarrantySchema, CreateWarrantyType, GetAssetDetailsType, GetDepTranType, GetMaintenanceType, GetWarrantyType } from "@/utils/type"
 
 // Types for additional data
@@ -201,8 +201,9 @@ export default function AssetDetails() {
       if (isNaN(assetId)) {
         throw new Error("Invalid asset ID")
       }
-      const data = await getAllAssetDetails(token, assetId)
-      setAssetData(data.data || null)
+      const data = await getDepreciationByAssetId(token, assetId)
+      setDepreciation(data.data || null)
+      console.log("🚀 ~ fetchDepreciations ~ data.data:", data.data)
     } catch (err) {
       console.error("Failed to fetch asset details:", err)
       setError(err instanceof Error ? err.message : "Failed to load asset details")
@@ -708,8 +709,9 @@ export default function AssetDetails() {
               <TableRow>
                 <TableHead>Period</TableHead>
                 <TableHead>Depreciation Amount</TableHead>
-                <TableHead>Accumulated Depreciation</TableHead>
-                <TableHead>Book Value</TableHead>
+                <TableHead>Asset Name</TableHead>
+                <TableHead>Book Name</TableHead>
+                <TableHead>Transaction Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -723,9 +725,10 @@ export default function AssetDetails() {
                 depreciation.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.period}</TableCell>
-                    <TableCell>{item.depreciationAmount}</TableCell>
-                    <TableCell>{item.accumulatedDepreciation}</TableCell>
-                    <TableCell>{item.bookValue}</TableCell>
+                    <TableCell>{item.depreciation_amount}</TableCell>
+                    <TableCell>{item.asset_name}</TableCell>
+                    <TableCell>{item.book_name}</TableCell>
+                    <TableCell>{item.transaction_date}</TableCell>
                   </TableRow>
                 ))
               )}

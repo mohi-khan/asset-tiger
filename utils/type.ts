@@ -346,7 +346,9 @@ export type CreateDepreciationInfoType = z.infer<typeof createDepreciationInfoSc
 export const getDepTranSchema = z.object({
   id: z.number().int(),
   asset_id: z.number().int(),
+  asset_name: z.string().max(255),
   book_id: z.number().int(),
+  book_name: z.string().max(100),
   transaction_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD expected)"),
   period: z.string().max(10),
   depreciation_amount: z.number(), // Can use `.nonnegative()` if needed
