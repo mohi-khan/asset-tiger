@@ -60,17 +60,6 @@ export async function createDepartment(
   })
 }
 
-export async function getAllCompany(token: string) {
-  return fetchApi<GetCompanyType[]>({
-    url: 'api/company/get-all-companies',
-    method: 'GET',
-    headers: {
-      Authentication: token,
-      'Content-Type': 'application/json',
-    },
-  })
-}
-
 export async function createCostCenter(
   data: CreateCostCenterType,
   token: string
@@ -475,6 +464,17 @@ export async function createAddition(
 export async function getAllAditions(token: string) {
   return fetchApi<GetAssetCapexAdditionType[]>({
     url: 'api/assetAddition/getall',
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getDepreciationReport(token: string, transactionDate: string) {
+  return fetchApi<GetDepTranType[]>({
+    url: `api/depCalculation/getDepByTranDate/${transactionDate}`,
     method: 'GET',
     headers: {
       Authorization: token,

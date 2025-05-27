@@ -1,19 +1,36 @@
-"use client"
+'use client'
 
-import type React from "react"
-
-import { useCallback, useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Popup } from "@/utils/popup"
-import { Plus } from "lucide-react"
-import { format } from "date-fns"
-import type { CreateAssetCapexAdditionType, GetAssetCapexAdditionType } from "@/utils/type"
-import { createAddition, getAllAditions } from "@/utils/api"
-import { tokenAtom, useInitializeUser, userDataAtom } from "@/utils/user"
-import { useAtom } from "jotai"
+import type React from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Popup } from '@/utils/popup'
+import { Plus } from 'lucide-react'
+import { format } from 'date-fns'
+import type {
+  CreateAssetCapexAdditionType,
+  GetAssetCapexAdditionType,
+  GetAssetType,
+} from '@/utils/type'
+import { createAddition, getAllAditions, getAllAssets } from '@/utils/api'
+import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
+import { useAtom } from 'jotai'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const AssetAddition = () => {
   useInitializeUser()
@@ -27,28 +44,47 @@ const AssetAddition = () => {
   // State for form data
   const [formData, setFormData] = useState<CreateAssetCapexAdditionType>({
     assetId: 0,
-    additionDate: format(new Date(), "yyyy-MM-dd"),
+    additionDate: format(new Date(), 'yyyy-MM-dd'),
     addedValue: 0,
-    description: "",
+    description: '',
     newBookValue: undefined,
     createdBy: userData?.userId || 0,
   })
 
   // State for table data
   const [additions, setAdditions] = useState<GetAssetCapexAdditionType[]>([])
+  const [assets, setAssets] = useState<GetAssetType[]>([])
 
   const fetchAdditions = useCallback(async () => {
     setIsLoading(true)
     try {
       const response = await getAllAditions(token)
-      console.log("🚀 ~ fetchAdditions ~ response:", response)
+      console.log('🚀 ~ fetchAdditions ~ response:', response)
       setAdditions(response.data ?? [])
     } catch (error) {
-      console.error("Error fetching asset additions:", error)
+      console.error('Error fetching asset additions:', error)
     } finally {
       setIsLoading(false)
     }
   }, [token])
+
+  const fetchAssets = useCallback(async () => {
+    try {
+      const data = await getAllAssets(token)
+      console.log('🚀 ~ fetchAssets ~ data:', data)
+      setAssets(data.data || [])
+    } catch (error) {
+      console.error('Failed to fetch assets:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [token])
+
+  // Fetch additions on component mount
+  useEffect(() => {
+    fetchAdditions()
+    fetchAssets()
+  }, [fetchAdditions])
 
   // Fetch additions on component mount
   useEffect(() => {
@@ -59,10 +95,14 @@ const AssetAddition = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target
 
-    if (type === "number") {
+    if (type === 'number') {
       setFormData((prev) => ({
         ...prev,
-        [name]: value ? Number(value) : name === "assetId" || name === "addedValue" ? 0 : undefined,
+        [name]: value
+          ? Number(value)
+          : name === 'assetId' || name === 'addedValue'
+            ? 0
+            : undefined,
       }))
     } else {
       setFormData((prev) => ({
@@ -91,18 +131,18 @@ const AssetAddition = () => {
         // Reset form and close popup
         resetForm()
       } catch (error) {
-        console.error("Error creating asset addition:", error)
+        console.error('Error creating asset addition:', error)
       }
     },
-    [formData, userData, token, fetchAdditions],
+    [formData, userData, token, fetchAdditions]
   )
 
   const resetForm = () => {
     setFormData({
       assetId: 0,
-      additionDate: format(new Date(), "yyyy-MM-dd"),
+      additionDate: format(new Date(), 'yyyy-MM-dd'),
       addedValue: 0,
-      description: "",
+      description: '',
       newBookValue: undefined,
       createdBy: userData?.userId || 0,
     })
@@ -111,9 +151,9 @@ const AssetAddition = () => {
 
   // Format date for display
   const formatDate = (date: string | null | undefined) => {
-    if (!date) return "-"
+    if (!date) return '-'
     try {
-      return format(new Date(date), "MMM dd, yyyy")
+      return format(new Date(date), 'MMM dd, yyyy')
     } catch {
       return date
     }
@@ -121,10 +161,10 @@ const AssetAddition = () => {
 
   // Format currency for display
   const formatCurrency = (value: number | null | undefined) => {
-    if (value === null || value === undefined) return "-"
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
+    if (value === null || value === undefined) return '-'
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
     }).format(value)
   }
 
@@ -138,7 +178,10 @@ const AssetAddition = () => {
           </div>
           <h2 className="text-lg font-semibold">Asset Additions</h2>
         </div>
-        <Button className="bg-yellow-400 hover:bg-yellow-500 text-black" onClick={() => setIsPopupOpen(true)}>
+        <Button
+          className="bg-yellow-400 hover:bg-yellow-500 text-black"
+          onClick={() => setIsPopupOpen(true)}
+        >
           Add Addition
         </Button>
       </div>
@@ -148,14 +191,10 @@ const AssetAddition = () => {
         <Table>
           <TableHeader className="bg-amber-100">
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Asset ID</TableHead>
+              <TableHead>Sl No</TableHead>
               <TableHead>Addition Date</TableHead>
               <TableHead>Added Value</TableHead>
-              <TableHead>New Book Value</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Created By</TableHead>
-              <TableHead>Created At</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -172,16 +211,14 @@ const AssetAddition = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              additions.map((addition) => (
+              additions.map((addition, index) => (
                 <TableRow key={addition.id}>
-                  <TableCell>{addition.id ?? "-"}</TableCell>
-                  <TableCell>{addition.assetId}</TableCell>
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell>{formatDate(addition.additionDate)}</TableCell>
                   <TableCell>{formatCurrency(addition.addedValue)}</TableCell>
-                  <TableCell>{formatCurrency(addition.newBookValue)}</TableCell>
-                  <TableCell className="max-w-xs truncate">{addition.description || "-"}</TableCell>
-                  <TableCell>{addition.createdBy ?? "-"}</TableCell>
-                  <TableCell>{addition.createdAt ? formatDate(addition.createdAt) : "-"}</TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {addition.description || '-'}
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -190,20 +227,38 @@ const AssetAddition = () => {
       </div>
 
       {/* Popup with form */}
-      <Popup isOpen={isPopupOpen} onClose={resetForm} title="Add Asset Capex Addition" size="sm:max-w-lg">
+      <Popup
+        isOpen={isPopupOpen}
+        onClose={resetForm}
+        title="Add Asset Capex Addition"
+        size="sm:max-w-lg"
+      >
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid gap-4">
             <div className="space-y-2">
-              <Label htmlFor="assetId">Asset ID*</Label>
-              <Input
-                id="assetId"
+              <Label htmlFor="assetId">Assets</Label>
+              <Select
                 name="assetId"
-                type="number"
-                min="0"
-                value={formData.assetId}
-                onChange={handleInputChange}
+                value={formData.assetId.toString()}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, assetId: parseInt(value) }))
+                }
                 required
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an asset" />
+                </SelectTrigger>
+                <SelectContent>
+                  {assets.map((asset) => (
+                    <SelectItem
+                      key={asset.id ?? 0}
+                      value={(asset.id ?? 0).toString()}
+                    >
+                      {asset.assetName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -240,7 +295,7 @@ const AssetAddition = () => {
                 type="number"
                 min="0"
                 step="0.01"
-                value={formData.newBookValue ?? ""}
+                value={formData.newBookValue ?? ''}
                 onChange={handleInputChange}
               />
             </div>
@@ -250,7 +305,7 @@ const AssetAddition = () => {
               <Input
                 id="description"
                 name="description"
-                value={formData.description ?? ""}
+                value={formData.description ?? ''}
                 onChange={handleInputChange}
                 placeholder="Optional description..."
               />

@@ -36,10 +36,11 @@ import {
   CreateAssetDepreciationType,
   GetCompanyType,
   GetDepreciationBookType,
+  GetDepTranType,
 } from '@/utils/type'
 import {
   createAssetDepreciation,
-  getAllCompany,
+  getAllCompanies,
   getAllDepreciationBook,
 } from '@/utils/api'
 import { CustomCombobox } from '@/utils/custom-combobox'
@@ -58,7 +59,7 @@ export default function AssetDepreciation() {
   const [depreciationBooks, setDepreciationBooks] = useState<
     GetDepreciationBookType[]
   >([])
-  const [previewData, setPreviewData] = useState<[] | null>(null)
+  const [previewData, setPreviewData] = useState<GetDepTranType[] | null>(null)
   const [formData, setFormData] = useState<CreateAssetDepreciationType | null>(
     null
   )
@@ -76,9 +77,9 @@ export default function AssetDepreciation() {
 
   // Fetch companies
   const fetchCompanies = useCallback(async () => {
-    // if (!token) return
+    if (!token) return
     try {
-      const response = await getAllCompany(token)
+      const response = await getAllCompanies(token)
       if (response.data) {
         setCompanies(response.data)
         console.log('🚀 ~ fetchCompanies ~ response.data:', response.data)
@@ -154,7 +155,11 @@ export default function AssetDepreciation() {
         )
       }
 
-      setPreviewData(response.data)
+      if (!Array.isArray(response.data)) {
+        throw new Error('Invalid response data format')
+      }
+
+      setPreviewData(response.data as GetDepTranType[])
       setFormData(data)
 
       toast({
@@ -403,28 +408,21 @@ export default function AssetDepreciation() {
                   {previewData.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell>{item.asset_id}</TableCell>
-                      <TableCell>{item.depreciation_method || 'N/A'}</TableCell>
+                      <TableCell>{item.transaction_date || 'N/A'}</TableCell>
                       <TableCell>
-                        {formatDate(item.depreciation_date)}
+                        {formatDate(item.transaction_date)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {formatCurrency(
-                          Number.parseFloat(item.depreciation_amount)
-                        )}
+                        {formatCurrency(item.depreciation_amount)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {formatCurrency(
-                          Number.parseFloat(item.accumulated_depreciation)
-                        )}
+                        {formatCurrency(item.depreciation_amount)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {formatCurrency(
-                          Number.parseFloat(item.remaining_value)
-                        )}
+                        {formatCurrency(item.depreciation_amount)}
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
+                  ))}                </TableBody>
               </Table>
             </div>
 
