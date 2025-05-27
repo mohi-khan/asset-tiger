@@ -60,17 +60,6 @@ export async function createDepartment(
   })
 }
 
-export async function getAllCompany(token: string) {
-  return fetchApi<GetCompanyType[]>({
-    url: 'api/company/get-all-companies',
-    method: 'GET',
-    headers: {
-      Authentication: token,
-      'Content-Type': 'application/json',
-    },
-  })
-}
-
 export async function createCostCenter(
   data: CreateCostCenterType,
   token: string
