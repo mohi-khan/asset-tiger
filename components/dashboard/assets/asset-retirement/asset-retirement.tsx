@@ -1,19 +1,30 @@
-"use client"
+'use client'
 
-import type React from "react"
-
-import { useCallback, useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Popup } from "@/utils/popup"
-import { Minus } from "lucide-react"
-import { format } from "date-fns"
-import type { CreateAssetPartialRetirementType, GetAssetPartialRetirementType } from "@/utils/type"
-import { createRetirement, getAllRetirements } from "@/utils/api"
-import { tokenAtom, useInitializeUser, userDataAtom } from "@/utils/user"
-import { useAtom } from "jotai"
+import type React from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Popup } from '@/utils/popup'
+import { Minus } from 'lucide-react'
+import { format } from 'date-fns'
+import type {
+  CreateAssetPartialRetirementType,
+  GetAssetPartialRetirementType,
+  GetAssetType,
+} from '@/utils/type'
+import { createRetirement, getAllAssets, getAllRetirements } from '@/utils/api'
+import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
+import { useAtom } from 'jotai'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const AssetRetirement = () => {
   useInitializeUser()
@@ -27,24 +38,39 @@ const AssetRetirement = () => {
   // State for form data
   const [formData, setFormData] = useState<CreateAssetPartialRetirementType>({
     assetId: 0,
-    retirementDate: format(new Date(), "yyyy-MM-dd"),
+    retirementDate: format(new Date(), 'yyyy-MM-dd'),
     retiredValue: 0,
-    reason: "",
+    reason: '',
     updatedBookValue: undefined,
     createdBy: userData?.userId || 0,
   })
 
   // State for table data
-  const [retirements, setRetirements] = useState<GetAssetPartialRetirementType[]>([])
+  const [retirements, setRetirements] = useState<
+    GetAssetPartialRetirementType[]
+  >([])
+  const [assets, setAssets] = useState<GetAssetType[]>([])
 
   const fetchRetirements = useCallback(async () => {
     setIsLoading(true)
     try {
       const response = await getAllRetirements(token)
-      console.log("🚀 ~ fetchRetirements ~ response:", response)
+      console.log('🚀 ~ fetchRetirements ~ response:', response)
       setRetirements(response.data ?? [])
     } catch (error) {
-      console.error("Error fetching asset retirements:", error)
+      console.error('Error fetching asset retirements:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [token])
+
+  const fetchAssets = useCallback(async () => {
+    try {
+      const data = await getAllAssets(token)
+      console.log('🚀 ~ fetchAssets ~ data:', data)
+      setAssets(data.data || [])
+    } catch (error) {
+      console.error('Failed to fetch assets:', error)
     } finally {
       setIsLoading(false)
     }
@@ -53,16 +79,21 @@ const AssetRetirement = () => {
   // Fetch retirements on component mount
   useEffect(() => {
     fetchRetirements()
+    fetchAssets()
   }, [fetchRetirements])
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target
 
-    if (type === "number") {
+    if (type === 'number') {
       setFormData((prev) => ({
         ...prev,
-        [name]: value ? Number(value) : name === "assetId" || name === "retiredValue" ? 0 : undefined,
+        [name]: value
+          ? Number(value)
+          : name === 'assetId' || name === 'retiredValue'
+            ? 0
+            : undefined,
       }))
     } else {
       setFormData((prev) => ({
@@ -91,18 +122,18 @@ const AssetRetirement = () => {
         // Reset form and close popup
         resetForm()
       } catch (error) {
-        console.error("Error creating asset retirement:", error)
+        console.error('Error creating asset retirement:', error)
       }
     },
-    [formData, userData, token, fetchRetirements],
+    [formData, userData, token, fetchRetirements]
   )
 
   const resetForm = () => {
     setFormData({
       assetId: 0,
-      retirementDate: format(new Date(), "yyyy-MM-dd"),
+      retirementDate: format(new Date(), 'yyyy-MM-dd'),
       retiredValue: 0,
-      reason: "",
+      reason: '',
       updatedBookValue: undefined,
       createdBy: userData?.userId || 0,
     })
@@ -111,9 +142,9 @@ const AssetRetirement = () => {
 
   // Format date for display
   const formatDate = (date: string | null | undefined) => {
-    if (!date) return "-"
+    if (!date) return '-'
     try {
-      return format(new Date(date), "MMM dd, yyyy")
+      return format(new Date(date), 'MMM dd, yyyy')
     } catch {
       return date
     }
@@ -121,10 +152,10 @@ const AssetRetirement = () => {
 
   // Format currency for display
   const formatCurrency = (value: number | null | undefined) => {
-    if (value === null || value === undefined) return "-"
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
+    if (value === null || value === undefined) return '-'
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
     }).format(value)
   }
 
@@ -138,7 +169,10 @@ const AssetRetirement = () => {
           </div>
           <h2 className="text-lg font-semibold">Asset Partial Retirements</h2>
         </div>
-        <Button className="bg-yellow-400 hover:bg-yellow-500 text-black" onClick={() => setIsPopupOpen(true)}>
+        <Button
+          className="bg-yellow-400 hover:bg-yellow-500 text-black"
+          onClick={() => setIsPopupOpen(true)}
+        >
           Add Retirement
         </Button>
       </div>
@@ -148,14 +182,10 @@ const AssetRetirement = () => {
         <Table>
           <TableHeader className="bg-amber-100">
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Asset ID</TableHead>
+              <TableHead>Sl No</TableHead>
               <TableHead>Retirement Date</TableHead>
               <TableHead>Retired Value</TableHead>
-              <TableHead>Updated Book Value</TableHead>
               <TableHead>Reason</TableHead>
-              <TableHead>Created By</TableHead>
-              <TableHead>Created At</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -172,16 +202,16 @@ const AssetRetirement = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              retirements.map((retirement) => (
+              retirements.map((retirement, index) => (
                 <TableRow key={retirement.id}>
-                  <TableCell>{retirement.id ?? "-"}</TableCell>
-                  <TableCell>{retirement.assetId}</TableCell>
+                  <TableCell>{index+1}</TableCell>
                   <TableCell>{formatDate(retirement.retirementDate)}</TableCell>
-                  <TableCell>{formatCurrency(retirement.retiredValue)}</TableCell>
-                  <TableCell>{formatCurrency(retirement.updatedBookValue)}</TableCell>
-                  <TableCell className="max-w-xs truncate">{retirement.reason || "-"}</TableCell>
-                  <TableCell>{retirement.createdBy ?? "-"}</TableCell>
-                  <TableCell>{retirement.createdAt ? formatDate(retirement.createdAt) : "-"}</TableCell>
+                  <TableCell>
+                    {formatCurrency(retirement.retiredValue)}
+                  </TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {retirement.reason || '-'}
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -190,20 +220,33 @@ const AssetRetirement = () => {
       </div>
 
       {/* Popup with form */}
-      <Popup isOpen={isPopupOpen} onClose={resetForm} title="Add Asset Partial Retirement" size="sm:max-w-lg">
+      <Popup
+        isOpen={isPopupOpen}
+        onClose={resetForm}
+        title="Add Asset Partial Retirement"
+        size="sm:max-w-lg"
+      >
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid gap-4">
             <div className="space-y-2">
-              <Label htmlFor="assetId">Asset ID*</Label>
-              <Input
-                id="assetId"
+              <Label htmlFor="assetId">Assets</Label>
+              <Select
                 name="assetId"
-                type="number"
-                min="0"
-                value={formData.assetId}
-                onChange={handleInputChange}
+                value={formData.assetId.toString()}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, assetId: parseInt(value) }))}
                 required
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an asset" />
+                </SelectTrigger>
+                <SelectContent>
+                  {assets.map((asset) => (
+                    <SelectItem key={asset.id ?? 0} value={(asset.id ?? 0).toString()}>
+                      {asset.assetName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -240,7 +283,7 @@ const AssetRetirement = () => {
                 type="number"
                 min="0"
                 step="0.01"
-                value={formData.updatedBookValue ?? ""}
+                value={formData.updatedBookValue ?? ''}
                 onChange={handleInputChange}
               />
             </div>
@@ -250,7 +293,7 @@ const AssetRetirement = () => {
               <Input
                 id="reason"
                 name="reason"
-                value={formData.reason ?? ""}
+                value={formData.reason ?? ''}
                 onChange={handleInputChange}
                 placeholder="Reason for retirement..."
               />
