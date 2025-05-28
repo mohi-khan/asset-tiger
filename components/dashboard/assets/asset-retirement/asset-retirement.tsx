@@ -24,12 +24,21 @@ import type {
 import { createRetirement, getAllAssets, getAllRetirements } from '@/utils/api'
 import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { useRouter } from 'next/router'
 
 const AssetRetirement = () => {
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
   const [userData] = useAtom(userDataAtom)
+
+  const router = useRouter()
 
   // State for popup visibility
   const [isPopupOpen, setIsPopupOpen] = useState(false)
@@ -52,11 +61,17 @@ const AssetRetirement = () => {
   const [assets, setAssets] = useState<GetAssetType[]>([])
 
   const fetchRetirements = useCallback(async () => {
+    if (!token) return
     setIsLoading(true)
     try {
       const response = await getAllRetirements(token)
-      console.log('🚀 ~ fetchRetirements ~ response:', response)
-      setRetirements(response.data ?? [])
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else {
+        setRetirements(response.data ?? [])
+        console.log('🚀 ~ fetchRetirements ~ response:', response)
+      }
     } catch (error) {
       console.error('Error fetching asset retirements:', error)
     } finally {
@@ -65,10 +80,16 @@ const AssetRetirement = () => {
   }, [token])
 
   const fetchAssets = useCallback(async () => {
+    if (!token) return
     try {
       const data = await getAllAssets(token)
-      console.log('🚀 ~ fetchAssets ~ data:', data)
-      setAssets(data.data || [])
+      if (data?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else {
+        console.log('🚀 ~ fetchAssets ~ data:', data)
+        setAssets(data.data || [])
+      }
     } catch (error) {
       console.error('Failed to fetch assets:', error)
     } finally {
@@ -80,7 +101,7 @@ const AssetRetirement = () => {
   useEffect(() => {
     fetchRetirements()
     fetchAssets()
-  }, [fetchRetirements])
+  }, [fetchRetirements, fetchAssets])
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -204,7 +225,7 @@ const AssetRetirement = () => {
             ) : (
               retirements.map((retirement, index) => (
                 <TableRow key={retirement.id}>
-                  <TableCell>{index+1}</TableCell>
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell>{formatDate(retirement.retirementDate)}</TableCell>
                   <TableCell>
                     {formatCurrency(retirement.retiredValue)}
@@ -233,7 +254,9 @@ const AssetRetirement = () => {
               <Select
                 name="assetId"
                 value={formData.assetId.toString()}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, assetId: parseInt(value) }))}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, assetId: parseInt(value) }))
+                }
                 required
               >
                 <SelectTrigger>
@@ -241,7 +264,10 @@ const AssetRetirement = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {assets.map((asset) => (
-                    <SelectItem key={asset.id ?? 0} value={(asset.id ?? 0).toString()}>
+                    <SelectItem
+                      key={asset.id ?? 0}
+                      value={(asset.id ?? 0).toString()}
+                    >
                       {asset.assetName}
                     </SelectItem>
                   ))}

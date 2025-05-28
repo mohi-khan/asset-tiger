@@ -14,9 +14,12 @@ import { getDepreciationReport } from '@/utils/api'
 import { GetDepTranType } from '@/utils/type'
 import { tokenAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
+import { useRouter } from 'next/router'
 
 export default function DepreciationReport() {
   const [token] = useAtom(tokenAtom)
+
+  const router = useRouter()
   const [transactionDate, setTransactionDate] = useState(
     new Date().toISOString().split('T')[0]
   )
@@ -24,11 +27,17 @@ export default function DepreciationReport() {
   const [loading, setLoading] = useState(false)
 
   const fetchData = async () => {
+    if (!token) return
     try {
       setLoading(true)
       const response = await getDepreciationReport(token, transactionDate)
-      setDepreciationData(response.data || [])
-      console.log("🚀 ~ fetchData ~ response.data:", response.data)
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else {
+        setDepreciationData(response.data || [])
+        console.log('🚀 ~ fetchData ~ response.data:', response.data)
+      }
     } catch (error) {
       console.error('Error fetching depreciation report:', error)
     } finally {

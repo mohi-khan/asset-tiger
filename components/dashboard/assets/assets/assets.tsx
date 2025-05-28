@@ -50,11 +50,14 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { createDepreciationInfoSchema } from '@/utils/type'
+import { useRouter } from 'next/navigation'
 
 const Assets = () => {
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
   const [userData] = useAtom(userDataAtom)
+
+  const router = useRouter()
 
   // State for assets data
   const [assets, setAssets] = useState<GetAssetType[]>([])
@@ -81,10 +84,17 @@ const Assets = () => {
 
   // Fetch assets on component mount
   const fetchAssets = useCallback(async () => {
+    if(!token) return
     try {
       const data = await getAllAssets(token)
       console.log('🚀 ~ fetchAssets ~ data:', data)
+      if (data?.error?.status === 401) {
+      router.push('/unauthorized-access')
+      return
+    }
+    else{
       setAssets(data.data || [])
+    }
     } catch (error) {
       console.error('Failed to fetch assets:', error)
       toast({

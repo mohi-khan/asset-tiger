@@ -46,11 +46,14 @@ import {
 import { CustomCombobox } from '@/utils/custom-combobox'
 import { useAtom } from 'jotai'
 import { tokenAtom, useInitializeUser } from '@/utils/user'
+import { useRouter } from 'next/navigation'
 
 export default function AssetDepreciation() {
   // Mock token - replace with your actual token management
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
+
+  const router = useRouter()
 
   // State variables
   const [isLoading, setIsLoading] = useState(false)
@@ -80,7 +83,10 @@ export default function AssetDepreciation() {
     if (!token) return
     try {
       const response = await getAllCompanies(token)
-      if (response.data) {
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else if (response.data) {
         setCompanies(response.data)
         console.log('🚀 ~ fetchCompanies ~ response.data:', response.data)
       } else {
@@ -108,7 +114,10 @@ export default function AssetDepreciation() {
     if (!token) return
     try {
       const response = await getAllDepreciationBook(token)
-      if (response.data) {
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else if (response.data) {
         setDepreciationBooks(response.data)
       } else {
         setDepreciationBooks([])
@@ -409,9 +418,7 @@ export default function AssetDepreciation() {
                     <TableRow key={index}>
                       <TableCell>{item.asset_id}</TableCell>
                       <TableCell>{item.transaction_date || 'N/A'}</TableCell>
-                      <TableCell>
-                        {formatDate(item.transaction_date)}
-                      </TableCell>
+                      <TableCell>{formatDate(item.transaction_date)}</TableCell>
                       <TableCell className="text-right">
                         {formatCurrency(item.depreciation_amount)}
                       </TableCell>
@@ -422,7 +429,8 @@ export default function AssetDepreciation() {
                         {formatCurrency(item.depreciation_amount)}
                       </TableCell>
                     </TableRow>
-                  ))}                </TableBody>
+                  ))}{' '}
+                </TableBody>
               </Table>
             </div>
 
