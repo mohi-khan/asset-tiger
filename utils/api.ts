@@ -472,9 +472,9 @@ export async function getAllAditions(token: string) {
   })
 }
 
-export async function getDepreciationReport(token: string, transactionDate: string) {
+export async function getDepreciationReport(token: string, period: number, bookId: number) {
   return fetchApi<GetDepTranType[]>({
-    url: `api/depCalculation/getDepByTranDate/${transactionDate}`,
+    url: `api/depCalculation/getDepByPeriodAndBook/${period}/${bookId}`,
     method: 'GET',
     headers: {
       Authorization: token,
