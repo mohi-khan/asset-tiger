@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
@@ -9,36 +9,89 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { getDepreciationReport } from '@/utils/api'
-import { GetDepTranType } from '@/utils/type'
-import { tokenAtom } from '@/utils/user'
+import { getAllDepreciationBook, getAllDepreciationTransactions, getDepreciationReport } from '@/utils/api'
+import { GetDepreciationBookType, GetDepTranType } from '@/utils/type'
+import { tokenAtom, useInitializeUser} from '@/utils/user'
 import { useAtom } from 'jotai'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useRouter } from 'next/navigation'
 
 export default function DepreciationReport() {
+  useInitializeUser()
   const [token] = useAtom(tokenAtom)
-  const [transactionDate, setTransactionDate] = useState(
-    new Date().toISOString().split('T')[0]
-  )
-  const [depreciationData, setDepreciationData] = useState<GetDepTranType[]>([])
+  console.log("🚀 ~ DepreciationReport ~ token:", token)
+
+  const router = useRouter()
+  const [selectedBookId, setSelectedBookId] = useState<number>(0)
+  const [selectedDepPeriod, setSelectedDepPeriod] = useState<number>(0)
+  const [periodId, setPeriodId] = useState<number>(0)
+  const [depreciationData, setDepreciationData] = useState<any[]>([])
+  const [bookData, setBookData] = useState<GetDepreciationBookType[]>([])
+  const [depTranData, setDepTranData] = useState<GetDepTranType[]>([])
   const [loading, setLoading] = useState(false)
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    if (!token) return
     try {
       setLoading(true)
-      const response = await getDepreciationReport(token, transactionDate)
-      setDepreciationData(response.data || [])
-      console.log("🚀 ~ fetchData ~ response.data:", response.data)
+      const response = await getDepreciationReport(token, periodId, selectedBookId)
+      if (response?.error?.status === 401) {
+        // router.push('/unauthorized-access')
+        return
+      } else {
+        setDepreciationData(response.data || [])
+        console.log('🚀 ~ fetchData ~ response.data:', response.data)
+      }
+    } catch (error) {
+      console.error('Error fetching selectDep report:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [token])
+
+  const fetchBookData = useCallback(async () => {
+    if (!token) return
+    try {
+      setLoading(true)
+      const response = await getAllDepreciationBook(token)
+      if (response?.error?.status === 401) {
+        // router.push('/unauthorized-access')
+        return
+      } else {
+        setBookData(response.data || [])
+        console.log('🚀 ~ fetchData ~ response.data:', response.data)
+      }
     } catch (error) {
       console.error('Error fetching depreciation report:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [token])
+
+  const fetchDepTran = useCallback(async () => {
+    if (!token) return
+    try {
+      setLoading(true)
+      const response = await getAllDepreciationTransactions(token)
+      if (response?.error?.status === 401) {
+        // router.push('/unauthorized-access')
+        return
+      } else {
+        setDepTranData(response.data || [])
+        console.log("🚀 ~ fetchDepTran ~ response.data:", response.data)
+      }
+    } catch (error) {
+      console.error('Error fetching depreciation report:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [token])
 
   useEffect(() => {
     fetchData()
-  }, [transactionDate])
+    fetchBookData()
+    fetchDepTran()
+  }, [periodId, selectedBookId, fetchData, fetchBookData, fetchDepTran])
 
   const handlePrint = () => {
     window.print()
@@ -56,17 +109,45 @@ export default function DepreciationReport() {
       <div className="mb-4 flex flex-wrap gap-4 print:hidden">
         <div>
           <label className="block text-sm font-medium mb-1">
-            Transaction Date
+            Period
           </label>
-          <Input
-            type="date"
-            value={transactionDate}
-            onChange={(e) => setTransactionDate(e.target.value)}
-          />
+          <Select value={periodId ? periodId.toString() : undefined} onValueChange={(value) => setPeriodId(Number(value))}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select period" />
+            </SelectTrigger>
+            <SelectContent>
+              {depTranData.map((item) => (
+                <SelectItem key={item.id} value={item.id.toString()}>
+                  {item.period}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Book
+          </label>
+          <Select value={selectedBookId ? selectedBookId.toString() : undefined} onValueChange={(value) => setSelectedBookId(Number(value))}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select book" />
+            </SelectTrigger>
+            <SelectContent>
+              {bookData.map((book) => (
+                <SelectItem key={book.id} value={book.id.toString()}>
+                  {book.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-end">
+          <Button onClick={fetchData} className="px-4 py-2">
+            Show
+          </Button>
+        </div>
 
-      <Card className="shadow-md">
+      </div>      <Card className="shadow-md">
         <CardContent className="overflow-auto">
           {loading ? (
             <p>Loading...</p>

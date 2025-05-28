@@ -20,6 +20,7 @@ import type { CreateCostCenterType, GetCostCenterType } from '@/utils/type'
 import { createCostCenter, getAllCostCenters } from '@/utils/api'
 import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
+import { useRouter } from 'next/navigation'
 
 const CostCenters = () => {
   const { toast } = useToast()
@@ -27,6 +28,8 @@ const CostCenters = () => {
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
   const [userData] = useAtom(userDataAtom)
+
+  const router = useRouter()
 
   // State for popup visibility
   const [isPopupOpen, setIsPopupOpen] = useState(false)
@@ -61,8 +64,13 @@ const CostCenters = () => {
     setIsLoading(true)
     try {
       const response = await getAllCostCenters(token)
-      console.log('🚀 ~ fetchCostCenters ~ response:', response)
-      setCostCenters(response.data ?? [])
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else {
+        console.log('🚀 ~ fetchCostCenters ~ response:', response)
+        setCostCenters(response.data ?? [])
+      }
     } catch (error) {
       console.error('Error fetching cost centers:', error)
     } finally {

@@ -33,7 +33,6 @@ import {
   createSite,
   createSupplier,
   getAllCategories,
-  getAllCompanies,
   getAllCostCenters,
   getAllDepartments,
   getAllLocations,
@@ -51,6 +50,7 @@ import { Switch } from '@/components/ui/switch'
 import { format, set } from 'date-fns'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
 
 const countries = [
   { id: 1, name: 'Bangladesh' },
@@ -62,6 +62,8 @@ const AddAssets = () => {
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
   const [userData] = useAtom(userDataAtom)
+
+  const router = useRouter()
 
   // Main form state
   const [formData, setFormData] = useState<CreateAssetType>({
@@ -182,7 +184,6 @@ const AddAssets = () => {
   // Fetch data from APIs
   const fetchData = useCallback(async () => {
     if (!token) return
-
     try {
       setLoading(true)
       const [
@@ -200,12 +201,24 @@ const AddAssets = () => {
         getAllSuppliers(token),
         getAllCostCenters(token),
       ])
-      setDepartments(departmentsData.data || [])
-      setCategories(categoriesData.data || [])
-      setLocations(locationsData.data || [])
-      setSites(sitesData.data || [])
-      setSuppliers(suppliersData.data || [])
-      setCostCenters(costCentersData.data || [])
+      if (
+        departmentsData?.error?.status === 401 ||
+        categoriesData?.error?.status === 401 ||
+        locationsData?.error?.status === 401 ||
+        sitesData?.error?.status === 401 ||
+        suppliersData?.error?.status === 401 ||
+        costCentersData?.error?.status === 401
+      ) {
+        router.push('/unauthorized-access')
+        return
+      } else {
+        setDepartments(departmentsData.data || [])
+        setCategories(categoriesData.data || [])
+        setLocations(locationsData.data || [])
+        setSites(sitesData.data || [])
+        setSuppliers(suppliersData.data || [])
+        setCostCenters(costCentersData.data || [])
+      }
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -1721,14 +1734,15 @@ const AddAssets = () => {
                     : Number(categoryFormData.depreciation_rate)
                 }
                 onChange={(e) => {
-                  const value = e.target.value === undefined ? null : Number(e.target.value)
+                  const value =
+                    e.target.value === undefined ? null : Number(e.target.value)
                   handleCategoryInputChange({
                     ...e,
                     target: {
                       ...e.target,
                       name: 'depreciation_rate',
                       value,
-                    }
+                    },
                   })
                 }}
               />

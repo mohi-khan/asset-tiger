@@ -22,12 +22,14 @@ import { CreateDepartmentType, GetDepartmentType } from '@/utils/type'
 import { createDepartment, getAllDepartments } from '@/utils/api'
 import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
+import { useRouter } from 'next/navigation'
 
 const Departments = () => {
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
   const [userData] = useAtom(userDataAtom)
-  // console.log('🚀 ~ Departments ~ token:', token)
+
+  const router = useRouter()
 
   // State for popup visibility
   const [isPopupOpen, setIsPopupOpen] = useState(false)
@@ -49,14 +51,17 @@ const Departments = () => {
   const [departments, setDepartments] = useState<GetDepartmentType[]>([])
 
   const fetchDepartments = useCallback(async () => {
-    // if (!token) return
+    if (!token) return
     setIsLoading(true)
     try {
       const response = await getAllDepartments(token)
-      console.log('🚀 ~ fetchDepartments ~ token:', token)
-
-      console.log('🚀 ~ fetchDepartments ~ response:', response)
-      setDepartments(response.data ?? [])
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else {
+        console.log('🚀 ~ fetchDepartments ~ response:', response)
+        setDepartments(response.data ?? [])
+      }
     } catch (error) {
       console.error('Error fetching departments:', error)
     } finally {
@@ -108,12 +113,8 @@ const Departments = () => {
         // Convert Date objects to 'YYYY-MM-DD' strings
         const payload = {
           ...formData,
-          startDate: formData.startDate
-            ? new Date(formData.startDate)
-            : null,
-          endDate: formData.endDate
-            ? new Date(formData.endDate)
-            : null,
+          startDate: formData.startDate ? new Date(formData.startDate) : null,
+          endDate: formData.endDate ? new Date(formData.endDate) : null,
         }
 
         await createDepartment(payload, token)
