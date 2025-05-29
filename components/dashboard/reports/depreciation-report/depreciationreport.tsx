@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { getAllDepreciationBook, getAllDepreciationTransactions, getDepreciationReport } from '@/utils/api'
-import { GetDepreciationBookType, GetDepTranType } from '@/utils/type'
+import { GetDepreciationBookType, GetDepreciationReportType, GetDepTranType } from '@/utils/type'
 import { tokenAtom, useInitializeUser} from '@/utils/user'
 import { useAtom } from 'jotai'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -19,19 +19,18 @@ import { useRouter } from 'next/navigation'
 export default function DepreciationReport() {
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
-  console.log("🚀 ~ DepreciationReport ~ token:", token)
 
   const router = useRouter()
   const [selectedBookId, setSelectedBookId] = useState<number>(0)
   const [selectedDepPeriod, setSelectedDepPeriod] = useState<number>(0)
-  const [periodId, setPeriodId] = useState<number>(0)
-  const [depreciationData, setDepreciationData] = useState<any[]>([])
+  const [periodId, setPeriodId] = useState<string>('')
+  const [depreciationData, setDepreciationData] = useState<GetDepreciationReportType[]>([])
   const [bookData, setBookData] = useState<GetDepreciationBookType[]>([])
   const [depTranData, setDepTranData] = useState<GetDepTranType[]>([])
   const [loading, setLoading] = useState(false)
 
   const fetchData = useCallback(async () => {
-    if (!token) return
+    if (!token || !periodId || !selectedBookId) return
     try {
       setLoading(true)
       const response = await getDepreciationReport(token, periodId, selectedBookId)
@@ -47,7 +46,7 @@ export default function DepreciationReport() {
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }, [token, periodId, selectedBookId])
 
   const fetchBookData = useCallback(async () => {
     if (!token) return
@@ -59,7 +58,7 @@ export default function DepreciationReport() {
         return
       } else {
         setBookData(response.data || [])
-        console.log('🚀 ~ fetchData ~ response.data:', response.data)
+        console.log('🚀 ~ fetchBookData ~ response.data:', response.data)
       }
     } catch (error) {
       console.error('Error fetching depreciation report:', error)
@@ -78,7 +77,7 @@ export default function DepreciationReport() {
         return
       } else {
         setDepTranData(response.data || [])
-        console.log("🚀 ~ fetchDepTran ~ response.data:", response.data)
+        console.log("ddddddddddddddddddd", response.data)
       }
     } catch (error) {
       console.error('Error fetching depreciation report:', error)
@@ -88,10 +87,9 @@ export default function DepreciationReport() {
   }, [token])
 
   useEffect(() => {
-    fetchData()
     fetchBookData()
     fetchDepTran()
-  }, [periodId, selectedBookId, fetchData, fetchBookData, fetchDepTran])
+  }, [fetchBookData, fetchDepTran])
 
   const handlePrint = () => {
     window.print()
@@ -111,13 +109,13 @@ export default function DepreciationReport() {
           <label className="block text-sm font-medium mb-1">
             Period
           </label>
-          <Select value={periodId ? periodId.toString() : undefined} onValueChange={(value) => setPeriodId(Number(value))}>
+          <Select value={periodId} onValueChange={(value) => setPeriodId(value)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
               {depTranData.map((item) => (
-                <SelectItem key={item.id} value={item.id.toString()}>
+                <SelectItem key={item.id} value={item.period}>
                   {item.period}
                 </SelectItem>
               ))}
@@ -128,7 +126,7 @@ export default function DepreciationReport() {
           <label className="block text-sm font-medium mb-1">
             Book
           </label>
-          <Select value={selectedBookId ? selectedBookId.toString() : undefined} onValueChange={(value) => setSelectedBookId(Number(value))}>
+          <Select value={selectedBookId.toString()} onValueChange={(value) => setSelectedBookId(Number(value))}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select book" />
             </SelectTrigger>
@@ -160,7 +158,12 @@ export default function DepreciationReport() {
                   <TableHead>Book Name</TableHead>
                   <TableHead>Transaction Date</TableHead>
                   <TableHead>Period</TableHead>
-                  <TableHead>Depreciation (BDT)</TableHead>
+                  <TableHead>Depreciation Amount (BDT)</TableHead>
+                  <TableHead>Depreciation Rate (%)</TableHead>
+                  <TableHead>Useful Life (Months)</TableHead>
+                  <TableHead>Residual Value (BDT)</TableHead>
+                  <TableHead>Current Value (BDT)</TableHead>
+                  <TableHead>Accumulated Depreciation (BDT)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -173,12 +176,17 @@ export default function DepreciationReport() {
                       <TableCell>{item.transaction_date}</TableCell>
                       <TableCell>{item.period}</TableCell>
                       <TableCell>{item.depreciation_amount}</TableCell>
+                      <TableCell>{item.depreciation_rate}</TableCell>
+                      <TableCell>{item.useful_life_months}</TableCell>
+                      <TableCell>{item.residual_value}</TableCell>
+                      <TableCell>{item.current_value}</TableCell>
+                      <TableCell>{item.acc_dep}</TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={11}
                       className="text-center text-gray-500"
                     >
                       No data found for this date
@@ -186,8 +194,7 @@ export default function DepreciationReport() {
                   </TableRow>
                 )}
               </TableBody>
-            </Table>
-          )}
+            </Table>          )}
         </CardContent>
       </Card>
     </div>

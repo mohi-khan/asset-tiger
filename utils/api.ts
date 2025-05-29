@@ -25,6 +25,7 @@ import {
   GetCostCenterType,
   GetDepartmentType,
   GetDepreciationBookType,
+  GetDepreciationReportType,
   GetDepTranType,
   GetDisposeType,
   GetLocationType,
@@ -411,7 +412,7 @@ export async function getDepreciationByAssetId(token: string, assetId: number) {
 
 export async function getAllDepreciationTransactions(token: string) {
   return fetchApi<GetDepTranType[]>({
-    url: 'api/depBook/getall',
+    url: 'api/depCalculation/getAllDepreciation',
     method: 'GET',
     headers: {
       Authorization: token,
@@ -472,8 +473,8 @@ export async function getAllAditions(token: string) {
   })
 }
 
-export async function getDepreciationReport(token: string, period: number, bookId: number) {
-  return fetchApi<GetDepTranType[]>({
+export async function getDepreciationReport(token: string, period: string, bookId: number) {
+  return fetchApi<GetDepreciationReportType[]>({
     url: `api/depCalculation/getDepByPeriodAndBook/${period}/${bookId}`,
     method: 'GET',
     headers: {
