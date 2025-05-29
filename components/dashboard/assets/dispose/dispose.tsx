@@ -25,8 +25,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Popup } from '@/utils/popup'
 import { Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
-import type { CreateDisposeType, GetDisposeType } from '@/utils/type'
-import { createDispose, getAllDispose } from '@/utils/api'
+import { GetAssetType, type CreateDisposeType, type GetDisposeType } from '@/utils/type'
+import { createDispose, getAllAssets, getAllDispose } from '@/utils/api'
 import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
 import { useRouter } from 'next/navigation'
@@ -55,6 +55,7 @@ const Dispose = () => {
 
   // State for table data
   const [disposes, setDisposes] = useState<GetDisposeType[]>([])
+  const [assets, setAssets] = useState<GetAssetType[]>([])
 
   const fetchDisposes = useCallback(async () => {
     if (!token) return
@@ -75,10 +76,30 @@ const Dispose = () => {
     }
   }, [token])
 
+  const fetchAssets = useCallback(async () => {
+    if (!token) return
+    setIsLoading(true)
+    try {
+      const response = await getAllAssets(token)
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else {
+        console.log('🚀 ~ fetchAssets ~ response:', response)
+        setAssets(response.data ?? [])
+      }
+    } catch (error) {
+      console.error('Error fetching disposes:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [token])
+
   // Fetch disposes on component mount
   useEffect(() => {
     fetchDisposes()
-  }, [fetchDisposes])
+    fetchAssets()
+  }, [fetchDisposes, fetchAssets])
 
   // Update performed_by when userData changes
   useEffect(() => {
@@ -109,11 +130,11 @@ const Dispose = () => {
     }
   }
 
-  // Handle select change for method
-  const handleSelectChange = (value: string) => {
+  // Handle select change for method and asset_id
+  const handleSelectChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
-      method: value as 'Sell' | 'Scrap' | 'Donate' | 'Transfer',
+      [field]: field === 'asset_id' ? Number(value) : value,
     }))
   }
 
@@ -185,8 +206,8 @@ const Dispose = () => {
         <Table>
           <TableHeader className="bg-amber-100">
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Asset ID</TableHead>
+              <TableHead>Sl No.</TableHead>
+              <TableHead>Asset</TableHead>
               <TableHead>Dispose Date</TableHead>
               <TableHead>Reason</TableHead>
               <TableHead>Method</TableHead>
@@ -209,10 +230,10 @@ const Dispose = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              disposes.map((dispose) => (
+              disposes.map((dispose, index) => (
                 <TableRow key={dispose.id}>
-                  <TableCell>{dispose.id}</TableCell>
-                  <TableCell>{dispose.asset_id}</TableCell>
+                  <TableCell>{index+1}</TableCell>
+                  <TableCell>{dispose.asset_name}</TableCell>
                   <TableCell>{formatDate(dispose.dispose_date)}</TableCell>
                   <TableCell
                     className="max-w-[200px] truncate"
@@ -260,16 +281,22 @@ const Dispose = () => {
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid gap-4">
             <div className="space-y-2">
-              <Label htmlFor="asset_id">Asset ID*</Label>
-              <Input
-                id="asset_id"
-                name="asset_id"
-                type="number"
-                value={formData.asset_id || ''}
-                onChange={handleInputChange}
-                required
-                min="1"
-              />
+              <Label htmlFor="asset_id">Asset</Label>
+              <Select
+                value={formData.asset_id?.toString() || ''}
+                onValueChange={(value) => handleSelectChange('asset_id', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select asset" />
+                </SelectTrigger>
+                <SelectContent>
+                  {assets.map((asset) => (
+                    <SelectItem key={asset.id ?? 0} value={(asset.id ?? 0).toString()}>
+                      {asset.assetName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -301,7 +328,7 @@ const Dispose = () => {
               <Label htmlFor="method">Disposal Method*</Label>
               <Select
                 value={formData.method}
-                onValueChange={handleSelectChange}
+                onValueChange={(value) => handleSelectChange('method', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select disposal method" />

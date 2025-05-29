@@ -15,6 +15,7 @@ import { tokenAtom, useInitializeUser} from '@/utils/user'
 import { useAtom } from 'jotai'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useRouter } from 'next/navigation'
+import { format } from 'date-fns'
 
 export default function DepreciationReport() {
   useInitializeUser()
@@ -95,6 +96,11 @@ export default function DepreciationReport() {
     window.print()
   }
 
+  const formatDate = (dateString: string) => {
+      if (!dateString) return '-'
+      return format(new Date(dateString), 'MMM dd, yyyy')
+    }
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
@@ -153,11 +159,8 @@ export default function DepreciationReport() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Asset ID</TableHead>
                   <TableHead>Asset Name</TableHead>
-                  <TableHead>Book Name</TableHead>
                   <TableHead>Transaction Date</TableHead>
-                  <TableHead>Period</TableHead>
                   <TableHead>Depreciation Amount (BDT)</TableHead>
                   <TableHead>Depreciation Rate (%)</TableHead>
                   <TableHead>Useful Life (Months)</TableHead>
@@ -170,11 +173,8 @@ export default function DepreciationReport() {
                 {depreciationData.length > 0 ? (
                   depreciationData.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell>{item.asset_id}</TableCell>
                       <TableCell>{item.asset_name}</TableCell>
-                      <TableCell>{item.book_name}</TableCell>
-                      <TableCell>{item.transaction_date}</TableCell>
-                      <TableCell>{item.period}</TableCell>
+                      <TableCell>{formatDate(item.transaction_date)}</TableCell>
                       <TableCell>{item.depreciation_amount}</TableCell>
                       <TableCell>{item.depreciation_rate}</TableCell>
                       <TableCell>{item.useful_life_months}</TableCell>

@@ -415,6 +415,7 @@ export type CreateWarrantyType = z.infer<typeof createWarrantySchema>;
 export const getDisposeSchema = z.object({
   id: z.number().int().optional(), // optional if auto-incremented
   asset_id: z.number().int().nonnegative(),
+  asset_name: z.string().min(1, { message: "Asset name is required" }),
   dispose_date: z.string().refine(
     (val) => !isNaN(Date.parse(val)),
     { message: "Invalid date format" }
