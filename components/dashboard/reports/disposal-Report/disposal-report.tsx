@@ -13,31 +13,50 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAtom } from "jotai";
 import { tokenAtom, useInitializeUser } from "@/utils/user";
-import { getDisposeReport } from "@/utils/api";
-import { GetDisposeType } from "@/utils/type";
+import { getAllCompanies, getDisposeReport } from "@/utils/api";
+import { GetCompanyType, GetDisposeType } from "@/utils/type";
 import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function AssetDisposalReport() {
   useInitializeUser();
   const [token] = useAtom(tokenAtom);
 
-  const [disposeDate, setDisposeDate] = useState("");
   const [disposeData, setDisposeData] = useState<GetDisposeType[]>([]);
+  const [companyData, setCompanyData] = useState<GetCompanyType[]>([]);
+  const [disposeDate, setDisposeDate] = useState<string>("");
+  const [companyId, setCompanyId] = useState<number>(0);
   const [loading, setLoading] = useState(false);
 
   const fetchDisposeData = useCallback(async () => {
-    if (!token || !disposeDate) return;
-
     try {
       setLoading(true);
-      const response = await getDisposeReport(token, disposeDate);
+      const response = await getDisposeReport(token, disposeDate, companyId);
       setDisposeData(response.data || []);
+      console.log("🚀 ~ fetchDisposeData ~ response.data:", response.data)
     } catch (error) {
       console.error("Error fetching disposal data:", error);
     } finally {
       setLoading(false);
     }
-  }, [token, disposeDate]);
+  }, [token, disposeDate, companyId]);
+
+  const fetchCompanyData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await getAllCompanies(token);
+      setCompanyData(response.data || []);
+      console.log("🚀 ~ fetchCompanyData ~ response.data:", response.data)
+    } catch (error) {
+      console.error("Error fetching disposal data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchCompanyData();
+  }, [fetchCompanyData]);
 
   const handlePrint = () => {
     window.print();
@@ -65,6 +84,21 @@ export default function AssetDisposalReport() {
             value={disposeDate}
             onChange={(e) => setDisposeDate(e.target.value)}
           />
+        </div>
+        <div>
+          <Label className="mb-1 block">Company</Label>
+          <Select onValueChange={(value) => setCompanyId(Number(value))} value={companyId ? companyId.toString() : undefined}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select company" />
+            </SelectTrigger>
+            <SelectContent>
+              {companyData.map((company) => (
+                <SelectItem key={company.companyId} value={company.companyId.toString()}>
+                  {company.companyName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <Button onClick={fetchDisposeData} className="px-4 py-2">
           Show
