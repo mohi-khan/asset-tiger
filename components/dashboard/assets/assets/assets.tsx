@@ -82,6 +82,7 @@ const Assets = () => {
   // Fetch assets on component mount
   const fetchAssets = useCallback(async () => {
     try {
+      console.log(token)
       const data = await getAllAssets(token)
       console.log('🚀 ~ fetchAssets ~ data:', data)
       setAssets(data.data || [])
