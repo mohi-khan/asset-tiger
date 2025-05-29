@@ -415,6 +415,7 @@ export type CreateWarrantyType = z.infer<typeof createWarrantySchema>;
 export const getDisposeSchema = z.object({
   id: z.number().int().optional(), // optional if auto-incremented
   asset_id: z.number().int().nonnegative(),
+  asset_name: z.string().min(1, { message: "Asset name is required" }),
   dispose_date: z.string().refine(
     (val) => !isNaN(Date.parse(val)),
     { message: "Invalid date format" }
@@ -492,6 +493,30 @@ export const createAssetCapexAdditionSchema = z.object({
   createdAt: z.string().datetime().optional() // set automatically by DB
 });
 export type CreateAssetCapexAdditionType = z.infer<typeof createAssetCapexAdditionSchema>;
+
+//depreciation report
+export const getDepreciationReportSchema = z.object({
+  id: z.number(),
+  asset_id: z.number(),
+  book_id: z.number(),
+  asset_name: z.string(),
+  book_name: z.string(),
+  transaction_date: z.string().refine(val => !isNaN(Date.parse(val)), {
+    message: "Invalid date format",
+  }),
+  period: z.string().regex(/^\d{4}-\d{2}$/, {
+    message: "Period must be in YYYY-MM format",
+  }),
+  depreciation_amount: z.number(),
+  created_by: z.number(),
+  depreciation_rate: z.number(),
+  useful_life_months: z.number(),
+  residual_value: z.number(),
+  current_value: z.number(),
+  acc_dep: z.number(),
+});
+export type GetDepreciationReportType = z.infer<typeof getDepreciationReportSchema>;
+
 
 
 
