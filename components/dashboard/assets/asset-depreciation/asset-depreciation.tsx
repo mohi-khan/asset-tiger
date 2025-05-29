@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import type * as z from 'zod'
+import { useForm } from 'react-hook-form'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,18 +23,6 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import {
-//   createAssetDepreciationSchema,
-//   type GetAssetData,
-  VoucherTypes,
-} from '@/utils/type'
-// import {
-//   createAssetDepreciation,
-//   createJournalEntryWithDetails,
-//   previewAssetDepreciation,
-// } from '@/api/asset-depreciation-api'
-import { toast } from '@/hooks/use-toast'
-import { CustomCombobox } from '@/utils/custom-combobox'
-import {
   Table,
   TableBody,
   TableCell,
@@ -42,20 +30,27 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-// import { formatCurrency } from '@/utils/format'
-import { useForm } from 'react-hook-form'
-import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
+import { toast } from '@/hooks/use-toast'
+import {
+  createAssetDepreciationSchema,
+  CreateAssetDepreciationType,
+  GetCompanyType,
+  GetDepreciationBookType,
+  GetDepTranType,
+} from '@/utils/type'
+import {
+  createAssetDepreciation,
+  getAllCompanies,
+  getAllDepreciationBook,
+} from '@/utils/api'
+import { CustomCombobox } from '@/utils/custom-combobox'
 import { useAtom } from 'jotai'
-// import { getAllCompanies, getAssets } from '@/api/common-shared-api'
+import { tokenAtom, useInitializeUser } from '@/utils/user'
 import { useRouter } from 'next/navigation'
 
-// Use the imported schema instead of defining a new one
-type FormValues = z.infer<typeof createAssetDepreciationSchema>
-
 export default function AssetDepreciation() {
-  //getting userData from jotai atom component
+  // Mock token - replace with your actual token management
   useInitializeUser()
-  const [userData] = useAtom(userDataAtom)
   const [token] = useAtom(tokenAtom)
 
   const router = useRouter()
@@ -63,51 +58,105 @@ export default function AssetDepreciation() {
   // State variables
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [companies, setCompanies] = useState<any[]>([])
-  const [previewData, setPreviewData] = useState<any[] | null>(null)
-  const [formData, setFormData] = useState<FormValues | null>(null)
-  const [asset, setAsset] = useState<GetAssetData[]>([])
-  const [userId, setUserId] = useState<number | undefined>()
+  const [companies, setCompanies] = useState<GetCompanyType[]>([])
+  const [depreciationBooks, setDepreciationBooks] = useState<
+    GetDepreciationBookType[]
+  >([])
+  const [previewData, setPreviewData] = useState<GetDepTranType[] | null>(null)
+  const [formData, setFormData] = useState<CreateAssetDepreciationType | null>(
+    null
+  )
 
-  // Initialize the form with react-hook-form
-  const form = useForm<FormValues>({
+  // Form setup
+  const form = useForm<CreateAssetDepreciationType>({
     resolver: zodResolver(createAssetDepreciationSchema),
     defaultValues: {
-      company_id: 75, // Changed from empty string to undefined for number type
+      company_id: 1,
       depreciation_date: '',
+      book_id: 0,
+      saveToDatabase: false,
     },
   })
 
-  useEffect(() => {
-    // Ensure we're in a browser environment
-    if (typeof window !== 'undefined') {
-      if (userData) {
-        setUserId(userData?.userId)
-        console.log('Current userId from localStorage:', userData.userId)
+  // Fetch companies
+  const fetchCompanies = useCallback(async () => {
+    if (!token) return
+    try {
+      const response = await getAllCompanies(token)
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else if (response.data) {
+        setCompanies(response.data)
+        console.log('🚀 ~ fetchCompanies ~ response.data:', response.data)
       } else {
-        console.log('No user data found in localStorage')
+        setCompanies([])
+        if (response.error) {
+          toast({
+            title: 'Error',
+            description: response.error.message,
+            variant: 'destructive',
+          })
+        }
       }
+    } catch (error) {
+      console.error('Failed to fetch companies:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch companies',
+        variant: 'destructive',
+      })
     }
-  }, [userData])
+  }, [token])
+
+  // Fetch depreciation books
+  const fetchDepreciationBooks = useCallback(async () => {
+    if (!token) return
+    try {
+      const response = await getAllDepreciationBook(token)
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else if (response.data) {
+        setDepreciationBooks(response.data)
+      } else {
+        setDepreciationBooks([])
+        if (response.error) {
+          toast({
+            title: 'Error',
+            description: response.error.message,
+            variant: 'destructive',
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch depreciation books:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch depreciation books',
+        variant: 'destructive',
+      })
+    }
+  }, [token])
+
+  useEffect(() => {
+    fetchCompanies()
+    fetchDepreciationBooks()
+  }, [fetchCompanies, fetchDepreciationBooks])
 
   // Handle preview request
-  const onPreview = async (data: FormValues) => {
+  const onPreview = async (data: CreateAssetDepreciationType) => {
     setIsLoading(true)
-    setPreviewData(null) // Clear any existing preview data
+    setPreviewData(null)
 
     try {
-      console.log('Calling preview API with data:', data)
-
-      // Make sure we're calling the preview API, not the create API
-      const response = await previewAssetDepreciation(
+      const response = await createAssetDepreciation(
         {
-          company_id: data.company_id,
-          depreciation_date: data.depreciation_date,
+          ...data,
+          saveToDatabase: false,
         },
         token
       )
-
-      console.log('Preview API response:', response.data)
 
       if (response.error || !response.data) {
         throw new Error(
@@ -115,22 +164,22 @@ export default function AssetDepreciation() {
         )
       }
 
-      // The response is already an array of depreciation items
-      const schedules = response.data || []
-      console.log('Setting preview data:', schedules)
+      if (!Array.isArray(response.data)) {
+        throw new Error('Invalid response data format')
+      }
 
-      setPreviewData(schedules)
-      setFormData(data) // Store the form data for later submission
+      setPreviewData(response.data as GetDepTranType[])
+      setFormData(data)
 
       toast({
         title: 'Preview Generated',
         description: 'Review the depreciation schedule below before submitting',
       })
     } catch (error) {
-      // console.error('Error previewing asset depreciation:', error)
       toast({
         title: 'Error',
-        description: `${typeof error === 'object' && error !== null && 'message' in error ? (error as any).message : String(error)}`,
+        description:
+          error instanceof Error ? error.message : 'An error occurred',
         variant: 'destructive',
       })
     } finally {
@@ -138,148 +187,23 @@ export default function AssetDepreciation() {
     }
   }
 
-  const fetchAssets = async () => {
-    if (!token) return
-    try {
-      const assetdata = await getAssets(token)
-      if (assetdata.data) {
-        setAsset(assetdata.data)
-      } else {
-        setAsset([])
-      }
-      console.log('Show The Assets All Data :', assetdata.data)
-    } catch (error) {
-      console.error('Failed to fetch asset categories:', error)
-    }
-  }
-
-  useEffect(() => {
-    fetchAssets()
-  }, [])
-
   // Handle final submission to database
   const onSubmit = async () => {
     if (!formData) return
 
     setIsSubmitting(true)
     try {
-      // Step 1: Create asset depreciation
       const response = await createAssetDepreciation(
         {
-          company_id: formData.company_id,
-          depreciation_date: formData.depreciation_date,
+          ...formData,
+          saveToDatabase: true,
         },
         token
       )
-      console.log('"Asset depreciation created successfully:", response.data)')
 
       if (response.error) {
         throw new Error(
           response.error.message || 'Failed to create depreciation schedule'
-        )
-      }
-
-      // Step 2: Create journal voucher in the background
-      console.log('Starting journal voucher creation...')
-      try {
-        // Get the asset data for each asset in the depreciation schedule
-        if (!previewData || previewData.length === 0) {
-          console.log('No preview data available for journal entries')
-          return
-        }
-
-        // Process each asset in the depreciation schedule
-        for (const depreciationItem of previewData) {
-          // Find the corresponding asset data
-          const assetData = asset.find(
-            (a) => a.id === depreciationItem.asset_id
-          )
-
-          if (!assetData) {
-            console.error(
-              `Asset data not found for asset ID: ${depreciationItem.asset_id}`
-            )
-            continue
-          }
-
-          // Calculate the total depreciation amount for this asset
-          const depreciationAmount = Number.parseFloat(
-            depreciationItem.depreciation_amount
-          )
-
-          // Type guard: Check if locationId is defined
-          if (assetData.locationId === undefined) {
-            return
-          }
-          if (userId === undefined) {
-            return
-          }
-
-          const journalVoucherData = {
-            journalEntry: {
-              date: new Date().toISOString().split('T')[0],
-              journalType: VoucherTypes.JournalVoucher,
-              state: 0,
-              companyId: assetData.companyId,
-              locationId: assetData.locationId, // Now we know this is defined
-              currencyId: 1,
-              amountTotal: depreciationAmount,
-              exchangeRate: 1,
-              notes: `Auto-generated for Asset Depreciation: ${assetData.name} on ${formData.depreciation_date}`,
-              createdBy: userId, // Now we know userId is defined from the type guard above
-            },
-            journalDetails: [
-              {
-                accountId: assetData.accountId,
-                costCenterId: assetData.costCenterId,
-                departmentId: assetData.departmentId,
-                notes: `Depreciation Expense for ${assetData.name}`,
-                debit: depreciationAmount,
-                credit: 0,
-                createdBy: userId, // Now we know userId is defined
-              },
-              {
-                accountId: assetData.accountId, // Accumulated Depreciation account
-                costCenterId: assetData.costCenterId,
-                departmentId: assetData.departmentId,
-                notes: `Accumulated Depreciation for ${assetData.name}`,
-                debit: 0,
-                credit: depreciationAmount,
-                createdBy: userId, // Now we know userId is defined
-              },
-            ],
-          }
-
-          console.log(
-            `Creating journal voucher for asset ${assetData.id} (${assetData.name}):`,
-            JSON.stringify(journalVoucherData, null, 2)
-          )
-
-          const journalResponse = await createJournalEntryWithDetails(
-            journalVoucherData,
-            token
-          )
-
-          if (
-            !journalResponse ||
-            journalResponse.error ||
-            !journalResponse.data
-          ) {
-            console.error(
-              `Journal voucher creation failed for asset ${assetData.id}:`,
-              journalResponse
-            )
-          } else {
-            console.log(
-              `Journal voucher created successfully for asset ${assetData.id}:`,
-              journalResponse.data
-            )
-          }
-        }
-      } catch (journalError) {
-        console.error(
-          'Exception during journal voucher creation:',
-          journalError
         )
       }
 
@@ -293,10 +217,12 @@ export default function AssetDepreciation() {
       setPreviewData(null)
       setFormData(null)
     } catch (error) {
-      console.error('Error creating asset depreciation:', error)
       toast({
         title: 'Error',
-        description: 'Failed to create asset depreciation schedule',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Failed to create asset depreciation schedule',
         variant: 'destructive',
       })
     } finally {
@@ -304,40 +230,15 @@ export default function AssetDepreciation() {
     }
   }
 
-  const fetchAllCompanies = useCallback(async () => {
-    if (!token) return
-    try {
-      const fetchedCompanies = await getAllCompanies(token)
-      if (fetchedCompanies?.error?.status === 401) {
-        router.push('/unauthorized-access')
-        return
-      } else if (fetchedCompanies.error || !fetchedCompanies.data) {
-        console.error('Error getting companies:', fetchedCompanies.error)
-        toast({
-          title: 'Error',
-          description:
-            fetchedCompanies.error?.message || 'Failed to get companies',
-          variant: 'destructive',
-        })
-      } else {
-        setCompanies(fetchedCompanies.data)
-      }
-    } catch (error) {
-      console.error('Error fetching companies:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch companies',
-        variant: 'destructive',
-      })
-    }
-  }, [token])
+  // Format currency for display
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount)
+  }
 
-  useEffect(() => {
-    fetchAllCompanies()
-    // Empty dependency array ensures this only runs once on component mount
-  }, [])
-
-  // Function to format date for display
+  // Format date for display
   const formatDate = (dateString: string | Date) => {
     const date = new Date(dateString)
     return date.toLocaleDateString()
@@ -369,36 +270,37 @@ export default function AssetDepreciation() {
                     <FormLabel>Company</FormLabel>
                     <FormControl>
                       <CustomCombobox
-                        items={companies.map((company) => {
-                          return {
-                            id:
-                              company.companyId?.toString() ||
-                              company.id?.toString() ||
-                              '',
-                            name:
-                              company.companyName ||
-                              company.name ||
-                              'Unnamed Company',
-                          }
-                        })}
+                        items={companies.map((company) => ({
+                          id: (
+                            company.companyId || company.companyId
+                          ).toString(),
+                          name:
+                            company.companyName ||
+                            company.address ||
+                            'Unnamed Company',
+                        }))}
                         value={
                           field.value
                             ? {
                                 id: field.value.toString(),
                                 name:
                                   companies.find(
-                                    (c) => (c.companyId || c.id) === field.value
+                                    (c) =>
+                                      (c.companyId || c.companyId) ===
+                                      field.value
                                   )?.companyName ||
                                   companies.find(
-                                    (c) => (c.companyId || c.id) === field.value
-                                  )?.name ||
+                                    (c) =>
+                                      (c.companyId || c.companyId) ===
+                                      field.value
+                                  )?.companyName ||
                                   '',
                               }
                             : null
                         }
                         onChange={(value) =>
                           field.onChange(
-                            value ? Number.parseInt(value.id, 10) : undefined
+                            value ? Number.parseInt(value.id, 10) : 0
                           )
                         }
                         placeholder="Select company"
@@ -414,49 +316,37 @@ export default function AssetDepreciation() {
 
               <FormField
                 control={form.control}
-                name="company_id"
+                name="book_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Depreciation books</FormLabel>
+                    <FormLabel>Depreciation Book</FormLabel>
                     <FormControl>
                       <CustomCombobox
-                        items={companies.map((company) => {
-                          return {
-                            id:
-                              company.companyId?.toString() ||
-                              company.id?.toString() ||
-                              '',
-                            name:
-                              company.companyName ||
-                              company.name ||
-                              'Unnamed Company',
-                          }
-                        })}
+                        items={depreciationBooks.map((book) => ({
+                          id: book.id.toString(),
+                          name: book.name,
+                        }))}
                         value={
                           field.value
                             ? {
                                 id: field.value.toString(),
                                 name:
-                                  companies.find(
-                                    (c) => (c.companyId || c.id) === field.value
-                                  )?.companyName ||
-                                  companies.find(
-                                    (c) => (c.companyId || c.id) === field.value
-                                  )?.name ||
-                                  '',
+                                  depreciationBooks.find(
+                                    (b) => b.id === field.value
+                                  )?.name || '',
                               }
                             : null
                         }
                         onChange={(value) =>
                           field.onChange(
-                            value ? Number.parseInt(value.id, 10) : undefined
+                            value ? Number.parseInt(value.id, 10) : 0
                           )
                         }
-                        placeholder="Select company"
+                        placeholder="Select depreciation book"
                       />
                     </FormControl>
                     <FormDescription>
-                      Select the company for this depreciation schedule
+                      Select the depreciation book for this schedule
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -480,7 +370,6 @@ export default function AssetDepreciation() {
                 )}
               />
 
-              {/* Change the button to explicitly call onPreview instead of submitting the form */}
               <Button
                 type="button"
                 className="w-full"
@@ -528,33 +417,19 @@ export default function AssetDepreciation() {
                   {previewData.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell>{item.asset_id}</TableCell>
-                      <TableCell>{item.depriciation_method || 'N/A'}</TableCell>
-                      <TableCell>
-                        {formatDate(item.depreciation_date)}
+                      <TableCell>{item.transaction_date || 'N/A'}</TableCell>
+                      <TableCell>{formatDate(item.transaction_date)}</TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(item.depreciation_amount)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {typeof formatCurrency === 'function'
-                          ? formatCurrency(
-                              Number.parseFloat(item.depreciation_amount)
-                            )
-                          : `${Number.parseFloat(item.depreciation_amount).toFixed(2)}`}
+                        {formatCurrency(item.depreciation_amount)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {typeof formatCurrency === 'function'
-                          ? formatCurrency(
-                              Number.parseFloat(item.accumulated_depreciation)
-                            )
-                          : `${Number.parseFloat(item.accumulated_depreciation).toFixed(2)}`}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {typeof formatCurrency === 'function'
-                          ? formatCurrency(
-                              Number.parseFloat(item.remaining_value)
-                            )
-                          : `${Number.parseFloat(item.remaining_value).toFixed(2)}`}
+                        {formatCurrency(item.depreciation_amount)}
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ))}{' '}
                 </TableBody>
               </Table>
             </div>

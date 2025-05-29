@@ -1,25 +1,38 @@
-"use client"
+'use client'
 
-import type React from "react"
+import type React from 'react'
 
-import { useCallback, useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Popup } from "@/utils/popup"
-import { BookOpen } from "lucide-react"
-import { Checkbox } from "@/components/ui/checkbox"
-import { format } from "date-fns"
-import type { CreateDepreciationBookType, GetDepreciationBookType } from "@/utils/type"
-import { createDepreciationBook, getAllDepreciationBook } from "@/utils/api"
-import { tokenAtom, useInitializeUser, userDataAtom } from "@/utils/user"
-import { useAtom } from "jotai"
+import { useCallback, useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Popup } from '@/utils/popup'
+import { BookOpen } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { format } from 'date-fns'
+import type {
+  CreateDepreciationBookType,
+  GetDepreciationBookType,
+} from '@/utils/type'
+import { createDepreciationBook, getAllDepreciationBook } from '@/utils/api'
+import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
+import { useAtom } from 'jotai'
+import { useRouter } from 'next/navigation'
 
 const DepreciationBook = () => {
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
   const [userData] = useAtom(userDataAtom)
+
+  const router = useRouter()
 
   // State for popup visibility
   const [isPopupOpen, setIsPopupOpen] = useState(false)
@@ -27,7 +40,7 @@ const DepreciationBook = () => {
 
   // State for form data
   const [formData, setFormData] = useState<CreateDepreciationBookType>({
-    name: "",
+    name: '',
     description: null,
     isActive: true,
     createdBy: userData?.userId || null,
@@ -36,16 +49,24 @@ const DepreciationBook = () => {
   })
 
   // State for table data
-  const [depreciationBooks, setDepreciationBooks] = useState<GetDepreciationBookType[]>([])
+  const [depreciationBooks, setDepreciationBooks] = useState<
+    GetDepreciationBookType[]
+  >([])
 
   const fetchDepreciationBooks = useCallback(async () => {
+    if (!token) return
     setIsLoading(true)
     try {
       const response = await getAllDepreciationBook(token)
-      console.log("🚀 ~ fetchDepreciationBooks ~ response:", response)
-      setDepreciationBooks(response.data ?? [])
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else {
+        console.log('🚀 ~ fetchDepreciationBooks ~ response:', response)
+        setDepreciationBooks(response.data ?? [])
+      }
     } catch (error) {
-      console.error("Error fetching depreciation books:", error)
+      console.error('Error fetching depreciation books:', error)
     } finally {
       setIsLoading(false)
     }
@@ -57,7 +78,9 @@ const DepreciationBook = () => {
   }, [fetchDepreciationBooks])
 
   // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
@@ -94,15 +117,15 @@ const DepreciationBook = () => {
         // Reset form and close popup
         resetForm()
       } catch (error) {
-        console.error("Error creating depreciation book:", error)
+        console.error('Error creating depreciation book:', error)
       }
     },
-    [formData, userData, token, fetchDepreciationBooks],
+    [formData, userData, token, fetchDepreciationBooks]
   )
 
   const resetForm = () => {
     setFormData({
-      name: "",
+      name: '',
       description: null,
       isActive: true,
       createdBy: userData?.userId || null,
@@ -114,8 +137,8 @@ const DepreciationBook = () => {
 
   // Format date for display
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "-"
-    return format(new Date(dateString), "MMM dd, yyyy")
+    if (!dateString) return '-'
+    return format(new Date(dateString), 'MMM dd, yyyy')
   }
 
   return (
@@ -128,7 +151,10 @@ const DepreciationBook = () => {
           </div>
           <h2 className="text-lg font-semibold">Depreciation Books</h2>
         </div>
-        <Button className="bg-yellow-400 hover:bg-yellow-500 text-black" onClick={() => setIsPopupOpen(true)}>
+        <Button
+          className="bg-yellow-400 hover:bg-yellow-500 text-black"
+          onClick={() => setIsPopupOpen(true)}
+        >
           Add
         </Button>
       </div>
@@ -164,12 +190,12 @@ const DepreciationBook = () => {
                 <TableRow key={book.id}>
                   <TableCell>{book.id}</TableCell>
                   <TableCell>{book.name}</TableCell>
-                  <TableCell>{book.description || "-"}</TableCell>
+                  <TableCell>{book.description || '-'}</TableCell>
                   <TableCell>
                     <span
-                      className={`px-2 py-1 rounded-full text-xs ${book.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
+                      className={`px-2 py-1 rounded-full text-xs ${book.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
                     >
-                      {book.isActive ? "Active" : "Inactive"}
+                      {book.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </TableCell>
                   <TableCell>{formatDate(book.createdAt)}</TableCell>
@@ -182,7 +208,12 @@ const DepreciationBook = () => {
       </div>
 
       {/* Popup with form */}
-      <Popup isOpen={isPopupOpen} onClose={resetForm} title="Add Depreciation Book" size="sm:max-w-md">
+      <Popup
+        isOpen={isPopupOpen}
+        onClose={resetForm}
+        title="Add Depreciation Book"
+        size="sm:max-w-md"
+      >
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid gap-4">
             <div className="space-y-2">
@@ -202,13 +233,17 @@ const DepreciationBook = () => {
               <Input
                 id="description"
                 name="description"
-                value={formData.description || ""}
+                value={formData.description || ''}
                 onChange={handleInputChange}
               />
             </div>
 
             <div className="flex items-center space-x-2">
-              <Checkbox id="isActive" checked={formData.isActive} onCheckedChange={handleCheckboxChange} />
+              <Checkbox
+                id="isActive"
+                checked={formData.isActive}
+                onCheckedChange={handleCheckboxChange}
+              />
               <Label htmlFor="isActive">Active</Label>
             </div>
           </div>

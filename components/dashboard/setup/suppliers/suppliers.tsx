@@ -16,11 +16,14 @@ import { createSupplier, getAllSuppliers } from "@/utils/api"
 import { tokenAtom, useInitializeUser, userDataAtom } from "@/utils/user"
 import { useAtom } from "jotai"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useRouter } from "next/navigation"
 
 const Suppliers = () => {
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
   const [userData] = useAtom(userDataAtom)
+
+  const router = useRouter()
 
   // State for popup visibility
   const [isPopupOpen, setIsPopupOpen] = useState(false)
@@ -51,11 +54,17 @@ const Suppliers = () => {
   const [suppliers, setSuppliers] = useState<GetSupplierType[]>([])
 
   const fetchSuppliers = useCallback(async () => {
+    if (!token) return
     setIsLoading(true)
     try {
       const response = await getAllSuppliers(token)
-      console.log("🚀 ~ fetchSuppliers ~ response:", response)
-      setSuppliers(response.data ?? [])
+      if (response?.error?.status === 401) {
+        router.push("/unauthorized-access")
+        return
+      } else {
+        console.log("🚀 ~ fetchSuppliers ~ response:", response)
+        setSuppliers(response.data ?? [])
+      }
     } catch (error) {
       console.error("Error fetching suppliers:", error)
     } finally {
@@ -141,12 +150,6 @@ const Suppliers = () => {
       createdAt: new Date(),
     })
     setIsPopupOpen(false)
-  }
-
-  // Format date for display
-  const formatDate = (date: Date | null | undefined) => {
-    if (!date) return "-"
-    return format(new Date(date), "MMM dd, yyyy")
   }
 
   return (

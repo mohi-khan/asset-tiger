@@ -19,6 +19,7 @@ import { GetCompanyType } from '@/utils/type'
 import { createCompany, getAllCompanies } from '@/utils/api'
 import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
+import { useRouter } from 'next/navigation'
 
 const CompanyInfo = () => {
   // State for popup visibility
@@ -26,7 +27,8 @@ const CompanyInfo = () => {
 
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
-  const [userData] = useAtom(userDataAtom)
+
+  const router = useRouter()
 
   // State for form data
   const [formData, setFormData] = useState({
@@ -51,19 +53,25 @@ const CompanyInfo = () => {
   const [error, setError] = useState<string | null>(null)
 
   const fetchCompanies = useCallback(async () => {
+    if (!token) return
     try {
       setIsLoading(true)
       const response = await getAllCompanies(token)
-      console.log("🚀 ~ fetchCompanies ~ response:", response)
-      setCompanies(response.data ?? [])
-      setError(null)
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else {
+        console.log('🚀 ~ fetchCompanies ~ response:', response)
+        setCompanies(response.data ?? [])
+        setError(null)
+      }
     } catch (err) {
       setError('Failed to fetch companies')
       console.error(err)
     } finally {
       setIsLoading(false)
     }
-  },[token])
+  }, [token])
 
   // Add useEffect to fetch companies when component mounts
   useEffect(() => {

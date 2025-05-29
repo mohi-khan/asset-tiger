@@ -228,7 +228,6 @@ export const assetDetailsSchema = z.object({
   createdAt: z.string(),
   assetDepStartValue: z.number(),
 });
-
 export type GetAssetDetailsType = z.infer<typeof assetDetailsSchema>;
 
 
@@ -314,7 +313,6 @@ export const getDepreciationBookSchema = z.object({
   createdAt: z.string(), // or z.coerce.date() if parsed as Date
   updatedAt: z.string(), // same here
 });
-
 export type GetDepreciationBookType = z.infer<typeof getDepreciationBookSchema>;
 
 export const createDepreciationBookSchema = z.object({
@@ -339,12 +337,185 @@ export const createDepreciationInfoSchema = z.object({
   startingValue: z.number(),
   createdBy: z.number().int().optional(), // optional if set by backend
 });
-
 export type CreateDepreciationInfoType = z.infer<typeof createDepreciationInfoSchema>;
 
+//depreciation transaction
+export const getDepTranSchema = z.object({
+  id: z.number().int(),
+  asset_id: z.number().int(),
+  asset_name: z.string().max(255),
+  book_id: z.number().int(),
+  book_name: z.string().max(100),
+  transaction_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD expected)"),
+  period: z.string().max(10),
+  depreciation_amount: z.number(), // Can use `.nonnegative()` if needed
+  notes: z.string().nullable(),
+  created_by: z.number().int().nullable(),
+  created_at: z.string().datetime().nullable(), // Or use z.coerce.date().nullable() if date object is desired
+});
+export type GetDepTranType = z.infer<typeof getDepTranSchema>;
 
+export const createAssetDepreciationSchema = z.object({
+  company_id: z.number().int(),
+  depreciation_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD expected)"),
+  book_id: z.number().int(),
+  saveToDatabase: z.boolean()
+});
+export type CreateAssetDepreciationType = z.infer<typeof createAssetDepreciationSchema>;
 
+//maintenance
+export const getMaintenanceSchema = z.object({
+  id: z.number().optional(), // serial PK, usually auto-generated
+  assetId: z.number().int().nonnegative(),
+  maintDate: z.string().date(), // assuming input as ISO string; adjust if using Date object directly
+  type: z.enum(["Preventive", "Corrective", "Condition-based"]),
+  cost: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, { message: "Invalid cost format" }), // for form input as string
+  description: z.string().optional(),
+  performedBy: z.string().min(1),
+});
+export type GetMaintenanceType = z.infer<typeof getMaintenanceSchema>;
 
+export const createMaintenanceSchema = z.object({
+  assetId: z.number().int().nonnegative(),
+  maintDate: z.string().date(), // assuming input as ISO string; adjust if using Date object directly
+  type: z.enum(["Preventive", "Corrective", "Condition-based"]),
+  cost: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, { message: "Invalid cost format" }), // for form input as string
+  description: z.string().optional(),
+  performedBy: z.string().min(1),
+});
+export type CreateMaintenanceType = z.infer<typeof createMaintenanceSchema>;
+
+//warrenty
+export const getWarrantySchema = z.object({
+  id: z.number().optional(), // Auto-increment primary key
+  asset_id: z.number().int().nonnegative(),
+  type: z.enum(["Standard Warranty", "Extended Warranty"]),
+  start_date: z.string().date(), // ISO date string (adjust to `z.coerce.date()` if needed)
+  end_date: z.string().date(),
+  warranty_provider: z.string().min(1), // text field with address + phone + email
+  description: z.string().max(500).optional(),
+});
+export type GetWarrantyType = z.infer<typeof getWarrantySchema>;
+
+export const createWarrantySchema = z.object({
+  asset_id: z.number().int().nonnegative(),
+  type: z.enum(["Standard Warranty", "Extended Warranty"]),
+  start_date: z.string().date(), // ISO date string (adjust to `z.coerce.date()` if needed)
+  end_date: z.string().date(),
+  warranty_provider: z.string().min(1), // text field with address + phone + email
+  description: z.string().max(500).optional(),
+});
+export type CreateWarrantyType = z.infer<typeof createWarrantySchema>;
+
+//dispose
+export const getDisposeSchema = z.object({
+  id: z.number().int().optional(), // optional if auto-incremented
+  asset_id: z.number().int().nonnegative(),
+  asset_name: z.string().min(1, { message: "Asset name is required" }),
+  dispose_date: z.string().refine(
+    (val) => !isNaN(Date.parse(val)),
+    { message: "Invalid date format" }
+  ),
+  reason: z.string().min(1, { message: "Reason is required" }),
+  method: z.enum(["Sell", "Scrap", "Donate", "Transfer"]),
+  value: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid decimal with up to 2 digits after decimal"),
+  remarks: z.string().optional(),
+  performed_by: z.string().min(1, { message: "Performed by is required" }),
+});
+export type GetDisposeType = z.infer<typeof getDisposeSchema>;
+
+export const createDisposeSchema = z.object({
+  asset_id: z.number().int().nonnegative(),
+  dispose_date: z.string().refine(
+    (val) => !isNaN(Date.parse(val)),
+    { message: "Invalid date format" }
+  ),
+  reason: z.string().min(1, { message: "Reason is required" }),
+  method: z.enum(["Sell", "Scrap", "Donate", "Transfer"]),
+  value: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid decimal with up to 2 digits after decimal"),
+  remarks: z.string().optional(),
+  performed_by: z.string().min(1, { message: "Performed by is required" }),
+});
+export type CreateDisposeType = z.infer<typeof createDisposeSchema>;
+
+//asset partial retirement
+export const getAssetPartialRetirementSchema = z.object({
+  id: z.number().int().optional(), // Optional because it's auto-incremented
+  assetId: z.number().int().nonnegative(),
+  retirementDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (expected YYYY-MM-DD)"),
+  retiredValue: z.number().nonnegative(),
+  reason: z.string().optional(),
+  updatedBookValue: z.number().nonnegative().optional(),
+  createdBy: z.number().int().optional(),
+  createdAt: z.string().datetime().optional() // auto-generated timestamp
+});
+export type GetAssetPartialRetirementType = z.infer<typeof getAssetPartialRetirementSchema>;
+
+export const createAssetPartialRetirementSchema = z.object({
+  assetId: z.number().int().nonnegative(),
+  retirementDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (expected YYYY-MM-DD)"),
+  retiredValue: z.number().nonnegative(),
+  reason: z.string().optional(),
+  updatedBookValue: z.number().nonnegative().optional(),
+  createdBy: z.number().int().optional(),
+  createdAt: z.string().datetime().optional() // auto-generated timestamp
+});
+export type CreateAssetPartialRetirementType = z.infer<typeof createAssetPartialRetirementSchema>;
+
+//asset capex addition
+export const getAssetCapexAdditionSchema = z.object({
+  id: z.number().int().optional(), // auto-incremented
+  assetId: z.number().int().nonnegative(),
+  additionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (expected YYYY-MM-DD)"),
+  addedValue: z.number().nonnegative(),
+  description: z.string().optional(),
+  newBookValue: z.number().nonnegative().optional(),
+  createdBy: z.number().int().optional(),
+  createdAt: z.string().datetime().optional() // set automatically by DB
+});
+export type GetAssetCapexAdditionType = z.infer<typeof getAssetCapexAdditionSchema>;
+
+export const createAssetCapexAdditionSchema = z.object({
+  assetId: z.number().int().nonnegative(),
+  additionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (expected YYYY-MM-DD)"),
+  addedValue: z.number().nonnegative(),
+  description: z.string().optional(),
+  newBookValue: z.number().nonnegative().optional(),
+  createdBy: z.number().int().optional(),
+  createdAt: z.string().datetime().optional() // set automatically by DB
+});
+export type CreateAssetCapexAdditionType = z.infer<typeof createAssetCapexAdditionSchema>;
+
+//depreciation report
+export const getDepreciationReportSchema = z.object({
+  id: z.number(),
+  asset_id: z.number(),
+  book_id: z.number(),
+  asset_name: z.string(),
+  book_name: z.string(),
+  transaction_date: z.string().refine(val => !isNaN(Date.parse(val)), {
+    message: "Invalid date format",
+  }),
+  period: z.string().regex(/^\d{4}-\d{2}$/, {
+    message: "Period must be in YYYY-MM format",
+  }),
+  depreciation_amount: z.number(),
+  created_by: z.number(),
+  depreciation_rate: z.number(),
+  useful_life_months: z.number(),
+  residual_value: z.number(),
+  current_value: z.number(),
+  acc_dep: z.number(),
+});
+export type GetDepreciationReportType = z.infer<typeof getDepreciationReportSchema>;
 
 
 

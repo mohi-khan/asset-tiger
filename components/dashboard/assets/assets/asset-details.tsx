@@ -1,24 +1,59 @@
-"use client"
+'use client'
 
-import type React from "react"
-import { format } from 'date-fns';
-import { useCallback, useEffect, useState } from "react"
-import { useParams } from "next/navigation"
-import Image from "next/image"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronDown, FileText, Pencil, Plus, Printer } from "lucide-react"
-import { tokenAtom, useInitializeUser } from "@/utils/user"
-import { useAtom } from "jotai"
-import { useToast } from "@/hooks/use-toast"
-import { getAllAssetDetails } from "@/utils/api"
-import { GetAssetDetailsType } from "@/utils/type"
+import type React from 'react'
+import { format } from 'date-fns'
+import { useCallback, useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import Image from 'next/image'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { ChevronDown, FileText, Pencil, Plus, Printer } from 'lucide-react'
+import { tokenAtom, useInitializeUser } from '@/utils/user'
+import { useAtom } from 'jotai'
+import { toast, useToast } from '@/hooks/use-toast'
+import {
+  createMaintenance,
+  createWarranty,
+  getAllAssetDetails,
+  getAssetMaintenanceById,
+  getAssetWarrantyeById,
+  getDepreciationByAssetId,
+} from '@/utils/api'
+import {
+  createMaintenanceSchema,
+  CreateMaintenanceType,
+  createWarrantySchema,
+  CreateWarrantyType,
+  GetAssetDetailsType,
+  GetDepTranType,
+  GetMaintenanceType,
+  GetWarrantyType,
+} from '@/utils/type'
 
 // Types for additional data
 type EventData = {
@@ -44,39 +79,19 @@ type DocData = {
   uploadedBy: string
 }
 
-type DepreciationData = {
-  id: number
-  period: string
-  depreciationAmount: string
-  accumulatedDepreciation: string
-  bookValue: string
-}
-
-type WarrantyData = {
-  id: number
-  type: string
-  startDate: string
-  endDate: string
-  provider: string
-  description: string
-}
-
-type MaintenanceData = {
-  id: number
-  date: string
-  type: string
-  cost: string
-  description: string
-  performedBy: string
-}
-
 export default function AssetDetails() {
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
   const params = useParams()
   const { toast } = useToast()
 
+  const router = useRouter()
+
   const [assetData, setAssetData] = useState<GetAssetDetailsType | null>(null)
+  const [depreciation, setDepreciation] = useState<GetDepTranType[]>([])
+  const [maintenanceData, setMaintenanceData] =
+    useState<GetMaintenanceType | null>(null)
+  const [warranty, setWarranty] = useState<GetWarrantyType | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -84,149 +99,199 @@ export default function AssetDetails() {
   const [eventsData] = useState<EventData[]>([
     {
       id: 1,
-      date: "04/02/2025",
-      event: "Maintenance Check",
-      description: "Regular maintenance check performed",
-      performedBy: "Tech Support",
+      date: '04/02/2025',
+      event: 'Maintenance Check',
+      description: 'Regular maintenance check performed',
+      performedBy: 'Tech Support',
     },
     {
       id: 2,
-      date: "03/30/2025",
-      event: "Assigned",
-      description: "Asset assigned to John Smith",
-      performedBy: "HR Department",
+      date: '03/30/2025',
+      event: 'Assigned',
+      description: 'Asset assigned to John Smith',
+      performedBy: 'HR Department',
     },
     {
       id: 3,
-      date: "03/28/2025",
-      event: "Purchased",
-      description: "Asset purchased and added to inventory",
-      performedBy: "Procurement",
+      date: '03/28/2025',
+      event: 'Purchased',
+      description: 'Asset purchased and added to inventory',
+      performedBy: 'Procurement',
     },
   ])
 
   const [photos, setPhotos] = useState<PhotoData[]>([
-    { id: 1, url: "/placeholder.svg?height=200&width=200", caption: "Front view" },
-    { id: 2, url: "/placeholder.svg?height=200&width=200", caption: "Side view" },
-    { id: 3, url: "/placeholder.svg?height=200&width=200", caption: "Back view" },
+    {
+      id: 1,
+      url: '/placeholder.svg?height=200&width=200',
+      caption: 'Front view',
+    },
+    {
+      id: 2,
+      url: '/placeholder.svg?height=200&width=200',
+      caption: 'Side view',
+    },
+    {
+      id: 3,
+      url: '/placeholder.svg?height=200&width=200',
+      caption: 'Back view',
+    },
   ])
 
   const [docs, setDocs] = useState<DocData[]>([
     {
       id: 1,
-      fileName: "Invoice.pdf",
-      description: "Purchase invoice",
-      fileType: "PDF",
-      uploadDate: "03/28/2025",
-      uploadedBy: "Finance Dept",
+      fileName: 'Invoice.pdf',
+      description: 'Purchase invoice',
+      fileType: 'PDF',
+      uploadDate: '03/28/2025',
+      uploadedBy: 'Finance Dept',
     },
     {
       id: 2,
-      fileName: "Warranty.pdf",
-      description: "Warranty certificate",
-      fileType: "PDF",
-      uploadDate: "03/28/2025",
-      uploadedBy: "Admin",
+      fileName: 'Warranty.pdf',
+      description: 'Warranty certificate',
+      fileType: 'PDF',
+      uploadDate: '03/28/2025',
+      uploadedBy: 'Admin',
     },
     {
       id: 3,
-      fileName: "Manual.pdf",
-      description: "User manual",
-      fileType: "PDF",
-      uploadDate: "03/29/2025",
-      uploadedBy: "Tech Support",
-    },
-  ])
-
-  const [depreciation, setDepreciation] = useState<DepreciationData[]>([
-    {
-      id: 1,
-      period: "2025-2026",
-      depreciationAmount: "₹24,000.00",
-      accumulatedDepreciation: "₹24,000.00",
-      bookValue: "₹96,000.00",
-    },
-    {
-      id: 2,
-      period: "2026-2027",
-      depreciationAmount: "₹19,200.00",
-      accumulatedDepreciation: "₹43,200.00",
-      bookValue: "₹76,800.00",
-    },
-    {
-      id: 3,
-      period: "2027-2028",
-      depreciationAmount: "₹15,360.00",
-      accumulatedDepreciation: "₹58,560.00",
-      bookValue: "₹61,440.00",
-    },
-  ])
-
-  const [warranty, setWarranty] = useState<WarrantyData[]>([
-    {
-      id: 1,
-      type: "Standard Warranty",
-      startDate: "03/28/2025",
-      endDate: "03/28/2027",
-      provider: "Toshiba",
-      description: "2 year standard warranty",
-    },
-  ])
-
-  const [maintenance, setMaintenance] = useState<MaintenanceData[]>([
-    {
-      id: 1,
-      date: "06/28/2025",
-      type: "Preventive",
-      cost: "₹2,000.00",
-      description: "Regular maintenance check",
-      performedBy: "Tech Support",
-    },
-    {
-      id: 2,
-      date: "09/28/2025",
-      type: "Preventive",
-      cost: "₹2,000.00",
-      description: "Regular maintenance check",
-      performedBy: "Tech Support",
+      fileName: 'Manual.pdf',
+      description: 'User manual',
+      fileType: 'PDF',
+      uploadDate: '03/29/2025',
+      uploadedBy: 'Tech Support',
     },
   ])
 
   // Fetch asset details
   const fetchAssetDetails = useCallback(async () => {
-    if (!token) {
-      toast({
-        title: "Authentication Error",
-        description: "You need to be logged in to view asset details",
-        variant: "destructive",
-      })
-      setIsLoading(false)
-      setError("Authentication error")
-      return
-    }
+    if (!token) return
 
     try {
       const assetId = Number(params.id)
       if (isNaN(assetId)) {
-        throw new Error("Invalid asset ID")
+        throw new Error('Invalid asset ID')
       }
       const data = await getAllAssetDetails(token, assetId)
-      setAssetData(data.data || null)
+      if (data?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else {
+        setAssetData(data.data || null)
+      }
     } catch (err) {
-      console.error("Failed to fetch asset details:", err)
-      setError(err instanceof Error ? err.message : "Failed to load asset details")
+      console.error('Failed to fetch asset details:', err)
+      setError(
+        err instanceof Error ? err.message : 'Failed to load asset details'
+      )
       toast({
-        title: "Error",
-        description: "Failed to load asset details. Please try again later.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load asset details. Please try again later.',
+        variant: 'destructive',
       })
     } finally {
       setIsLoading(false)
     }
   }, [params.id, token, toast])
 
+  const fetchDepreciations = useCallback(async () => {
+    if (!token) return
+
+    try {
+      const assetId = Number(params.id)
+      if (isNaN(assetId)) {
+        throw new Error('Invalid asset ID')
+      }
+      const data = await getDepreciationByAssetId(token, assetId)
+      if (data?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else {
+        setDepreciation(data.data || null)
+        console.log('🚀 ~ fetchDepreciations ~ data.data:', data.data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch asset details:', err)
+      setError(
+        err instanceof Error ? err.message : 'Failed to load asset details'
+      )
+      toast({
+        title: 'Error',
+        description: 'Failed to load asset details. Please try again later.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [params.id, token, toast])
+
+  const fetchMaintenance = useCallback(async () => {
+    if (!token) return
+    try {
+      const response = await getAssetMaintenanceById(token, params.id)
+      if (response.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else if (response.data) {
+        setMaintenanceData(response.data)
+        console.log('🚀 ~ fetchCompanies ~ response.data:', response.data)
+      } else {
+        setMaintenanceData(null)
+        if (response.error) {
+          toast({
+            title: 'Error',
+            description: response.error.message,
+            variant: 'destructive',
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching maintenance records:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch maintenance records',
+        variant: 'destructive',
+      })
+    }
+  }, [token])
+
+  const fetchAssetWarranty = useCallback(async () => {
+    if (!token) return
+    try {
+      const response = await getAssetWarrantyeById(token, params.id)
+      if (response.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else if (response.data) {
+        setWarranty(response.data)
+        console.log('🚀 ~ fetchCompanies ~ response.data:', response.data)
+      } else {
+        setWarranty(null)
+        if (response.error) {
+          toast({
+            title: 'Error',
+            description: response.error.message,
+            variant: 'destructive',
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching maintenance records:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch maintenance records',
+        variant: 'destructive',
+      })
+    }
+  }, [token])
+
   useEffect(() => {
+    fetchMaintenance()
     fetchAssetDetails()
+    fetchDepreciations()
+    fetchAssetWarranty()
   }, [fetchAssetDetails])
 
   // Add new photo
@@ -235,14 +300,18 @@ export default function AssetDetails() {
   }
 
   // Add new document
-  const handleAddDoc = (docData: { fileName: string; description: string; fileType: string }) => {
+  const handleAddDoc = (docData: {
+    fileName: string
+    description: string
+    fileType: string
+  }) => {
     setDocs([
       ...docs,
       {
         id: docs.length + 1,
         ...docData,
         uploadDate: new Date().toLocaleDateString(),
-        uploadedBy: "Current User",
+        uploadedBy: 'Current User',
       },
     ])
   }
@@ -254,7 +323,10 @@ export default function AssetDetails() {
     accumulatedDepreciation: string
     bookValue: string
   }) => {
-    setDepreciation([...depreciation, { id: depreciation.length + 1, ...depData }])
+    setDepreciation([
+      ...depreciation,
+      { id: depreciation.length + 1, ...depData },
+    ])
   }
 
   // Add new warranty
@@ -269,14 +341,18 @@ export default function AssetDetails() {
   }
 
   // Add new maintenance
-  const handleAddMaintenance = (maintenanceData: {
-    date: string
-    type: string
-    cost: string
-    description: string
-    performedBy: string
-  }) => {
-    setMaintenance([...maintenance, { id: maintenance.length + 1, ...maintenanceData }])
+  const handleAddMaintenance = (maintenanceData: CreateMaintenanceType) => {
+    setMaintenance([
+      ...maintenance,
+      {
+        id: maintenance.length + 1,
+        date: maintenanceData.maintDate,
+        type: maintenanceData.type,
+        cost: maintenanceData.cost,
+        description: maintenanceData.description || '',
+        performedBy: maintenanceData.performedBy,
+      },
+    ])
   }
 
   // Loading state
@@ -292,9 +368,12 @@ export default function AssetDetails() {
   if (error || !assetData) {
     return (
       <div className="container mx-auto p-4">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <div
+          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
+          role="alert"
+        >
           <strong className="font-bold">Error: </strong>
-          <span className="block sm:inline">{error || "Asset not found"}</span>
+          <span className="block sm:inline">{error || 'Asset not found'}</span>
         </div>
       </div>
     )
@@ -305,7 +384,13 @@ export default function AssetDetails() {
       {/* Header */}
       <div className="flex items-center mb-6">
         <div className="text-primary mr-2">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <path
               d="M12 2L2 7L12 12L22 7L12 2Z"
               stroke="currentColor"
@@ -364,47 +449,77 @@ export default function AssetDetails() {
         </div>
         <div className="col-span-2 grid grid-cols-2 gap-x-4 gap-y-2">
           <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Asset Code</div>
+            <div className="p-1 text-sm border text-muted-foreground">
+              Asset Code
+            </div>
             <div className="p-1 border">{assetData.assetCode}</div>
           </div>
           <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Location</div>
-            <div className="p-1 border">{assetData.locationName ? assetData.locationName : "N/A"}</div>
-          </div>
-          <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Purchase Date</div>
-            <div className="p-1 border">{format(new Date(assetData.purDate), 'dd/MM/yyyy')}</div>
-          </div>
-          <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Department</div>
-            <div className="p-1 border">{assetData.departmentName ? assetData.departmentName : "N/A"}</div>
-          </div>
-          <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Asset Value</div>
-            <div className="p-1 border">{assetData.assetValue.toLocaleString()}</div>
-          </div>
-          <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Category</div>
-            <div className="p-1 border">Category {assetData.categoryName}</div>
-          </div>
-          <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Model</div>
-            <div className="p-1 border">{assetData.model || "N/A"}</div>
-          </div>
-          <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">User</div>
-            <div className="p-1 border">{assetData.user || "N/A"}</div>
-          </div>
-          <div className="grid grid-cols-2">
-            <div className="p-1 text-sm border text-muted-foreground">Current Value</div>
+            <div className="p-1 text-sm border text-muted-foreground">
+              Location
+            </div>
             <div className="p-1 border">
-              {assetData.currentValue ? `${assetData.currentValue.toLocaleString()}` : "N/A"}
+              {assetData.locationName ? assetData.locationName : 'N/A'}
             </div>
           </div>
           <div className="grid grid-cols-2">
-            <div className="text-sm border p-1 text-muted-foreground">Status</div>
-            <div className={`p-1 border ${assetData.status === "Active" ? "text-green-600" : ""}`}>
-              {assetData.status || "Active"}
+            <div className="p-1 text-sm border text-muted-foreground">
+              Purchase Date
+            </div>
+            <div className="p-1 border">
+              {format(new Date(assetData.purDate), 'dd/MM/yyyy')}
+            </div>
+          </div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">
+              Department
+            </div>
+            <div className="p-1 border">
+              {assetData.departmentName ? assetData.departmentName : 'N/A'}
+            </div>
+          </div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">
+              Asset Value
+            </div>
+            <div className="p-1 border">
+              {assetData.assetValue.toLocaleString()}
+            </div>
+          </div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">
+              Category
+            </div>
+            <div className="p-1 border">Category {assetData.categoryName}</div>
+          </div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">
+              Model
+            </div>
+            <div className="p-1 border">{assetData.model || 'N/A'}</div>
+          </div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">User</div>
+            <div className="p-1 border">{assetData.user || 'N/A'}</div>
+          </div>
+          <div className="grid grid-cols-2">
+            <div className="p-1 text-sm border text-muted-foreground">
+              Current Value
+            </div>
+            <div className="p-1 border">
+              {assetData.currentValue
+                ? `${assetData.currentValue.toLocaleString()}`
+                : 'N/A'}
+            </div>
+          </div>
+          <div className="grid grid-cols-2">
+            <div className="text-sm border p-1 text-muted-foreground">
+              Status
+            </div>
+            <div
+              className={`p-1 border ${assetData.status === 'Active' ? 'text-green-600' : ''}`}
+            >
+              {assetData.status || 'Active'}
             </div>
           </div>
         </div>
@@ -465,12 +580,20 @@ export default function AssetDetails() {
             <h4 className="text-primary font-medium mb-2">Miscellaneous</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Serial No</div>
-                <div className="border p-1">{assetData.slNo || "N/A"}</div>
+                <div className="p-1 border text-sm text-muted-foreground">
+                  Serial No
+                </div>
+                <div className="border p-1">{assetData.slNo || 'N/A'}</div>
               </div>
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Supplier</div>
-                <div className="border p-1">{assetData.manufacure ? `Supplier ${assetData.manufacure}` : "N/A"}</div>
+                <div className="p-1 border text-sm text-muted-foreground">
+                  Supplier
+                </div>
+                <div className="border p-1">
+                  {assetData.manufacure
+                    ? `Supplier ${assetData.manufacure}`
+                    : 'N/A'}
+                </div>
               </div>
             </div>
           </div>
@@ -479,11 +602,15 @@ export default function AssetDetails() {
             <h4 className="text-primary font-medium mb-2">Custom fields</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Asset Name</div>
+                <div className="p-1 border text-sm text-muted-foreground">
+                  Asset Name
+                </div>
                 <div className="border p-1">{assetData.assetName}</div>
               </div>
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Asset Code</div>
+                <div className="p-1 border text-sm text-muted-foreground">
+                  Asset Code
+                </div>
                 <div className="border p-1">{assetData.assetCode}</div>
               </div>
             </div>
@@ -493,28 +620,48 @@ export default function AssetDetails() {
             <h4 className="text-primary font-medium mb-2">Depreciation</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Asset Value</div>
-                <div className="border p-1">{assetData.assetValue.toLocaleString()}</div>
-              </div>
-              <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Depreciation Rate</div>
-                <div className="border p-1">{assetData.depRate ? `${assetData.depRate}%` : "N/A"}</div>
-              </div>
-              <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Salvage Value</div>
+                <div className="p-1 border text-sm text-muted-foreground">
+                  Asset Value
+                </div>
                 <div className="border p-1">
-                  {assetData.salvageValue ? `${assetData.salvageValue.toLocaleString()}` : "N/A"}
+                  {assetData.assetValue.toLocaleString()}
                 </div>
               </div>
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Current Value</div>
+                <div className="p-1 border text-sm text-muted-foreground">
+                  Depreciation Rate
+                </div>
                 <div className="border p-1">
-                  {assetData.currentValue ? `${assetData.currentValue.toLocaleString()}` : "N/A"}
+                  {assetData.depRate ? `${assetData.depRate}%` : 'N/A'}
                 </div>
               </div>
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Start Date</div>
-                <div className="p-1 border">{format(new Date(assetData.startDate), 'dd/MM/yyyy')}</div>
+                <div className="p-1 border text-sm text-muted-foreground">
+                  Salvage Value
+                </div>
+                <div className="border p-1">
+                  {assetData.salvageValue
+                    ? `${assetData.salvageValue.toLocaleString()}`
+                    : 'N/A'}
+                </div>
+              </div>
+              <div className="grid grid-cols-2">
+                <div className="p-1 border text-sm text-muted-foreground">
+                  Current Value
+                </div>
+                <div className="border p-1">
+                  {assetData.currentValue
+                    ? `${assetData.currentValue.toLocaleString()}`
+                    : 'N/A'}
+                </div>
+              </div>
+              <div className="grid grid-cols-2">
+                <div className="p-1 border text-sm text-muted-foreground">
+                  Start Date
+                </div>
+                <div className="p-1 border">
+                  {format(new Date(assetData.startDate), 'dd/MM/yyyy')}
+                </div>
               </div>
             </div>
           </div>
@@ -523,12 +670,20 @@ export default function AssetDetails() {
             <h4 className="text-primary font-medium mb-2">Creation</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Created At</div>
-                <div className="p-1 border">{format(new Date(assetData.createdAt), 'dd/MM/yyyy')}</div>
+                <div className="p-1 border text-sm text-muted-foreground">
+                  Created At
+                </div>
+                <div className="p-1 border">
+                  {format(new Date(assetData.createdAt), 'dd/MM/yyyy')}
+                </div>
               </div>
               <div className="grid grid-cols-2">
-                <div className="p-1 border text-sm text-muted-foreground">Created By</div>
-                <div className="border p-1">{assetData.createdBy ? assetData.createdBy : "N/A"}</div>
+                <div className="p-1 border text-sm text-muted-foreground">
+                  Created By
+                </div>
+                <div className="border p-1">
+                  {assetData.createdBy ? assetData.createdBy : 'N/A'}
+                </div>
               </div>
             </div>
           </div>
@@ -551,7 +706,10 @@ export default function AssetDetails() {
             <TableBody>
               {eventsData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-6 text-gray-500">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-6 text-gray-500"
+                  >
                     No events found for this asset.
                   </TableCell>
                 </TableRow>
@@ -577,10 +735,16 @@ export default function AssetDetails() {
           </div>
           {photos.length === 0 ? (
             <div className="text-center py-12 border rounded-md">
-              <p className="text-gray-500">No photos available for this asset.</p>
+              <p className="text-gray-500">
+                No photos available for this asset.
+              </p>
               <Button
                 className="mt-4"
-                onClick={() => document.querySelector<HTMLButtonElement>("[data-add-photo]")?.click()}
+                onClick={() =>
+                  document
+                    .querySelector<HTMLButtonElement>('[data-add-photo]')
+                    ?.click()
+                }
               >
                 Add First Photo
               </Button>
@@ -588,9 +752,12 @@ export default function AssetDetails() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {photos.map((photo) => (
-                <div key={photo.id} className="border rounded-md overflow-hidden">
+                <div
+                  key={photo.id}
+                  className="border rounded-md overflow-hidden"
+                >
                   <Image
-                    src={photo.url || "/placeholder.svg"}
+                    src={photo.url || '/placeholder.svg'}
                     alt={photo.caption}
                     width={200}
                     height={200}
@@ -623,7 +790,10 @@ export default function AssetDetails() {
             <TableBody>
               {docs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-6 text-gray-500"
+                  >
                     No documents found for this asset.
                   </TableCell>
                 </TableRow>
@@ -661,14 +831,18 @@ export default function AssetDetails() {
               <TableRow>
                 <TableHead>Period</TableHead>
                 <TableHead>Depreciation Amount</TableHead>
-                <TableHead>Accumulated Depreciation</TableHead>
-                <TableHead>Book Value</TableHead>
+                <TableHead>Asset Name</TableHead>
+                <TableHead>Book Name</TableHead>
+                <TableHead>Transaction Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {depreciation.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-6 text-gray-500">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-6 text-gray-500"
+                  >
                     No depreciation data found for this asset.
                   </TableCell>
                 </TableRow>
@@ -676,9 +850,10 @@ export default function AssetDetails() {
                 depreciation.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.period}</TableCell>
-                    <TableCell>{item.depreciationAmount}</TableCell>
-                    <TableCell>{item.accumulatedDepreciation}</TableCell>
-                    <TableCell>{item.bookValue}</TableCell>
+                    <TableCell>{item.depreciation_amount}</TableCell>
+                    <TableCell>{item.asset_name}</TableCell>
+                    <TableCell>{item.book_name}</TableCell>
+                    <TableCell>{item.transaction_date}</TableCell>
                   </TableRow>
                 ))
               )}
@@ -703,22 +878,16 @@ export default function AssetDetails() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {warranty.length === 0 ? (
+              {warranty ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-gray-500">
-                    No warranty information found for this asset.
-                  </TableCell>
+                  <TableCell>{warranty?.type}</TableCell>
+                  <TableCell>{warranty?.start_date}</TableCell>
+                  <TableCell>{warranty?.end_date}</TableCell>
+                  <TableCell>{warranty?.warranty_provider}</TableCell>
+                  <TableCell>{warranty?.description}</TableCell>
                 </TableRow>
               ) : (
-                warranty.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.type}</TableCell>
-                    <TableCell>{item.startDate}</TableCell>
-                    <TableCell>{item.endDate}</TableCell>
-                    <TableCell>{item.provider}</TableCell>
-                    <TableCell>{item.description}</TableCell>
-                  </TableRow>
-                ))
+                <TableCell>No maintenance found</TableCell>
               )}
             </TableBody>
           </Table>
@@ -741,22 +910,16 @@ export default function AssetDetails() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {maintenance.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-gray-500">
-                    No maintenance records found for this asset.
-                  </TableCell>
+              {maintenanceData ? (
+                <TableRow key={maintenanceData.id}>
+                  <TableCell>{maintenanceData.maintDate}</TableCell>
+                  <TableCell>{maintenanceData.type}</TableCell>
+                  <TableCell>{maintenanceData.cost}</TableCell>
+                  <TableCell>{maintenanceData.description}</TableCell>
+                  <TableCell>{maintenanceData.performedBy}</TableCell>
                 </TableRow>
               ) : (
-                maintenance.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.date}</TableCell>
-                    <TableCell>{item.type}</TableCell>
-                    <TableCell>{item.cost}</TableCell>
-                    <TableCell>{item.description}</TableCell>
-                    <TableCell>{item.performedBy}</TableCell>
-                  </TableRow>
-                ))
+                <TableCell>No maintenance found</TableCell>
               )}
             </TableBody>
           </Table>
@@ -769,15 +932,15 @@ export default function AssetDetails() {
 // Add Photo Dialog Component
 function AddPhotoDialog({ onAddPhoto }: { onAddPhoto: (data: any) => void }) {
   const [open, setOpen] = useState(false)
-  const [caption, setCaption] = useState("")
+  const [caption, setCaption] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onAddPhoto({
-      url: "/placeholder.svg?height=200&width=200",
+      url: '/placeholder.svg?height=200&width=200',
       caption: caption,
     })
-    setCaption("")
+    setCaption('')
     setOpen(false)
   }
 
@@ -810,7 +973,9 @@ function AddPhotoDialog({ onAddPhoto }: { onAddPhoto: (data: any) => void }) {
                 <Button type="button" variant="outline" size="sm">
                   Choose File
                 </Button>
-                <p className="text-xs text-muted-foreground mt-2">Supported formats: JPG, PNG, GIF</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Supported formats: JPG, PNG, GIF
+                </p>
               </div>
             </div>
           </div>
@@ -824,7 +989,11 @@ function AddPhotoDialog({ onAddPhoto }: { onAddPhoto: (data: any) => void }) {
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="submit">Add Photo</Button>
@@ -838,9 +1007,9 @@ function AddPhotoDialog({ onAddPhoto }: { onAddPhoto: (data: any) => void }) {
 // Add Document Dialog Component
 function AddDocDialog({ onAddDoc }: { onAddDoc: (data: any) => void }) {
   const [open, setOpen] = useState(false)
-  const [fileName, setFileName] = useState("")
-  const [description, setDescription] = useState("")
-  const [fileType, setFileType] = useState("PDF")
+  const [fileName, setFileName] = useState('')
+  const [description, setDescription] = useState('')
+  const [fileType, setFileType] = useState('PDF')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -849,9 +1018,9 @@ function AddDocDialog({ onAddDoc }: { onAddDoc: (data: any) => void }) {
       description,
       fileType,
     })
-    setFileName("")
-    setDescription("")
-    setFileType("PDF")
+    setFileName('')
+    setDescription('')
+    setFileType('PDF')
     setOpen(false)
   }
 
@@ -874,7 +1043,9 @@ function AddDocDialog({ onAddDoc }: { onAddDoc: (data: any) => void }) {
               <Button type="button" variant="outline">
                 Choose File
               </Button>
-              <p className="text-xs text-muted-foreground mt-2">Supported formats: PDF, DOC, DOCX, XLS, XLSX</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Supported formats: PDF, DOC, DOCX, XLS, XLSX
+              </p>
             </div>
           </div>
           <div className="space-y-2">
@@ -912,7 +1083,11 @@ function AddDocDialog({ onAddDoc }: { onAddDoc: (data: any) => void }) {
             </Select>
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="submit">Add Document</Button>
@@ -924,12 +1099,16 @@ function AddDocDialog({ onAddDoc }: { onAddDoc: (data: any) => void }) {
 }
 
 // Add Depreciation Dialog Component
-function AddDepreciationDialog({ onAddDepreciation }: { onAddDepreciation: (data: any) => void }) {
+function AddDepreciationDialog({
+  onAddDepreciation,
+}: {
+  onAddDepreciation: (data: any) => void
+}) {
   const [open, setOpen] = useState(false)
-  const [period, setPeriod] = useState("")
-  const [depreciationAmount, setDepreciationAmount] = useState("")
-  const [accumulatedDepreciation, setAccumulatedDepreciation] = useState("")
-  const [bookValue, setBookValue] = useState("")
+  const [period, setPeriod] = useState('')
+  const [depreciationAmount, setDepreciationAmount] = useState('')
+  const [accumulatedDepreciation, setAccumulatedDepreciation] = useState('')
+  const [bookValue, setBookValue] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -939,10 +1118,10 @@ function AddDepreciationDialog({ onAddDepreciation }: { onAddDepreciation: (data
       accumulatedDepreciation,
       bookValue,
     })
-    setPeriod("")
-    setDepreciationAmount("")
-    setAccumulatedDepreciation("")
-    setBookValue("")
+    setPeriod('')
+    setDepreciationAmount('')
+    setAccumulatedDepreciation('')
+    setBookValue('')
     setOpen(false)
   }
 
@@ -980,7 +1159,9 @@ function AddDepreciationDialog({ onAddDepreciation }: { onAddDepreciation: (data
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="accumulatedDepreciation">Accumulated Depreciation</Label>
+            <Label htmlFor="accumulatedDepreciation">
+              Accumulated Depreciation
+            </Label>
             <Input
               id="accumulatedDepreciation"
               value={accumulatedDepreciation}
@@ -1000,7 +1181,11 @@ function AddDepreciationDialog({ onAddDepreciation }: { onAddDepreciation: (data
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="submit">Add Entry</Button>
@@ -1012,29 +1197,47 @@ function AddDepreciationDialog({ onAddDepreciation }: { onAddDepreciation: (data
 }
 
 // Add Warranty Dialog Component
-function AddWarrantyDialog({ onAddWarranty }: { onAddWarranty: (data: any) => void }) {
+function AddWarrantyDialog({
+  onAddWarranty,
+}: {
+  onAddWarranty: (data: CreateWarrantyType) => void
+}) {
+  const [token] = useAtom(tokenAtom)
+  const params = useParams()
   const [open, setOpen] = useState(false)
-  const [type, setType] = useState("")
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
-  const [provider, setProvider] = useState("")
-  const [description, setDescription] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onAddWarranty({
-      type,
-      startDate,
-      endDate,
-      provider,
-      description,
-    })
-    setType("")
-    setStartDate("")
-    setEndDate("")
-    setProvider("")
-    setDescription("")
-    setOpen(false)
+  const form = useForm<CreateWarrantyType>({
+    resolver: zodResolver(createWarrantySchema),
+    defaultValues: {
+      type: undefined,
+      start_date: '',
+      end_date: '',
+      warranty_provider: '',
+      description: '',
+      asset_id: Number(params.id),
+    },
+  })
+
+  const onSubmit = async (data: CreateWarrantyType) => {
+    try {
+      await createWarranty(data, token)
+
+      form.reset()
+      setOpen(false)
+      onAddWarranty(data)
+
+      toast({
+        title: 'Success',
+        description: 'Warranty record created successfully',
+      })
+    } catch (error) {
+      console.error('Error creating warranty record:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to create warranty record. Please try again.',
+        variant: 'destructive',
+      })
+    }
   }
 
   return (
@@ -1049,94 +1252,165 @@ function AddWarrantyDialog({ onAddWarranty }: { onAddWarranty: (data: any) => vo
         <DialogHeader>
           <DialogTitle>Add Warranty Information</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="type">Warranty Type</Label>
-            <Input
-              id="type"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              placeholder="e.g. Standard, Extended"
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Warranty Type</FormLabel>
+                  <FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select warranty type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Standard Warranty">
+                          Standard Warranty
+                        </SelectItem>
+                        <SelectItem value="Extended Warranty">
+                          Extended Warranty
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="startDate">Start Date</Label>
-            <Input
-              id="startDate"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              placeholder="MM/DD/YYYY"
-              required
+            <FormField
+              control={form.control}
+              name="start_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="endDate">End Date</Label>
-            <Input
-              id="endDate"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              placeholder="MM/DD/YYYY"
-              required
+            <FormField
+              control={form.control}
+              name="end_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>End Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="provider">Provider</Label>
-            <Input
-              id="provider"
-              value={provider}
-              onChange={(e) => setProvider(e.target.value)}
-              placeholder="e.g. Manufacturer name"
-              required
+            <FormField
+              control={form.control}
+              name="warranty_provider"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Provider Details</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Enter provider details (address, phone, email)"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter warranty details"
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Enter warranty details (optional)"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">Add Warranty</Button>
-          </div>
-        </form>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">Add Warranty</Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )
 }
-
 // Add Maintenance Dialog Component
-function AddMaintenanceDialog({ onAddMaintenance }: { onAddMaintenance: (data: any) => void }) {
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form'
+
+export function AddMaintenanceDialog({
+  onAddMaintenance,
+}: {
+  onAddMaintenance: (data: CreateMaintenanceType) => void
+}) {
+  const [token] = useAtom(tokenAtom)
+  const params = useParams()
   const [open, setOpen] = useState(false)
-  const [date, setDate] = useState("")
-  const [type, setType] = useState("")
-  const [cost, setCost] = useState("")
-  const [description, setDescription] = useState("")
-  const [performedBy, setPerformedBy] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onAddMaintenance({
-      date,
-      type,
-      cost,
-      description,
-      performedBy,
-    })
-    setDate("")
-    setType("")
-    setCost("")
-    setDescription("")
-    setPerformedBy("")
-    setOpen(false)
+  const form = useForm<CreateMaintenanceType>({
+    resolver: zodResolver(createMaintenanceSchema),
+    defaultValues: {
+      maintDate: '',
+      type: undefined,
+      cost: '',
+      description: '',
+      performedBy: '',
+      assetId: Number(params.id),
+    },
+  })
+
+  const onSubmit = async (data: CreateMaintenanceType) => {
+    try {
+      await createMaintenance(data, token)
+
+      // Reset form and close dialog
+      form.reset()
+      setOpen(false)
+      onAddMaintenance(data)
+
+      toast({
+        title: 'Success',
+        description: 'Maintenance record created successfully',
+      })
+    } catch (error) {
+      console.error('Error creating maintenance record:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to create maintenance record. Please try again.',
+        variant: 'destructive',
+      })
+    }
   }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -1149,61 +1423,108 @@ function AddMaintenanceDialog({ onAddMaintenance }: { onAddMaintenance: (data: a
         <DialogHeader>
           <DialogTitle>Add Maintenance Record</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
-            <Input id="date" value={date} onChange={(e) => setDate(e.target.value)} placeholder="MM/DD/YYYY" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="type">Type</Label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select maintenance type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Preventive">Preventive</SelectItem>
-                <SelectItem value="Corrective">Corrective</SelectItem>
-                <SelectItem value="Condition-based">Condition-based</SelectItem>
-                <SelectItem value="Predictive">Predictive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="cost">Cost</Label>
-            <Input
-              id="cost"
-              value={cost}
-              onChange={(e) => setCost(e.target.value)}
-              placeholder="e.g. ₹2,000.00"
-              required
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              name="maintDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter maintenance details"
+
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select maintenance type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Preventive">Preventive</SelectItem>
+                      <SelectItem value="Corrective">Corrective</SelectItem>
+                      <SelectItem value="Condition-based">
+                        Condition-based
+                      </SelectItem>
+                      <SelectItem value="Predictive">Predictive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="performedBy">Performed By</Label>
-            <Input
-              id="performedBy"
-              value={performedBy}
-              onChange={(e) => setPerformedBy(e.target.value)}
-              placeholder="e.g. Tech Support"
-              required
+
+            <FormField
+              control={form.control}
+              name="cost"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cost</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. ₹2,000.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">Add Record</Button>
-          </div>
-        </form>
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter maintenance details"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="performedBy"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Performed By</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Tech Support" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">Add Record</Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )
