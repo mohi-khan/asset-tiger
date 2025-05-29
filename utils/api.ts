@@ -483,3 +483,14 @@ export async function getDepreciationReport(token: string, period: string, bookI
     },
   })
 }
+
+export async function getDisposeReport(token: string, disposeDate: string) {
+  return fetchApi<GetDisposeType[]>({
+    url: `api/dispose/getByDisposeDate/${disposeDate}`,
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
