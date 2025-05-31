@@ -89,9 +89,10 @@ export default function AssetDetails() {
 
   const [assetData, setAssetData] = useState<GetAssetDetailsType | null>(null)
   const [depreciation, setDepreciation] = useState<GetDepTranType[]>([])
-  const [maintenanceData, setMaintenanceData] =
-    useState<GetMaintenanceType | null>(null)
-  const [warranty, setWarranty] = useState<GetWarrantyType | null>(null)
+  const [maintenanceData, setMaintenanceData] = useState<GetMaintenanceType[]>(
+    []
+  )
+  const [warranty, setWarranty] = useState<GetWarrantyType[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -180,6 +181,10 @@ export default function AssetDetails() {
         return
       } else {
         setAssetData(data.data || null)
+        console.log(
+          '🚀 ~ fetchAssetDetails ~ data.data || null:',
+          data.data || null
+        )
       }
     } catch (err) {
       console.error('Failed to fetch asset details:', err)
@@ -194,7 +199,7 @@ export default function AssetDetails() {
     } finally {
       setIsLoading(false)
     }
-  }, [params.id, token, toast])
+  }, [params.id, token, toast, router])
 
   const fetchDepreciations = useCallback(async () => {
     if (!token) return
@@ -209,7 +214,7 @@ export default function AssetDetails() {
         router.push('/unauthorized-access')
         return
       } else {
-        setDepreciation(data.data || null)
+        setDepreciation(data.data || [])
         console.log('🚀 ~ fetchDepreciations ~ data.data:', data.data)
       }
     } catch (err) {
@@ -225,20 +230,24 @@ export default function AssetDetails() {
     } finally {
       setIsLoading(false)
     }
-  }, [params.id, token, toast])
+  }, [params.id, token, toast, router])
 
   const fetchMaintenance = useCallback(async () => {
     if (!token) return
     try {
-      const response = await getAssetMaintenanceById(token, params.id)
+      const assetId = String(params.id)
+      if (!assetId) {
+        throw new Error('Invalid asset ID')
+      }
+      const response = await getAssetMaintenanceById(token, assetId)
       if (response.error?.status === 401) {
         router.push('/unauthorized-access')
         return
       } else if (response.data) {
-        setMaintenanceData(response.data)
+        setMaintenanceData(response.data || [])
         console.log('🚀 ~ fetchCompanies ~ response.data:', response.data)
       } else {
-        setMaintenanceData(null)
+        setMaintenanceData([])
         if (response.error) {
           toast({
             title: 'Error',
@@ -255,12 +264,16 @@ export default function AssetDetails() {
         variant: 'destructive',
       })
     }
-  }, [token])
+  }, [token, toast, router, params.id])
 
   const fetchAssetWarranty = useCallback(async () => {
     if (!token) return
     try {
-      const response = await getAssetWarrantyeById(token, params.id)
+      const assetId = String(params.id)
+      if (!assetId) {
+        throw new Error('Invalid asset ID')
+      }
+      const response = await getAssetWarrantyeById(token, assetId)
       if (response.error?.status === 401) {
         router.push('/unauthorized-access')
         return
@@ -268,7 +281,7 @@ export default function AssetDetails() {
         setWarranty(response.data)
         console.log('🚀 ~ fetchCompanies ~ response.data:', response.data)
       } else {
-        setWarranty(null)
+        setWarranty([])
         if (response.error) {
           toast({
             title: 'Error',
@@ -285,14 +298,14 @@ export default function AssetDetails() {
         variant: 'destructive',
       })
     }
-  }, [token])
+  }, [token, toast, router, params.id])
 
   useEffect(() => {
     fetchMaintenance()
     fetchAssetDetails()
     fetchDepreciations()
     fetchAssetWarranty()
-  }, [fetchAssetDetails])
+  }, [fetchAssetDetails, fetchDepreciations, fetchAssetWarranty, fetchMaintenance])
 
   // Add new photo
   const handleAddPhoto = (photoData: { url: string; caption: string }) => {
@@ -323,36 +336,48 @@ export default function AssetDetails() {
     accumulatedDepreciation: string
     bookValue: string
   }) => {
-    setDepreciation([
-      ...depreciation,
-      { id: depreciation.length + 1, ...depData },
-    ])
+    const newDepreciation = {
+      id: depreciation.length + 1,
+      asset_id: Number(params.id),
+      asset_name: assetData?.assetName || '',
+      book_id: 1,
+      book_name: 'Default Book',
+      transaction_date: new Date().toISOString(),
+      period: depData.period,
+      depreciation_amount: Number(depData.depreciationAmount),
+      notes: null,
+      created_by: null,
+      created_at: new Date().toISOString(),
+    }
+    setDepreciation([...depreciation, newDepreciation])
   }
 
   // Add new warranty
-  const handleAddWarranty = (warrantyData: {
-    type: string
-    startDate: string
-    endDate: string
-    provider: string
-    description: string
-  }) => {
-    setWarranty([...warranty, { id: warranty.length + 1, ...warrantyData }])
+  const handleAddWarranty = (warrantyData: CreateWarrantyType) => {
+    setWarranty([
+      ...warranty,
+      {
+        id: warranty.length + 1,
+        type: warrantyData.type,
+        asset_id: warrantyData.asset_id,
+        start_date: warrantyData.start_date,
+        end_date: warrantyData.end_date,
+        warranty_provider: warrantyData.warranty_provider,
+        description: warrantyData.description,
+      },
+    ])
   }
 
   // Add new maintenance
   const handleAddMaintenance = (maintenanceData: CreateMaintenanceType) => {
-    setMaintenance([
-      ...maintenance,
-      {
-        id: maintenance.length + 1,
-        date: maintenanceData.maintDate,
-        type: maintenanceData.type,
-        cost: maintenanceData.cost,
-        description: maintenanceData.description || '',
-        performedBy: maintenanceData.performedBy,
-      },
-    ])
+    setMaintenanceData({
+      assetId: Number(params.id),
+      maintDate: maintenanceData.maintDate,
+      type: maintenanceData.type,
+      cost: maintenanceData.cost,
+      description: maintenanceData.description || '',
+      performedBy: maintenanceData.performedBy,
+    })
   }
 
   // Loading state
@@ -837,7 +862,7 @@ export default function AssetDetails() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {depreciation.length === 0 ? (
+              {depreciation?.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={4}
@@ -847,7 +872,7 @@ export default function AssetDetails() {
                   </TableCell>
                 </TableRow>
               ) : (
-                depreciation.map((item) => (
+                depreciation?.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.period}</TableCell>
                     <TableCell>{item.depreciation_amount}</TableCell>
@@ -878,16 +903,22 @@ export default function AssetDetails() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {warranty ? (
+              {warranty?.length === 0 ? (
                 <TableRow>
-                  <TableCell>{warranty?.type}</TableCell>
-                  <TableCell>{warranty?.start_date}</TableCell>
-                  <TableCell>{warranty?.end_date}</TableCell>
-                  <TableCell>{warranty?.warranty_provider}</TableCell>
-                  <TableCell>{warranty?.description}</TableCell>
+                  <TableCell colSpan={5} className="text-center">
+                    No warranty found
+                  </TableCell>
                 </TableRow>
               ) : (
-                <TableCell>No maintenance found</TableCell>
+                warranty?.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.type}</TableCell>
+                    <TableCell>{item.start_date}</TableCell>
+                    <TableCell>{item.end_date}</TableCell>
+                    <TableCell>{item.warranty_provider}</TableCell>
+                    <TableCell>{item.description}</TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
@@ -910,16 +941,22 @@ export default function AssetDetails() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {maintenanceData ? (
-                <TableRow key={maintenanceData.id}>
-                  <TableCell>{maintenanceData.maintDate}</TableCell>
-                  <TableCell>{maintenanceData.type}</TableCell>
-                  <TableCell>{maintenanceData.cost}</TableCell>
-                  <TableCell>{maintenanceData.description}</TableCell>
-                  <TableCell>{maintenanceData.performedBy}</TableCell>
+              {maintenanceData?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">
+                    No maintenance found
+                  </TableCell>
                 </TableRow>
               ) : (
-                <TableCell>No maintenance found</TableCell>
+                maintenanceData?.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.maintDate}</TableCell>
+                    <TableCell>{item.type}</TableCell>
+                    <TableCell>{item.cost}</TableCell>
+                    <TableCell>{item.description}</TableCell>
+                    <TableCell>{item.performedBy}</TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>

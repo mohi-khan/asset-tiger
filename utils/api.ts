@@ -166,7 +166,7 @@ export async function getAllAssets(token: string) {
 }
 
 export async function getAllAssetDetails(token: string, id: number) {
-  return fetchApi<GetAssetDetailsType[]>({
+  return fetchApi<GetAssetDetailsType>({
     url: `api/asset/getDetails/${id}`,
     method: 'GET',
     headers: {
