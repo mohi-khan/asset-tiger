@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/table'
 import { toast } from '@/hooks/use-toast'
 import {
+  AssetDepreciationType,
   createAssetDepreciationSchema,
   CreateAssetDepreciationType,
   GetCompanyType,
@@ -62,7 +63,7 @@ export default function AssetDepreciation() {
   const [depreciationBooks, setDepreciationBooks] = useState<
     GetDepreciationBookType[]
   >([])
-  const [previewData, setPreviewData] = useState<GetDepTranType[] | null>(null)
+  const [previewData, setPreviewData] = useState<AssetDepreciationType[] | null>(null)
   const [formData, setFormData] = useState<CreateAssetDepreciationType | null>(
     null
   )
@@ -88,7 +89,6 @@ export default function AssetDepreciation() {
         return
       } else if (response.data) {
         setCompanies(response.data)
-        console.log('🚀 ~ fetchCompanies ~ response.data:', response.data)
       } else {
         setCompanies([])
         if (response.error) {
@@ -147,8 +147,6 @@ export default function AssetDepreciation() {
   // Handle preview request
   const onPreview = async (data: CreateAssetDepreciationType) => {
     setIsLoading(true)
-    setPreviewData(null)
-
     try {
       const response = await createAssetDepreciation(
         {
@@ -157,24 +155,9 @@ export default function AssetDepreciation() {
         },
         token
       )
-
-      if (response.error || !response.data) {
-        throw new Error(
-          response.error?.message || 'Failed to preview depreciation schedule'
-        )
-      }
-
-      if (!Array.isArray(response.data)) {
-        throw new Error('Invalid response data format')
-      }
-
-      setPreviewData(response.data as GetDepTranType[])
+      setPreviewData(response.data && response.data)
+      console.log('🚀 ~ onPreview ~ response.data:', response.data)
       setFormData(data)
-
-      toast({
-        title: 'Preview Generated',
-        description: 'Review the depreciation schedule below before submitting',
-      })
     } catch (error) {
       toast({
         title: 'Error',
@@ -200,16 +183,11 @@ export default function AssetDepreciation() {
         },
         token
       )
-
-      if (response.error) {
-        throw new Error(
-          response.error.message || 'Failed to create depreciation schedule'
-        )
-      }
-
       toast({
         title: 'Success',
         description: 'Asset depreciation schedule created successfully',
+        variant: 'default',
+        duration: 3000,
       })
 
       // Reset the form and preview data after successful submission
@@ -224,12 +202,12 @@ export default function AssetDepreciation() {
             ? error.message
             : 'Failed to create asset depreciation schedule',
         variant: 'destructive',
+        duration: 3000,
       })
     } finally {
       setIsSubmitting(false)
     }
   }
-
   // Format currency for display
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -386,7 +364,7 @@ export default function AssetDepreciation() {
       </Card>
 
       {/* Preview Data Table */}
-      {previewData && previewData.length > 0 && (
+      {previewData &&  (
         <Card>
           <CardHeader>
             <CardTitle>Depreciation Schedule Preview</CardTitle>
@@ -400,39 +378,30 @@ export default function AssetDepreciation() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Asset ID</TableHead>
-                    <TableHead>Depreciation Method</TableHead>
-                    <TableHead>Depreciation Date</TableHead>
+                    <TableHead>Book ID</TableHead>
+                    <TableHead>Transaction Date</TableHead>
+                    <TableHead>Period</TableHead>
                     <TableHead className="text-right">
                       Depreciation Amount
                     </TableHead>
-                    <TableHead className="text-right">
-                      Accumulated Depreciation
-                    </TableHead>
-                    <TableHead className="text-right">
-                      Remaining Value
-                    </TableHead>
+                    <TableHead>Created By</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {previewData.map((item, index) => (
+                  {Array.isArray(previewData) && previewData.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell>{item.asset_id}</TableCell>
-                      <TableCell>{item.transaction_date || 'N/A'}</TableCell>
-                      <TableCell>{formatDate(item.transaction_date)}</TableCell>
+                      <TableCell>{item.assetId}</TableCell>
+                      <TableCell>{item.bookId}</TableCell>
+                      <TableCell>{formatDate(item.transactionDate)}</TableCell>
+                      <TableCell>{item.period}</TableCell>
                       <TableCell className="text-right">
-                        {formatCurrency(item.depreciation_amount)}
+                        {formatCurrency(item.depreciationAmount)}
                       </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(item.depreciation_amount)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(item.depreciation_amount)}
-                      </TableCell>
+                      <TableCell>{item.createdBy}</TableCell>
                     </TableRow>
-                  ))}{' '}
+                  ))}
                 </TableBody>
-              </Table>
-            </div>
+              </Table>            </div>
 
             <div className="mt-6 flex justify-end">
               <Button
