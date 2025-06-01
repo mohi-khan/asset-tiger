@@ -517,6 +517,18 @@ export const getDepreciationReportSchema = z.object({
 });
 export type GetDepreciationReportType = z.infer<typeof getDepreciationReportSchema>;
 
+//asset-depreciation
+
+const assetDepreciationSchema = z.object({
+  assetId: z.number(),
+  bookId: z.number(),
+  transactionDate: z.string().datetime(), // ISO date string
+  period: z.string(),                    // e.g. "2025-06"
+  depreciationAmount: z.number(),
+  createdBy: z.number()
+});
+export type AssetDepreciationType = z.infer<typeof assetDepreciationSchema>;
+
 
 
 

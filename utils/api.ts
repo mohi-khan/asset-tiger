@@ -1,5 +1,6 @@
 import { fetchApi } from '@/utils/http'
 import {
+  AssetDepreciationType,
   CreateAssetCapexAdditionType,
   CreateAssetDepreciationType,
   CreateAssetPartialRetirementType,
@@ -299,7 +300,7 @@ export async function createAssetDepreciation(
   data: CreateAssetDepreciationType,
   token: string
 ) {
-  return fetchApi<CreateAssetDepreciationType>({
+  return fetchApi<AssetDepreciationType[]>({
     url: 'api/depCalculation/calculate',
     method: 'POST',
     body: data,
