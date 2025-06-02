@@ -378,26 +378,28 @@ export default function AssetDepreciation() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Asset ID</TableHead>
-                    <TableHead>Book ID</TableHead>
+                    <TableHead>Asset Name</TableHead>
+                    <TableHead>Book Name</TableHead>
                     <TableHead>Transaction Date</TableHead>
                     <TableHead>Period</TableHead>
                     <TableHead className="text-right">
                       Depreciation Amount
                     </TableHead>
-                    <TableHead>Created By</TableHead>
+                    
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {Array.isArray(previewData) && previewData.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell>{item.assetId}</TableCell>
-                      <TableCell>{item.bookId}</TableCell>
+                      <TableCell>{item.assetName}</TableCell>
+                      <TableCell>{item.bookName}</TableCell>
                       <TableCell>{formatDate(item.transactionDate)}</TableCell>
                       <TableCell>{item.period}</TableCell>
                       <TableCell className="text-right">
                         {formatCurrency(item.depreciationAmount)}
                       </TableCell>
-                      <TableCell>{item.createdBy}</TableCell>
+                     
                     </TableRow>
                   ))}
                 </TableBody>
