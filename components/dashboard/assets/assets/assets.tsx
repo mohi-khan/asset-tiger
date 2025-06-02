@@ -13,8 +13,18 @@ import {
 import { Eye, MoreVertical } from 'lucide-react'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
-import type { CreateDepreciationInfoType, GetAssetType } from '@/utils/type'
-import { createDepreciationInfo, getAllAssets } from '@/utils/api'
+import type {
+  CreateDepreciationInfoType,
+  GetAssetType,
+  CreateAssetCapexAdditionType,
+  CreateAssetPartialRetirementType,
+} from '@/utils/type'
+import {
+  createDepreciationInfo,
+  getAllAssets,
+  createAddition,
+  createRetirement,
+} from '@/utils/api'
 import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
 import {
@@ -40,6 +50,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -49,7 +60,11 @@ import {
 } from '@/components/ui/select'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { createDepreciationInfoSchema } from '@/utils/type'
+import {
+  createDepreciationInfoSchema,
+  createAssetCapexAdditionSchema,
+  createAssetPartialRetirementSchema,
+} from '@/utils/type'
 import { useRouter } from 'next/navigation'
 
 const Assets = () => {
@@ -64,38 +79,65 @@ const Assets = () => {
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
 
-  // State for dialog
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  // State for dialogs
+  const [isDepreciationDialogOpen, setIsDepreciationDialogOpen] =
+    useState(false)
+  const [isAdditionDialogOpen, setIsAdditionDialogOpen] = useState(false)
+  const [isRetirementDialogOpen, setIsRetirementDialogOpen] = useState(false)
   const [selectedAssetId, setSelectedAssetId] = useState<number | null>(null)
 
-  // Form setup
-  const form = useForm<CreateDepreciationInfoType>({
+  // Form setups
+  const depreciationForm = useForm<CreateDepreciationInfoType>({
     resolver: zodResolver(createDepreciationInfoSchema),
     defaultValues: {
       depreciationMethod: 'Straight Line',
       startingValue: 0,
-      depreciationRate: 0, // Add default value
-      usefulLifeMonths: 0, // Add default value
-      residualValue: 0, // Add default value
+      depreciationRate: 0,
+      usefulLifeMonths: 0,
+      accDepValue: 0,
+      residualValue: 0,
       effectiveDate: new Date().toISOString().split('T')[0],
+      createdBy: userData?.userId,
+    },
+  })
+
+  const additionForm = useForm<CreateAssetCapexAdditionType>({
+    resolver: zodResolver(createAssetCapexAdditionSchema),
+    defaultValues: {
+      assetId: 0,
+      additionDate: new Date().toISOString().split('T')[0],
+      addedValue: 0,
+      description: '',
+      newBookValue: 0,
+      createdBy: userData?.userId,
+    },
+  })
+
+  const retirementForm = useForm<CreateAssetPartialRetirementType>({
+    resolver: zodResolver(createAssetPartialRetirementSchema),
+    defaultValues: {
+      assetId: 0,
+      retirementDate: new Date().toISOString().split('T')[0],
+      retiredValue: 0,
+      reason: '',
+      updatedBookValue: 0,
       createdBy: userData?.userId,
     },
   })
 
   // Fetch assets on component mount
   const fetchAssets = useCallback(async () => {
-    if(!token) return
+    if (!token) return
     try {
       console.log(token)
       const data = await getAllAssets(token)
       console.log('🚀 ~ fetchAssets ~ data:', data)
       if (data?.error?.status === 401) {
-      router.push('/unauthorized-access')
-      return
-    }
-    else{
-      setAssets(data.data || [])
-    }
+        router.push('/unauthorized-access')
+        return
+      } else {
+        setAssets(data.data || [])
+      }
     } catch (error) {
       console.error('Failed to fetch assets:', error)
       toast({
@@ -106,45 +148,108 @@ const Assets = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [toast, token])
+  }, [toast, token, router])
 
   useEffect(() => {
     fetchAssets()
   }, [fetchAssets])
 
-  // Open dialog with asset ID
+  // Dialog handlers
   const handleOpenDepreciationDialog = (assetId: number) => {
     setSelectedAssetId(assetId)
-    form.reset({
+    depreciationForm.reset({
       assetId: assetId,
-      bookId: 1, // Default book ID, adjust as needed
+      bookId: 1,
       depreciationMethod: 'Straight Line',
       startingValue: 0,
-      depreciationRate: 0, // Add default value
-      usefulLifeMonths: 0, // Add default value
-      residualValue: 0, // Add default value
+      depreciationRate: 0,
+      usefulLifeMonths: 0,
+      residualValue: 0,
       effectiveDate: new Date().toISOString().split('T')[0],
       createdBy: userData?.userId,
     })
-    setIsDialogOpen(true)
+    setIsDepreciationDialogOpen(true)
   }
 
-  // Handle form submission
-  const onSubmit = async (data: CreateDepreciationInfoType) => {
+  const handleOpenAdditionDialog = (assetId: number) => {
+    setSelectedAssetId(assetId)
+    additionForm.reset({
+      assetId: assetId,
+      additionDate: new Date().toISOString().split('T')[0],
+      addedValue: 0,
+      description: '',
+      newBookValue: 0,
+      createdBy: userData?.userId,
+    })
+    setIsAdditionDialogOpen(true)
+  }
+
+  const handleOpenRetirementDialog = (assetId: number) => {
+    setSelectedAssetId(assetId)
+    retirementForm.reset({
+      assetId: assetId,
+      retirementDate: new Date().toISOString().split('T')[0],
+      retiredValue: 0,
+      reason: '',
+      updatedBookValue: 0,
+      createdBy: userData?.userId,
+    })
+    setIsRetirementDialogOpen(true)
+  }
+
+  // Form submission handlers
+  const onDepreciationSubmit = async (data: CreateDepreciationInfoType) => {
     try {
       const response = await createDepreciationInfo(data, token)
       toast({
         title: 'Success',
         description: 'Depreciation information created successfully.',
       })
-      setIsDialogOpen(false)
-      // Optionally refresh assets
+      setIsDepreciationDialogOpen(false)
       fetchAssets()
     } catch (error) {
       console.error('Failed to create depreciation info:', error)
       toast({
         title: 'Error',
         description: 'Failed to create depreciation information.',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const onAdditionSubmit = async (data: CreateAssetCapexAdditionType) => {
+    try {
+      const response = await createAddition(data, token)
+      toast({
+        title: 'Success',
+        description: 'Asset addition created successfully.',
+      })
+      setIsAdditionDialogOpen(false)
+      fetchAssets()
+    } catch (error) {
+      console.error('Failed to create addition:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to create asset addition.',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const onRetirementSubmit = async (data: CreateAssetPartialRetirementType) => {
+    try {
+      const response = await createRetirement(data, token)
+      toast({
+        title: 'Success',
+        description: 'Asset retirement created successfully.',
+      })
+      setIsRetirementDialogOpen(false)
+      fetchAssets()
+    } catch (error) {
+      console.error('Failed to create retirement:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to create asset retirement.',
         variant: 'destructive',
       })
     }
@@ -253,6 +358,26 @@ const Assets = () => {
                           >
                             Create Depreciation Info
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              if (asset.id !== undefined) {
+                                handleOpenAdditionDialog(asset.id)
+                              }
+                            }}
+                            className="cursor-pointer"
+                          >
+                            Create Addition
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              if (asset.id !== undefined) {
+                                handleOpenRetirementDialog(asset.id)
+                              }
+                            }}
+                            className="cursor-pointer"
+                          >
+                            Create Retirement
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -265,7 +390,10 @@ const Assets = () => {
       )}
 
       {/* Depreciation Info Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog
+        open={isDepreciationDialogOpen}
+        onOpenChange={setIsDepreciationDialogOpen}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Create Depreciation Information</DialogTitle>
@@ -274,10 +402,13 @@ const Assets = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <Form {...depreciationForm}>
+            <form
+              onSubmit={depreciationForm.handleSubmit(onDepreciationSubmit)}
+              className="space-y-4"
+            >
               <FormField
-                control={form.control}
+                control={depreciationForm.control}
                 name="depreciationMethod"
                 render={({ field }) => (
                   <FormItem>
@@ -306,7 +437,7 @@ const Assets = () => {
               />
 
               <FormField
-                control={form.control}
+                control={depreciationForm.control}
                 name="startingValue"
                 render={({ field }) => (
                   <FormItem>
@@ -326,7 +457,7 @@ const Assets = () => {
               />
 
               <FormField
-                control={form.control}
+                control={depreciationForm.control}
                 name="depreciationRate"
                 render={({ field }) => (
                   <FormItem>
@@ -346,7 +477,27 @@ const Assets = () => {
               />
 
               <FormField
-                control={form.control}
+                control={depreciationForm.control}
+                name="accDepValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Account Depreciation Value</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(Number.parseFloat(e.target.value))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={depreciationForm.control}
                 name="usefulLifeMonths"
                 render={({ field }) => (
                   <FormItem>
@@ -366,7 +517,7 @@ const Assets = () => {
               />
 
               <FormField
-                control={form.control}
+                control={depreciationForm.control}
                 name="residualValue"
                 render={({ field }) => (
                   <FormItem>
@@ -386,7 +537,7 @@ const Assets = () => {
               />
 
               <FormField
-                control={form.control}
+                control={depreciationForm.control}
                 name="effectiveDate"
                 render={({ field }) => (
                   <FormItem>
@@ -401,8 +552,8 @@ const Assets = () => {
                             ? typeof field.value === 'string'
                               ? field.value
                               : field.value instanceof Date
-                              ? field.value.toISOString().split('T')[0]
-                              : ''
+                                ? field.value.toISOString().split('T')[0]
+                                : ''
                             : ''
                         }
                       />
@@ -416,7 +567,7 @@ const Assets = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
+                  onClick={() => setIsDepreciationDialogOpen(false)}
                 >
                   Cancel
                 </Button>
@@ -425,6 +576,236 @@ const Assets = () => {
                   className="bg-amber-500 hover:bg-amber-600 text-white"
                 >
                   Create
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Addition Dialog */}
+      <Dialog
+        open={isAdditionDialogOpen}
+        onOpenChange={setIsAdditionDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create Asset Addition</DialogTitle>
+            <DialogDescription>
+              Enter the addition details for this asset.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...additionForm}>
+            <form
+              onSubmit={additionForm.handleSubmit(onAdditionSubmit)}
+              className="space-y-4"
+            >
+              <FormField
+                control={additionForm.control}
+                name="additionDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Addition Date</FormLabel>
+                    <FormControl>
+                      <input
+                        type="date"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={additionForm.control}
+                name="addedValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Added Value</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(Number.parseFloat(e.target.value))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={additionForm.control}
+                name="newBookValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Book Value (Optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(Number.parseFloat(e.target.value))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={additionForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Enter description of the addition..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAdditionDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-amber-500 hover:bg-amber-600 text-white"
+                >
+                  Create Addition
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Retirement Dialog */}
+      <Dialog
+        open={isRetirementDialogOpen}
+        onOpenChange={setIsRetirementDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create Asset Retirement</DialogTitle>
+            <DialogDescription>
+              Enter the retirement details for this asset.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...retirementForm}>
+            <form
+              onSubmit={retirementForm.handleSubmit(onRetirementSubmit)}
+              className="space-y-4"
+            >
+              <FormField
+                control={retirementForm.control}
+                name="retirementDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Retirement Date</FormLabel>
+                    <FormControl>
+                      <input
+                        type="date"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={retirementForm.control}
+                name="retiredValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Retired Value</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(Number.parseFloat(e.target.value))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={retirementForm.control}
+                name="updatedBookValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Updated Book Value (Optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(Number.parseFloat(e.target.value))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={retirementForm.control}
+                name="reason"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reason (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Enter reason for retirement..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsRetirementDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-amber-500 hover:bg-amber-600 text-white"
+                >
+                  Create Retirement
                 </Button>
               </DialogFooter>
             </form>
