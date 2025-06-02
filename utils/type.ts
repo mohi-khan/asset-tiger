@@ -509,6 +509,7 @@ export const getDepreciationReportSchema = z.object({
     message: "Period must be in YYYY-MM format",
   }),
   depreciation_amount: z.number(),
+  depreciation_method: z.string(),
   created_by: z.number(),
   depreciation_rate: z.number(),
   useful_life_months: z.number(),
