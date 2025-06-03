@@ -50,25 +50,23 @@ import { tokenAtom, useInitializeUser } from '@/utils/user'
 import { useRouter } from 'next/navigation'
 
 export default function AssetDepreciation() {
-  // Mock token - replace with your actual token management
   useInitializeUser()
   const [token] = useAtom(tokenAtom)
-
   const router = useRouter()
 
   // State variables
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [companies, setCompanies] = useState<GetCompanyType[]>([])
-  const [depreciationBooks, setDepreciationBooks] = useState<
-    GetDepreciationBookType[]
-  >([])
+  const [depreciationBooks, setDepreciationBooks] = useState<GetDepreciationBookType[]>([])
   const [previewData, setPreviewData] = useState<AssetDepreciationType[] | null>(null)
-  const [formData, setFormData] = useState<CreateAssetDepreciationType | null>(
-    null
-  )
+  const [formData, setFormData] = useState<CreateAssetDepreciationType | null>(null)
 
-  // Form setup
+  // Search and pagination states
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
   const form = useForm<CreateAssetDepreciationType>({
     resolver: zodResolver(createAssetDepreciationSchema),
     defaultValues: {
@@ -79,7 +77,18 @@ export default function AssetDepreciation() {
     },
   })
 
-  // Fetch companies
+  // Filter preview data based on search term
+  const filteredPreviewData = previewData ? previewData.filter((item) =>
+    Object.values(item).some((value) =>
+      String(value).toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  ) : []
+
+  // Calculate pagination
+  const totalPages = Math.ceil((filteredPreviewData?.length || 0) / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedPreviewData = filteredPreviewData?.slice(startIndex, startIndex + itemsPerPage)
+
   const fetchCompanies = useCallback(async () => {
     if (!token) return
     try {
@@ -371,6 +380,18 @@ export default function AssetDepreciation() {
             <CardDescription>
               Review the calculated depreciation schedule before submitting
             </CardDescription>
+            <div className="flex items-center gap-4">
+              <Input
+                type="text"
+                placeholder="Search schedules..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="w-64"
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border">
@@ -385,27 +406,53 @@ export default function AssetDepreciation() {
                     <TableHead className="text-right">
                       Depreciation Amount
                     </TableHead>
-                    
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.isArray(previewData) && previewData.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{item.assetId}</TableCell>
-                      <TableCell>{item.assetName}</TableCell>
-                      <TableCell>{item.bookName}</TableCell>
-                      <TableCell>{formatDate(item.transactionDate)}</TableCell>
-                      <TableCell>{item.period}</TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(item.depreciationAmount)}
+                  {paginatedPreviewData && paginatedPreviewData.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                        No depreciation schedules found.
                       </TableCell>
-                     
                     </TableRow>
-                  ))}
+                  ) : (
+                    paginatedPreviewData && paginatedPreviewData.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{item.assetId}</TableCell>
+                        <TableCell>{item.assetName}</TableCell>
+                        <TableCell>{item.bookName}</TableCell>
+                        <TableCell>{formatDate(item.transactionDate)}</TableCell>
+                        <TableCell>{item.period}</TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(item.depreciationAmount)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
-              </Table>            </div>
+              </Table>
+            </div>
 
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex justify-between items-center">
+              <div className="flex justify-center items-center gap-2">
+                <Button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                >
+                  Previous
+                </Button>
+                <span className="mx-4">
+                  Page {currentPage} of {totalPages || 1}
+                </span>
+                <Button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  variant="outline"
+                >
+                  Next
+                </Button>
+              </div>
               <Button
                 onClick={onSubmit}
                 disabled={isSubmitting}

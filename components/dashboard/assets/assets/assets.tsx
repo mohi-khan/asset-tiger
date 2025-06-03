@@ -79,14 +79,30 @@ const Assets = () => {
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
 
+  // Search and pagination states
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
   // State for dialogs
-  const [isDepreciationDialogOpen, setIsDepreciationDialogOpen] =
-    useState(false)
+  const [isDepreciationDialogOpen, setIsDepreciationDialogOpen] = useState(false)
   const [isAdditionDialogOpen, setIsAdditionDialogOpen] = useState(false)
   const [isRetirementDialogOpen, setIsRetirementDialogOpen] = useState(false)
   const [selectedAssetId, setSelectedAssetId] = useState<number | null>(null)
 
-  // Form setups
+  // Filter assets based on search term
+  const filteredAssets = assets.filter((asset) =>
+    Object.values(asset).some((value) =>
+      String(value).toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  )
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredAssets.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedAssets = filteredAssets.slice(startIndex, startIndex + itemsPerPage)
+
+  // Rest of your existing form setups...
   const depreciationForm = useForm<CreateDepreciationInfoType>({
     resolver: zodResolver(createDepreciationInfoSchema),
     defaultValues: {
@@ -125,7 +141,7 @@ const Assets = () => {
     },
   })
 
-  // Fetch assets on component mount
+  // Your existing fetchAssets and other functions...
   const fetchAssets = useCallback(async () => {
     if (!token) return
     try {
@@ -257,7 +273,7 @@ const Assets = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header with title and add button */}
+      {/* Header with title, search, and add button */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2 mb-4">
           <div className="bg-amber-100 p-2 rounded-md">
@@ -280,11 +296,23 @@ const Assets = () => {
           </div>
           <h2 className="text-lg font-semibold">Asset Details</h2>
         </div>
-        <Link href={'/dashboard/assets/add-assets'}>
-          <Button className="bg-yellow-400 hover:bg-yellow-500 text-black">
-            Add
-          </Button>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Input
+            type="text"
+            placeholder="Search assets..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setCurrentPage(1)
+            }}
+            className="w-64"
+          />
+          <Link href={'/dashboard/assets/add-assets'}>
+            <Button className="bg-yellow-400 hover:bg-yellow-500 text-black">
+              Add
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Loading state */}
@@ -293,102 +321,127 @@ const Assets = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
         </div>
       ) : (
-        /* Table for asset data */
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader className="bg-amber-100">
-              <TableRow>
-                <TableHead>Asset Code</TableHead>
-                <TableHead>Asset Name</TableHead>
-                <TableHead>Purchase Date</TableHead>
-                <TableHead>Asset Value</TableHead>
-                <TableHead>Current Value</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead>Serial No.</TableHead>
-                <TableHead>Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {assets.length === 0 ? (
+        <>
+          {/* Table for asset data */}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader className="bg-amber-100">
                 <TableRow>
-                  <TableCell
-                    colSpan={9}
-                    className="text-center py-6 text-gray-500"
-                  >
-                    No assets found. Add your first asset to get started.
-                  </TableCell>
+                  <TableHead>Asset Code</TableHead>
+                  <TableHead>Asset Name</TableHead>
+                  <TableHead>Purchase Date</TableHead>
+                  <TableHead>Asset Value</TableHead>
+                  <TableHead>Current Value</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Model</TableHead>
+                  <TableHead>Serial No.</TableHead>
+                  <TableHead>Action</TableHead>
                 </TableRow>
-              ) : (
-                assets.map((asset) => (
-                  <TableRow key={asset.id}>
-                    <TableCell>{asset.assetCode}</TableCell>
-                    <TableCell>{asset.assetName}</TableCell>
-                    <TableCell>{asset.purDate}</TableCell>
-                    <TableCell>{asset.assetValue}</TableCell>
-                    <TableCell>{asset.currentValue || 'N/A'}</TableCell>
-                    <TableCell>{asset.status || 'Active'}</TableCell>
-                    <TableCell>{asset.model || 'N/A'}</TableCell>
-                    <TableCell>{asset.slNo || 'N/A'}</TableCell>
-                    <TableCell className="flex items-center space-x-2">
-                      <Link
-                        href={`/dashboard/assets/assets/asset-details/${asset.id}`}
-                      >
-                        <Eye className="h-5 w-5 cursor-pointer text-amber-600 hover:text-amber-800" />
-                      </Link>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 p-0"
-                          >
-                            <MoreVertical className="h-5 w-5 text-amber-600 hover:text-amber-800" />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              if (asset.id !== undefined) {
-                                handleOpenDepreciationDialog(asset.id)
-                              }
-                            }}
-                            className="cursor-pointer"
-                          >
-                            Create Depreciation Info
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              if (asset.id !== undefined) {
-                                handleOpenAdditionDialog(asset.id)
-                              }
-                            }}
-                            className="cursor-pointer"
-                          >
-                            Create Addition
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              if (asset.id !== undefined) {
-                                handleOpenRetirementDialog(asset.id)
-                              }
-                            }}
-                            className="cursor-pointer"
-                          >
-                            Create Retirement
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+              </TableHeader>
+              <TableBody>
+                {paginatedAssets.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={9}
+                      className="text-center py-6 text-gray-500"
+                    >
+                      No assets found. Add your first asset to get started.
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                ) : (
+                  paginatedAssets.map((asset) => (
+                    // Your existing asset row code...
+                    <TableRow key={asset.id}>
+                      <TableCell>{asset.assetCode}</TableCell>
+                      <TableCell>{asset.assetName}</TableCell>
+                      <TableCell>{asset.purDate}</TableCell>
+                      <TableCell>{asset.assetValue}</TableCell>
+                      <TableCell>{asset.currentValue || 'N/A'}</TableCell>
+                      <TableCell>{asset.status || 'Active'}</TableCell>
+                      <TableCell>{asset.model || 'N/A'}</TableCell>
+                      <TableCell>{asset.slNo || 'N/A'}</TableCell>
+                      <TableCell className="flex items-center space-x-2">
+                        <Link
+                          href={`/dashboard/assets/assets/asset-details/${asset.id}`}
+                        >
+                          <Eye className="h-5 w-5 cursor-pointer text-amber-600 hover:text-amber-800" />
+                        </Link>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 p-0"
+                            >
+                              <MoreVertical className="h-5 w-5 text-amber-600 hover:text-amber-800" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                if (asset.id !== undefined) {
+                                  handleOpenDepreciationDialog(asset.id)
+                                }
+                              }}
+                              className="cursor-pointer"
+                            >
+                              Create Depreciation Info
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                if (asset.id !== undefined) {
+                                  handleOpenAdditionDialog(asset.id)
+                                }
+                              }}
+                              className="cursor-pointer"
+                            >
+                              Create Addition
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                if (asset.id !== undefined) {
+                                  handleOpenRetirementDialog(asset.id)
+                                }
+                              }}
+                              className="cursor-pointer"
+                            >
+                              Create Retirement
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Pagination controls */}
+          <div className="flex justify-center items-center gap-2 mt-4">
+            <Button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              variant="outline"
+            >
+              Previous
+            </Button>
+            <span className="mx-4">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              variant="outline"
+            >
+              Next
+            </Button>
+          </div>
+        </>
       )}
 
+      {/* Keep all your existing dialogs */}
       {/* Depreciation Info Dialog */}
       <Dialog
         open={isDepreciationDialogOpen}
