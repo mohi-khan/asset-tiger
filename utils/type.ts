@@ -335,6 +335,7 @@ export const createDepreciationInfoSchema = z.object({
   residualValue: z.number().optional(), // optional if nullable in DB
   effectiveDate: z.string().or(z.date()), // can accept either string or Date object
   startingValue: z.number(),
+  accDepValue: z.number(),
   createdBy: z.number().int().optional(), // optional if set by backend
 });
 export type CreateDepreciationInfoType = z.infer<typeof createDepreciationInfoSchema>;
@@ -508,6 +509,7 @@ export const getDepreciationReportSchema = z.object({
     message: "Period must be in YYYY-MM format",
   }),
   depreciation_amount: z.number(),
+  depreciation_method: z.string(),
   created_by: z.number(),
   depreciation_rate: z.number(),
   useful_life_months: z.number(),

@@ -77,8 +77,11 @@ export default function DepreciationReport() {
         // router.push('/unauthorized-access')
         return
       } else {
-        setDepTranData(response.data || [])
-        console.log("ddddddddddddddddddd", response.data)
+        const uniquePeriods = response.data?.filter((item, index, self) =>
+          index === self.findIndex((t) => t.period === item.period)
+        ) || []
+        setDepTranData(uniquePeriods)
+        console.log("ddddddddddddddddddd", uniquePeriods)
       }
     } catch (error) {
       console.error('Error fetching depreciation report:', error)
@@ -86,7 +89,7 @@ export default function DepreciationReport() {
       setLoading(false)
     }
   }, [token])
-
+  
   useEffect(() => {
     fetchBookData()
     fetchDepTran()
@@ -161,6 +164,7 @@ export default function DepreciationReport() {
                 <TableRow>
                   <TableHead>Asset Name</TableHead>
                   <TableHead>Transaction Date</TableHead>
+                  <TableHead>Depreciation Method</TableHead>
                   <TableHead>Depreciation Amount (BDT)</TableHead>
                   <TableHead>Depreciation Rate (%)</TableHead>
                   <TableHead>Useful Life (Months)</TableHead>
@@ -171,10 +175,11 @@ export default function DepreciationReport() {
               </TableHeader>
               <TableBody>
                 {depreciationData.length > 0 ? (
-                  depreciationData.map((item) => (
-                    <TableRow key={item.id}>
+                  depreciationData.map((item, index) => (
+                    <TableRow key={index}>
                       <TableCell>{item.asset_name}</TableCell>
                       <TableCell>{formatDate(item.transaction_date)}</TableCell>
+                      <TableCell>{item.depreciation_method}</TableCell>
                       <TableCell>{item.depreciation_amount}</TableCell>
                       <TableCell>{item.depreciation_rate}</TableCell>
                       <TableCell>{item.useful_life_months}</TableCell>
