@@ -30,7 +30,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { toast } from '@/hooks/use-toast'
 import {
   AssetDepreciationType,
   createAssetDepreciationSchema,
@@ -48,6 +47,7 @@ import { CustomCombobox } from '@/utils/custom-combobox'
 import { useAtom } from 'jotai'
 import { tokenAtom, useInitializeUser } from '@/utils/user'
 import { useRouter } from 'next/navigation'
+import { toast } from '@/hooks/use-toast'
 
 export default function AssetDepreciation() {
   useInitializeUser()
@@ -58,9 +58,15 @@ export default function AssetDepreciation() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [companies, setCompanies] = useState<GetCompanyType[]>([])
-  const [depreciationBooks, setDepreciationBooks] = useState<GetDepreciationBookType[]>([])
-  const [previewData, setPreviewData] = useState<AssetDepreciationType[] | null>(null)
-  const [formData, setFormData] = useState<CreateAssetDepreciationType | null>(null)
+  const [depreciationBooks, setDepreciationBooks] = useState<
+    GetDepreciationBookType[]
+  >([])
+  const [previewData, setPreviewData] = useState<
+    AssetDepreciationType[] | null
+  >(null)
+  const [formData, setFormData] = useState<CreateAssetDepreciationType | null>(
+    null
+  )
 
   // Search and pagination states
   const [searchTerm, setSearchTerm] = useState('')
@@ -78,16 +84,23 @@ export default function AssetDepreciation() {
   })
 
   // Filter preview data based on search term
-  const filteredPreviewData = previewData ? previewData.filter((item) =>
-    Object.values(item).some((value) =>
-      String(value).toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  ) : []
+  const filteredPreviewData = previewData
+    ? previewData.filter((item) =>
+        Object.values(item).some((value) =>
+          String(value).toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      )
+    : []
 
   // Calculate pagination
-  const totalPages = Math.ceil((filteredPreviewData?.length || 0) / itemsPerPage)
+  const totalPages = Math.ceil(
+    (filteredPreviewData?.length || 0) / itemsPerPage
+  )
   const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedPreviewData = filteredPreviewData?.slice(startIndex, startIndex + itemsPerPage)
+  const paginatedPreviewData = filteredPreviewData?.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  )
 
   const fetchCompanies = useCallback(async () => {
     if (!token) return
@@ -163,9 +176,20 @@ export default function AssetDepreciation() {
           saveToDatabase: false,
         },
         token
-      )
-      setPreviewData(response.data && response.data)
-      console.log('🚀 ~ onPreview ~ response.data:', response.data)
+      ) as { error?: any; data?: any } // Add type annotation
+
+      if (response?.error?.details?.error?.statusCode === 400) {
+        toast({
+          title: 'Error',
+          description: 'Depreciation for this peridod already exists.',
+          variant: 'destructive',
+        })
+        console.log('🚀 ~ onPreview ~ response.error:', response.error)
+        return
+      } else {
+        setPreviewData(response.data && response.data)
+        console.log('🚀 ~ onPreview ~ response.data:', response.data)
+      }
       setFormData(data)
     } catch (error) {
       toast({
@@ -373,7 +397,7 @@ export default function AssetDepreciation() {
       </Card>
 
       {/* Preview Data Table */}
-      {previewData &&  (
+      {previewData && (
         <Card>
           <CardHeader>
             <CardTitle>Depreciation Schedule Preview</CardTitle>
@@ -411,17 +435,23 @@ export default function AssetDepreciation() {
                 <TableBody>
                   {paginatedPreviewData && paginatedPreviewData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                      <TableCell
+                        colSpan={6}
+                        className="text-center py-6 text-gray-500"
+                      >
                         No depreciation schedules found.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    paginatedPreviewData && paginatedPreviewData.map((item, index) => (
+                    paginatedPreviewData &&
+                    paginatedPreviewData.map((item, index) => (
                       <TableRow key={index}>
                         <TableCell>{item.assetId}</TableCell>
                         <TableCell>{item.assetName}</TableCell>
                         <TableCell>{item.bookName}</TableCell>
-                        <TableCell>{formatDate(item.transactionDate)}</TableCell>
+                        <TableCell>
+                          {formatDate(item.transactionDate)}
+                        </TableCell>
                         <TableCell>{item.period}</TableCell>
                         <TableCell className="text-right">
                           {formatCurrency(item.depreciationAmount)}
@@ -436,7 +466,9 @@ export default function AssetDepreciation() {
             <div className="mt-6 flex justify-between items-center">
               <div className="flex justify-center items-center gap-2">
                 <Button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
                   disabled={currentPage === 1}
                   variant="outline"
                 >
@@ -446,7 +478,9 @@ export default function AssetDepreciation() {
                   Page {currentPage} of {totalPages || 1}
                 </span>
                 <Button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
                   disabled={currentPage === totalPages || totalPages === 0}
                   variant="outline"
                 >
