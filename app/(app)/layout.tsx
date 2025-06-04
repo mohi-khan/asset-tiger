@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google'
 import { DashboardSidebar } from '@/components/dashboard/sidebar/dashboard-sidebar'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import Navbar from '@/components/shared/navbar'
+import { Toaster } from '@/components/ui/toaster'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -25,6 +26,7 @@ export default function RootLayout({
           <DashboardSidebar />
           <SidebarInset>
             <main className="flex-1 p-6">{children}</main>
+            <Toaster />
           </SidebarInset>
         </SidebarProvider>
       </body>
