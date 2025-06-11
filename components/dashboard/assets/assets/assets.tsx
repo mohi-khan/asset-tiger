@@ -18,12 +18,14 @@ import type {
   GetAssetType,
   CreateAssetCapexAdditionType,
   CreateAssetPartialRetirementType,
+  GetDepreciationBookType,
 } from '@/utils/type'
 import {
   createDepreciationInfo,
   getAllAssets,
   createAddition,
   createRetirement,
+  getAllDepreciationBook,
 } from '@/utils/api'
 import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
@@ -44,6 +46,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -66,6 +69,7 @@ import {
   createAssetPartialRetirementSchema,
 } from '@/utils/type'
 import { useRouter } from 'next/navigation'
+import { CustomCombobox } from '@/utils/custom-combobox'
 
 const Assets = () => {
   useInitializeUser()
@@ -76,6 +80,9 @@ const Assets = () => {
 
   // State for assets data
   const [assets, setAssets] = useState<GetAssetType[]>([])
+  const [depreciationBooks, setDepreciationBooks] = useState<
+    GetDepreciationBookType[]
+  >([])
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
 
@@ -85,7 +92,8 @@ const Assets = () => {
   const itemsPerPage = 10
 
   // State for dialogs
-  const [isDepreciationDialogOpen, setIsDepreciationDialogOpen] = useState(false)
+  const [isDepreciationDialogOpen, setIsDepreciationDialogOpen] =
+    useState(false)
   const [isAdditionDialogOpen, setIsAdditionDialogOpen] = useState(false)
   const [isRetirementDialogOpen, setIsRetirementDialogOpen] = useState(false)
   const [selectedAssetId, setSelectedAssetId] = useState<number | null>(null)
@@ -100,7 +108,10 @@ const Assets = () => {
   // Calculate pagination
   const totalPages = Math.ceil(filteredAssets.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedAssets = filteredAssets.slice(startIndex, startIndex + itemsPerPage)
+  const paginatedAssets = filteredAssets.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  )
 
   // Rest of your existing form setups...
   const depreciationForm = useForm<CreateDepreciationInfoType>({
@@ -109,6 +120,7 @@ const Assets = () => {
       depreciationMethod: 'Straight Line',
       startingValue: 0,
       depreciationRate: 0,
+      bookId: 0,
       usefulLifeMonths: 0,
       accDepValue: 0,
       residualValue: 0,
@@ -166,9 +178,39 @@ const Assets = () => {
     }
   }, [toast, token, router])
 
+  const fetchDepreciationBooks = useCallback(async () => {
+    if (!token) return
+    try {
+      const response = await getAllDepreciationBook(token)
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else if (response.data) {
+        setDepreciationBooks(response.data)
+      } else {
+        setDepreciationBooks([])
+        if (response.error) {
+          toast({
+            title: 'Error',
+            description: response.error.message,
+            variant: 'destructive',
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch depreciation books:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch depreciation books',
+        variant: 'destructive',
+      })
+    }
+  }, [token, router, toast])
+
   useEffect(() => {
     fetchAssets()
-  }, [fetchAssets])
+    fetchDepreciationBooks()
+  }, [fetchAssets, fetchDepreciationBooks])
 
   // Dialog handlers
   const handleOpenDepreciationDialog = (assetId: number) => {
@@ -421,7 +463,7 @@ const Assets = () => {
           {/* Pagination controls */}
           <div className="flex justify-center items-center gap-2 mt-4">
             <Button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
               variant="outline"
             >
@@ -431,7 +473,9 @@ const Assets = () => {
               Page {currentPage} of {totalPages}
             </span>
             <Button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
               disabled={currentPage === totalPages}
               variant="outline"
             >
@@ -441,7 +485,6 @@ const Assets = () => {
         </>
       )}
 
-      {/* Keep all your existing dialogs */}
       {/* Depreciation Info Dialog */}
       <Dialog
         open={isDepreciationDialogOpen}
@@ -484,6 +527,42 @@ const Assets = () => {
                         </SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={depreciationForm.control}
+                name="bookId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Depreciation Book</FormLabel>
+                    <FormControl>
+                      <CustomCombobox
+                        items={depreciationBooks.map((book) => ({
+                          id: book.id.toString(),
+                          name: book.name,
+                        }))}
+                        value={
+                          field.value
+                            ? {
+                                id: field.value.toString(),
+                                name:
+                                  depreciationBooks.find(
+                                    (b) => b.id === field.value
+                                  )?.name || '',
+                              }
+                            : null
+                        }
+                        onChange={(value) =>
+                          field.onChange(
+                            value ? Number.parseInt(value.id, 10) : 0
+                          )
+                        }
+                        placeholder="Select depreciation book"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

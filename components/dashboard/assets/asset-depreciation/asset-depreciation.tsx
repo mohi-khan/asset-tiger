@@ -129,7 +129,7 @@ export default function AssetDepreciation() {
         variant: 'destructive',
       })
     }
-  }, [token])
+  }, [token, router])
 
   // Fetch depreciation books
   const fetchDepreciationBooks = useCallback(async () => {
@@ -159,7 +159,7 @@ export default function AssetDepreciation() {
         variant: 'destructive',
       })
     }
-  }, [token])
+  }, [token, router])
 
   useEffect(() => {
     fetchCompanies()
