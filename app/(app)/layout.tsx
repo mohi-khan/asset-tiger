@@ -5,6 +5,7 @@ import { DashboardSidebar } from '@/components/dashboard/sidebar/dashboard-sideb
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import Navbar from '@/components/shared/navbar'
 import { Toaster } from '@/components/ui/toaster'
+import { useRouter } from 'next/navigation'
 
 const inter = Inter({ subsets: ['latin'] })
 

@@ -3,8 +3,27 @@ import { Settings, BarChart3, Wallet, ShoppingCart } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
+import { useInitializeUser, userDataAtom } from "@/utils/user"
+import { useAtom } from "jotai"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 const DashboardOverview = () => {
+  useInitializeUser()
+  const [userData] = useAtom(userDataAtom)
+
+  const router = useRouter()
+  
+  // useEffect(() => {
+  //   if (userData === null) {
+  //     router.push('/signin');
+  //   }
+  // }, [userData, router]);
+  
+  // if (userData === undefined) {
+  //   // still initializing
+  //   return <div>Loading...</div>;
+  // }
   // Sample data for the pie chart
   const pieData = [
     { name: "Equipment", value: 95 },
