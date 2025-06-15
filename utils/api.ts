@@ -495,3 +495,14 @@ export async function getDisposeReport(token: string, disposeDate: string, compa
     },
   })
 }
+
+export async function getGlDepCalculationeReport(token: string, companyId: number, bookId: number, period: string) {
+  return fetchApi<any[]>({
+    url: `api/report/getCostCenterReport?companyId=${companyId}&bookId=${bookId}&period=${period}`,
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
