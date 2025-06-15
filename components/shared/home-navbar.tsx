@@ -40,7 +40,6 @@ const HomeNavbar = () => {
         setIsScrolled(false)
       }
 
-      const homePosition = 0
       const reviewsPosition = document.getElementById("reviews")?.offsetTop || 0
       const featuresPosition = document.getElementById("features")?.offsetTop || 0
       const appsPosition = document.getElementById("apps")?.offsetTop || 0

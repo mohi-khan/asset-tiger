@@ -1,6 +1,7 @@
 import { fetchApi } from '@/utils/http'
 import {
   AssetDepreciationType,
+  AssetInfoReportType,
   CreateAssetCapexAdditionType,
   CreateAssetDepreciationType,
   CreateAssetPartialRetirementType,
@@ -34,6 +35,7 @@ import {
   GetSiteType,
   GetSupplierType,
   GetWarrantyType,
+  GLDepreciationReportType,
 } from '@/utils/type'
 
 export async function getAllDepartments(token: string) {
@@ -496,9 +498,20 @@ export async function getDisposeReport(token: string, disposeDate: string, compa
   })
 }
 
-export async function getGlDepCalculationeReport(token: string, companyId: number, bookId: number, period: string) {
-  return fetchApi<any[]>({
+export async function getGlDepreciationReport(token: string, companyId: number, bookId: number, period: string) {
+  return fetchApi<GLDepreciationReportType[]>({
     url: `api/report/getCostCenterReport?companyId=${companyId}&bookId=${bookId}&period=${period}`,
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getAssetInfoReport(token: string, companyId: number) {
+  return fetchApi<AssetInfoReportType[]>({
+    url: `api/report/getAssetInfoReport?companyId=${companyId}`,
     method: 'GET',
     headers: {
       Authorization: token,
