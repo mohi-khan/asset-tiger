@@ -162,6 +162,10 @@ export function DashboardSidebar() {
           title: 'Accounting Journal Report',
           href: '/dashboard/report/accounting-Journal-Report',
         },
+        {
+          title: 'GL Depreciation Report',
+          href: '/dashboard/report/gl-depreciation-report',
+        },
        
       ],}
 

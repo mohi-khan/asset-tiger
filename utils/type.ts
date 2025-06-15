@@ -520,7 +520,6 @@ export const getDepreciationReportSchema = z.object({
 export type GetDepreciationReportType = z.infer<typeof getDepreciationReportSchema>;
 
 //asset-depreciation
-
 const assetDepreciationSchema = z.object({
   assetId: z.number(),
   assetName:z.string(),
@@ -533,14 +532,15 @@ const assetDepreciationSchema = z.object({
 });
 export type AssetDepreciationType = z.infer<typeof assetDepreciationSchema>;
 
+//gl-depreciation-report
+export const glDepreciationReportSchema = z.object({
+  period: z.string(), // if it's a date you can use z.string().regex() or z.date()
+  asset_gl: z.string(),
+  costCenterCode: z.string(),
+  totalDepreciation: z.number(),
+});
 
-
-
-
-
-
-
-
+export type GLDepreciationReportType = z.infer<typeof glDepreciationReportSchema>;
 
 
 

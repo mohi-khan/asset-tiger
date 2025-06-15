@@ -34,6 +34,7 @@ import {
   GetSiteType,
   GetSupplierType,
   GetWarrantyType,
+  GLDepreciationReportType,
 } from '@/utils/type'
 
 export async function getAllDepartments(token: string) {
@@ -496,8 +497,8 @@ export async function getDisposeReport(token: string, disposeDate: string, compa
   })
 }
 
-export async function getGlDepCalculationeReport(token: string, companyId: number, bookId: number, period: string) {
-  return fetchApi<any[]>({
+export async function getGlDepreciationReport(token: string, companyId: number, bookId: number, period: string) {
+  return fetchApi<GLDepreciationReportType[]>({
     url: `api/report/getCostCenterReport?companyId=${companyId}&bookId=${bookId}&period=${period}`,
     method: 'GET',
     headers: {
