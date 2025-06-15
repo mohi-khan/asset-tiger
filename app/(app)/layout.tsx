@@ -2,10 +2,9 @@ import '.././globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { DashboardSidebar } from '@/components/dashboard/sidebar/dashboard-sidebar'
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import Navbar from '@/components/shared/navbar'
 import { Toaster } from '@/components/ui/toaster'
-import { useRouter } from 'next/navigation'
 
 const inter = Inter({ subsets: ['latin'] })
 
