@@ -542,6 +542,50 @@ export const glDepreciationReportSchema = z.object({
 
 export type GLDepreciationReportType = z.infer<typeof glDepreciationReportSchema>;
 
+//asset-info-report
+export const assetInfoReportchema = z.object({
+  item_code: z.string(),
+  item_desc: z.string(),
+  mfg_code: z.string(),
+  mfg_name: z.string(),
+  c_origin: z.string(),
+  m_model: z.string(),
+  mfg_yy: z.union([z.string(), z.number()]), // depends on your data source
+  mc_sl: z.string(),
+  mc_loc: z.union([z.string(), z.number()]),
+  comm_dt: z.string(), // you can add date regex if needed
+  mc_sup: z.number(),
+  supplier_name: z.string(),
+  a_loc: z.union([z.string(), z.number()]),
+  a_sec: z.union([z.string(), z.number()]),
+  a_cat: z.union([z.string(), z.number()]),
+  a_dept: z.union([z.string(), z.number()]),
+  a_st: z.string(),
+  a_value: z.number(),
+  curr_value: z.number(),
+  l_time: z.number(),
+  d_pct: z.number(),
+  yy_dep: z.number(),
+  accu_dep_o: z.number(),
+  accu_dep: z.number(),
+  b_value: z.number(),
+  b_name: z.string(),
+  a_scat: z.union([z.string(), z.number()]),
+  cc_code: z.number(),
+  cc_desc: z.string(),
+  oh_amt: z.number(),
+  oh_l_time: z.number(),
+  oh_dt: z.string(),
+  r_l_time: z.number(),
+  u_l_time: z.number(),
+  u_accu_dep: z.number(),
+  a_st_dt: z.string(),
+  s_amt: z.number(),
+  a_rem: z.string(),
+  sold_dt: z.string(),
+});
+export type AssetInfoReportType = z.infer<typeof assetInfoReportchema>;
+
 
 
 

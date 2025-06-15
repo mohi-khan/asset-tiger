@@ -166,6 +166,10 @@ export function DashboardSidebar() {
           title: 'GL Depreciation Report',
           href: '/dashboard/report/gl-depreciation-report',
         },
+        {
+          title: 'Asset Info Report',
+          href: '/dashboard/report/asset-info-report',
+        },
        
       ],}
 
