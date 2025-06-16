@@ -586,6 +586,13 @@ export const assetInfoReportchema = z.object({
 });
 export type AssetInfoReportType = z.infer<typeof assetInfoReportchema>;
 
+export const catAndSubcatAccuDepReportType = z.object({
+  subCategory: z.string(),
+  parentCategory: z.string(),
+  totalDepreciation: z.number(),
+});
+export type CatAndSubcatAccuDepReportType = z.infer<typeof catAndSubcatAccuDepReportType>;
+
 
 
 

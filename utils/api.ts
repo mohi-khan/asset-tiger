@@ -2,6 +2,7 @@ import { fetchApi } from '@/utils/http'
 import {
   AssetDepreciationType,
   AssetInfoReportType,
+  CatAndSubcatAccuDepReportType,
   CreateAssetCapexAdditionType,
   CreateAssetDepreciationType,
   CreateAssetPartialRetirementType,
@@ -501,6 +502,17 @@ export async function getDisposeReport(token: string, disposeDate: string, compa
 export async function getGlDepreciationReport(token: string, companyId: number, bookId: number, period: string) {
   return fetchApi<GLDepreciationReportType[]>({
     url: `api/report/getCostCenterReport?companyId=${companyId}&bookId=${bookId}&period=${period}`,
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getCatAndSubcatAccuDepReport(token: string, companyId: number, bookId: number, period: string) {
+  return fetchApi<CatAndSubcatAccuDepReportType[]>({
+    url: `api/report/getCatWiseDepReport?companyId=${companyId}&bookId=${bookId}&period=${period}`,
     method: 'GET',
     headers: {
       Authorization: token,

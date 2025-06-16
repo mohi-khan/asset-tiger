@@ -170,6 +170,10 @@ export function DashboardSidebar() {
           title: 'Asset Info Report',
           href: '/dashboard/report/asset-info-report',
         },
+        {
+          title: 'Category & Sub-category Wise Accumulated Depreciation Report',
+          href: '/dashboard/report/cat-and-subcat-accu-dep-report',
+        },
        
       ],}
 
@@ -206,7 +210,7 @@ export function DashboardSidebar() {
                       className={`${isItemActive(item) ? 'bg-yellow-400 text-black hover:bg-yellow-400' : ''}  `}
                     >
                       <Link href={item.href}>
-                        <item.icon className="mr-2 h-4 w-4" />
+                        <item.icon className="mr-2 w-4" />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -220,9 +224,9 @@ export function DashboardSidebar() {
                         <SidebarMenuButton
                           className={`${isItemActive(item) ? 'bg-yellow-400 text-black hover:bg-yellow-400' : ''}  `}
                         >
-                          <item.icon className="mr-2 h-4 w-4" />
+                          <item.icon className="mr-2 w-4" />
                           <span>{item.title}</span>
-                          <ChevronDown className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                          <ChevronDown className="ml-auto w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
                         </SidebarMenuButton>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
@@ -233,7 +237,7 @@ export function DashboardSidebar() {
                                 asChild
                                 className={`${pathname === subItem.href ? 'bg-gray-100 text-black' : ''}`}
                               >
-                                <Link href={subItem.href}>{subItem.title}</Link>
+                                <Link className='h-auto mt-2' href={subItem.href}>{subItem.title}</Link>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
                           ))}
