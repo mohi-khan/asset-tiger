@@ -5,6 +5,7 @@ import { DashboardSidebar } from '@/components/dashboard/sidebar/dashboard-sideb
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import Navbar from '@/components/shared/navbar'
 import { Toaster } from '@/components/ui/toaster'
+import HomeNavbar from '@/components/shared/home-navbar'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <Navbar />
+        <HomeNavbar />
         <SidebarProvider>
           <DashboardSidebar />
           <SidebarInset>

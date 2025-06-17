@@ -2,6 +2,7 @@ import { Toaster } from '@/components/ui/toaster'
 import '.././globals.css'
 import { Inter } from 'next/font/google'
 import HomeNavbar from '@/components/shared/home-navbar'
+import Footer from '@/components/shared/footer'
 const inter = Inter({ subsets: ['latin'] })
 
 export default function HomeLayout({
@@ -12,9 +13,10 @@ export default function HomeLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="flex items-center justify-center min-h-max">
+        <div className="">
             <HomeNavbar />
-          <div className="p-8 bg-white rounded">{children}</div>
+          <div className="bg-white rounded">{children}</div>
+          <Footer />
           <Toaster />
         </div>
       </body>
