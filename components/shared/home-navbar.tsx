@@ -1,12 +1,24 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Menu, X } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
+import { Menu, User2, X } from 'lucide-react'
+import { useInitializeUser, userDataAtom } from '@/utils/user'
+import { useAtom } from 'jotai'
+import Link from 'next/link'
 
 const HomeNavbar = () => {
+  useInitializeUser()
+  const [userData] = useAtom(userDataAtom)
+
   const [isScrolled, setIsScrolled] = useState(false)
   const [active, setActive] = useState('#')
   const [open, setOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const profileRef = useRef(null)
+
+  const handleSignOut = () => {
+    // Add sign out logic here
+  }
 
   // Smooth scroll function
   const scrollToSection = (sectionId: string) => {
@@ -353,30 +365,61 @@ const HomeNavbar = () => {
             >
               CONTACT US
             </a>
-            <div className="pt-4 border-t">
-              <a
-                href="#signup"
-                onClick={(e) => {
-                  e.preventDefault()
-                  scrollToSection('#signup')
-                  setOpen(false)
-                }}
-                className="block w-full text-center border border-gray-800 text-gray-800 px-4 py-2 rounded mb-2 hover:bg-gray-100 transition-colors cursor-pointer"
-              >
-                CREATE NEW ACCOUNT
-              </a>
-              <a
-                href="#signin"
-                onClick={(e) => {
-                  e.preventDefault()
-                  scrollToSection('#signin')
-                  setOpen(false)
-                }}
-                className="block w-full text-center bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition-colors cursor-pointer"
-              >
-                SIGN IN
-              </a>
-            </div>
+            {userData ? (
+              <div className="flex items-center ml-4">
+                <div className="relative" ref={profileRef}>
+                  <button
+                    className="flex items-center justify-center w-10 h-10 text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition duration-500 ease-in-out"
+                    id="user-menu"
+                    aria-label="User menu"
+                    aria-haspopup="true"
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  >
+                    <User2 className="h-9 w-9 text-gray-600 border border-gray-600 p-1 rounded-full" />
+                  </button>
+                  {isProfileOpen && (
+                    <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg">
+                      <div
+                        className="py-1 rounded-md bg-white shadow-xs"
+                        role="menu"
+                        aria-orientation="vertical"
+                        aria-labelledby="user-menu"
+                      >
+                        <Link
+                          href="/change-password"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          role="menuitem"
+                        >
+                          Change Password
+                        </Link>
+                        <button
+                          onClick={handleSignOut}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          role="menuitem"
+                        >
+                          Sign out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="pt-4 border-t">
+                <Link
+                  href="#signup"
+                  className="block w-full text-center border border-gray-800 text-gray-800 px-4 py-2 rounded mb-2 hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  CREATE NEW ACCOUNT
+                </Link>
+                <Link
+                  href="/signin"
+                  className="block w-full text-center bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition-colors cursor-pointer"
+                >
+                  SIGN IN
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

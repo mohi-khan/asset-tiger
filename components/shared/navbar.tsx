@@ -1,20 +1,10 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import Image from 'next/image'
-import { ChevronDown, PlusCircle } from 'lucide-react'
+import { PlusCircle, User2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Company, User } from '@/utils/type'
-import { Search, List, Plus } from 'lucide-react';
-import { DollarSign, Building, BookOpen, Repeat } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Search, List } from 'lucide-react';
 
 export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -94,13 +84,7 @@ export default function Navbar() {
                 aria-haspopup="true"
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
               >
-                <Image
-                  src="/placeholder.svg?height=40&width=40"
-                  width={40}
-                  height={40}
-                  className="rounded-full border"
-                  alt="Profile"
-                />
+                <User2 className="h-9 w-9 text-gray-600 border border-gray-600 p-1 rounded-full" />
               </button>
               {isProfileOpen && (
                 <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg">
