@@ -174,6 +174,10 @@ export function DashboardSidebar() {
           title: 'Category & Sub-category Wise Accumulated Depreciation Report',
           href: '/dashboard/report/cat-and-subcat-accu-dep-report',
         },
+        {
+          title: 'Depreciation Info Report',
+          href: '/dashboard/report/depreciation-info-report',
+        },
        
       ],}
 

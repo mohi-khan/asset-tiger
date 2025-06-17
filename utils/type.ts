@@ -593,6 +593,23 @@ export const catAndSubcatAccuDepReportType = z.object({
 });
 export type CatAndSubcatAccuDepReportType = z.infer<typeof catAndSubcatAccuDepReportType>;
 
+export const depreciationInfoReportSchema = z.object({
+  code: z.string(),
+  description: z.string(),
+  commencement: z.string(), // You can add date validation if needed
+  subCategory: z.string(),
+  locationId: z.union([z.string(), z.number()]),
+  location: z.string(),
+  departmentId: z.union([z.string(), z.number()]),
+  department: z.string(),
+  actualValue: z.number(),
+  currentValue: z.number(),
+  usefulLife: z.number(),
+  depreciationPercentage: z.number(),
+  depreciation: z.number(),
+});
+export type DepreciationInfoReportType = z.infer<typeof depreciationInfoReportSchema>;
+
 
 
 

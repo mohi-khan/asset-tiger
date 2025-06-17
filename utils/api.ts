@@ -19,6 +19,7 @@ import {
   CreateSiteType,
   CreateSupplierType,
   CreateWarrantyType,
+  DepreciationInfoReportType,
   GetAssetCapexAdditionType,
   GetAssetDetailsType,
   GetAssetPartialRetirementType,
@@ -513,6 +514,17 @@ export async function getGlDepreciationReport(token: string, companyId: number, 
 export async function getCatAndSubcatAccuDepReport(token: string, companyId: number, bookId: number, period: string) {
   return fetchApi<CatAndSubcatAccuDepReportType[]>({
     url: `api/report/getCatWiseDepReport?companyId=${companyId}&bookId=${bookId}&period=${period}`,
+    method: 'GET',
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+export async function getMonthlyDepreciationInfoReport(token: string, companyId: number, bookId: number, period: string) {
+  return fetchApi<DepreciationInfoReportType[]>({
+    url: `api/report/getMonthlyDepInfoReport?companyId=${companyId}&bookId=${bookId}&period=${period}`,
     method: 'GET',
     headers: {
       Authorization: token,
