@@ -1,7 +1,7 @@
 'use client'
 
 import type React from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,8 +14,31 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Popup } from '@/utils/popup'
+import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
+import { useAtom } from 'jotai'
+import { useRouter } from 'next/navigation'
 
 const LocationsAndSites = () => {
+  useInitializeUser()
+    const [userData] = useAtom(userDataAtom)
+    const [token] = useAtom(tokenAtom)
+  
+    const router = useRouter()
+  
+    useEffect(() => {
+      const checkUserData = () => {
+        const storedUserData = localStorage.getItem('currentUser')
+        const storedToken = localStorage.getItem('authToken')
+  
+        if (!storedUserData || !storedToken) {
+          console.log('No user data or token found in localStorage')
+          router.push('/signin')
+          return
+        }
+      }
+  
+      checkUserData()
+    }, [userData, token, router])
   // State for popup visibility
   const [isPopupOpen, setIsPopupOpen] = useState(false)
 

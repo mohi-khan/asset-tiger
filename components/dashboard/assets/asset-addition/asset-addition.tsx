@@ -35,10 +35,25 @@ import { useRouter } from 'next/navigation'
 
 const AssetAddition = () => {
   useInitializeUser()
-  const [token] = useAtom(tokenAtom)
   const [userData] = useAtom(userDataAtom)
+  const [token] = useAtom(tokenAtom)
 
   const router = useRouter()
+
+  useEffect(() => {
+    const checkUserData = () => {
+      const storedUserData = localStorage.getItem('currentUser')
+      const storedToken = localStorage.getItem('authToken')
+
+      if (!storedUserData || !storedToken) {
+        console.log('No user data or token found in localStorage')
+        router.push('/signin')
+        return
+      }
+    }
+
+    checkUserData()
+  }, [userData, token, router])
 
   // State for popup visibility
   const [isPopupOpen, setIsPopupOpen] = useState(false)
@@ -85,7 +100,7 @@ const AssetAddition = () => {
       if (data?.error?.status === 401) {
         router.push('/unauthorized-access')
         return
-      }else {
+      } else {
         setAssets(data.data || [])
       }
     } catch (error) {

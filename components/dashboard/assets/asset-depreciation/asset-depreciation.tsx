@@ -45,14 +45,31 @@ import {
 } from '@/utils/api'
 import { CustomCombobox } from '@/utils/custom-combobox'
 import { useAtom } from 'jotai'
-import { tokenAtom, useInitializeUser } from '@/utils/user'
+import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useRouter } from 'next/navigation'
 import { toast } from '@/hooks/use-toast'
 
 export default function AssetDepreciation() {
   useInitializeUser()
-  const [token] = useAtom(tokenAtom)
-  const router = useRouter()
+    const [userData] = useAtom(userDataAtom)
+    const [token] = useAtom(tokenAtom)
+  
+    const router = useRouter()
+  
+    useEffect(() => {
+      const checkUserData = () => {
+        const storedUserData = localStorage.getItem('currentUser')
+        const storedToken = localStorage.getItem('authToken')
+  
+        if (!storedUserData || !storedToken) {
+          console.log('No user data or token found in localStorage')
+          router.push('/signin')
+          return
+        }
+      }
+  
+      checkUserData()
+    }, [userData, token, router])
 
   // State variables
   const [isLoading, setIsLoading] = useState(false)
