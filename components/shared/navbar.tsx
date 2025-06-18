@@ -33,8 +33,9 @@ export default function Navbar() {
   
   const handleSignOut = () => {
     localStorage.removeItem('currentUser')
+    localStorage.removeItem('authToken')
     setIsProfileOpen(false)
-    router.push('/')
+    router.push('/signin')
   }
 
   return (
