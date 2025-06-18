@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ChevronDown, FileText, Pencil, Plus, Printer } from 'lucide-react'
-import { tokenAtom, useInitializeUser } from '@/utils/user'
+import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
 import { toast, useToast } from '@/hooks/use-toast'
 import {
@@ -81,11 +81,27 @@ type DocData = {
 
 export default function AssetDetails() {
   useInitializeUser()
-  const [token] = useAtom(tokenAtom)
+    const [userData] = useAtom(userDataAtom)
+    const [token] = useAtom(tokenAtom)
+  
+    const router = useRouter()
+  
+    useEffect(() => {
+      const checkUserData = () => {
+        const storedUserData = localStorage.getItem('currentUser')
+        const storedToken = localStorage.getItem('authToken')
+  
+        if (!storedUserData || !storedToken) {
+          console.log('No user data or token found in localStorage')
+          router.push('/signin')
+          return
+        }
+      }
+  
+      checkUserData()
+    }, [userData, token, router])
   const params = useParams()
   const { toast } = useToast()
-
-  const router = useRouter()
 
   const [assetData, setAssetData] = useState<GetAssetDetailsType | null>(null)
   const [depreciation, setDepreciation] = useState<GetDepTranType[]>([])

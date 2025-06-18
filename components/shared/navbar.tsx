@@ -5,8 +5,30 @@ import { PlusCircle, User2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Search, List } from 'lucide-react';
+import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
+import { useAtom } from 'jotai'
 
 export default function Navbar() {
+  useInitializeUser()
+    const [userData] = useAtom(userDataAtom)
+    const [token] = useAtom(tokenAtom)
+  
+    const router = useRouter()
+  
+    useEffect(() => {
+      const checkUserData = () => {
+        const storedUserData = localStorage.getItem('currentUser')
+        const storedToken = localStorage.getItem('authToken')
+  
+        if (!storedUserData || !storedToken) {
+          console.log('No user data or token found in localStorage')
+          router.push('/signin')
+          return
+        }
+      }
+  
+      checkUserData()
+    }, [userData, token, router])
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
   const companiesRef = useRef<HTMLDivElement>(null)
@@ -28,8 +50,6 @@ export default function Navbar() {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [profileRef, companiesRef])
-
-  const router = useRouter()
   
   const handleSignOut = () => {
     localStorage.removeItem('currentUser')

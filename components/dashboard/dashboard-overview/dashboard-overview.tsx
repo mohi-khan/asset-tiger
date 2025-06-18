@@ -14,14 +14,21 @@ const DashboardOverview = () => {
   const [token] = useAtom(tokenAtom)
 
   const router = useRouter()
-  
-  const isLoading = userData === undefined || token === undefined
 
   useEffect(() => {
-    if (!isLoading && (!userData || !token)) {
-      router.push('/signin')
+    const checkUserData = () => {
+      const storedUserData = localStorage.getItem('currentUser')
+      const storedToken = localStorage.getItem('authToken')
+
+      if (!storedUserData || !storedToken) {
+        console.log('No user data or token found in localStorage')
+        router.push('/signin')
+        return
+      }
     }
-  }, [isLoading, userData, token, router])
+
+    checkUserData()
+  }, [userData, token, router])
   
   // if (userData === undefined) {
   //   // still initializing
