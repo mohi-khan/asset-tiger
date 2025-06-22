@@ -1,4 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react'
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
@@ -9,13 +11,29 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { getAllDepreciationBook, getAllDepreciationTransactions, getDepreciationReport } from '@/utils/api'
-import { GetDepreciationBookType, GetDepreciationReportType, GetDepTranType } from '@/utils/type'
-import { tokenAtom, useInitializeUser} from '@/utils/user'
+import {
+  getAllDepreciationBook,
+  getAllDepreciationTransactions,
+  getDepreciationReport,
+} from '@/utils/api'
+import type {
+  GetDepreciationBookType,
+  GetDepreciationReportType,
+  GetDepTranType,
+} from '@/utils/type'
+import { tokenAtom, useInitializeUser } from '@/utils/user'
 import { useAtom } from 'jotai'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
 
 export default function DepreciationReport() {
   useInitializeUser()
@@ -25,7 +43,9 @@ export default function DepreciationReport() {
   const [selectedBookId, setSelectedBookId] = useState<number>(0)
   const [selectedDepPeriod, setSelectedDepPeriod] = useState<number>(0)
   const [periodId, setPeriodId] = useState<string>('')
-  const [depreciationData, setDepreciationData] = useState<GetDepreciationReportType[]>([])
+  const [depreciationData, setDepreciationData] = useState<
+    GetDepreciationReportType[]
+  >([])
   const [bookData, setBookData] = useState<GetDepreciationBookType[]>([])
   const [depTranData, setDepTranData] = useState<GetDepTranType[]>([])
   const [loading, setLoading] = useState(false)
@@ -34,7 +54,11 @@ export default function DepreciationReport() {
     if (!token || !periodId || !selectedBookId) return
     try {
       setLoading(true)
-      const response = await getDepreciationReport(token, periodId, selectedBookId)
+      const response = await getDepreciationReport(
+        token,
+        periodId,
+        selectedBookId
+      )
       if (response?.error?.status === 401) {
         // router.push('/unauthorized-access')
         return
@@ -77,11 +101,13 @@ export default function DepreciationReport() {
         // router.push('/unauthorized-access')
         return
       } else {
-        const uniquePeriods = response.data?.filter((item, index, self) =>
-          index === self.findIndex((t) => t.period === item.period)
-        ) || []
+        const uniquePeriods =
+          response.data?.filter(
+            (item, index, self) =>
+              index === self.findIndex((t) => t.period === item.period)
+          ) || []
         setDepTranData(uniquePeriods)
-        console.log("ddddddddddddddddddd", uniquePeriods)
+        console.log('ddddddddddddddddddd', uniquePeriods)
       }
     } catch (error) {
       console.error('Error fetching depreciation report:', error)
@@ -89,7 +115,7 @@ export default function DepreciationReport() {
       setLoading(false)
     }
   }, [token])
-  
+
   useEffect(() => {
     fetchBookData()
     fetchDepTran()
@@ -99,26 +125,66 @@ export default function DepreciationReport() {
     window.print()
   }
 
+  const flattenData = (data: GetDepreciationReportType[]): any[] => {
+    return data.map((item) => ({
+      asset_name: item.asset_name,
+      transaction_date: item.transaction_date,
+      depreciation_method: item.depreciation_method,
+      depreciation_amount: item.depreciation_amount,
+      depreciation_rate: item.depreciation_rate,
+      useful_life_months: item.useful_life_months,
+      residual_value: item.residual_value,
+      current_value: item.current_value,
+      acc_dep: item.acc_dep,
+    }))
+  }
+
+  const generateExcel = () => {
+    exportToExcel(depreciationData, 'depreciation-report')
+  }
+
   const formatDate = (dateString: string) => {
-      if (!dateString) return '-'
-      return format(new Date(dateString), 'MMM dd, yyyy')
-    }
+    if (!dateString) return '-'
+    return format(new Date(dateString), 'MMM dd, yyyy')
+  }
+
+  const exportToExcel = (
+    data: GetDepreciationReportType[],
+    fileName: string
+  ) => {
+    const worksheet = XLSX.utils.json_to_sheet(flattenData(data))
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Depreciation Report')
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+    })
+    const blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
+    })
+    saveAs(blob, `${fileName}.xlsx`)
+  }
 
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Depreciation Report</h1>
-        <Button onClick={handlePrint} className="print:hidden">
-          Print
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={generateExcel} className="print:hidden">
+            Export to Excel
+          </Button>
+          <Button onClick={handlePrint} className="print:hidden">
+            Print
+          </Button>
+        </div>
       </div>
-
       <div className="mb-4 flex flex-wrap gap-4 print:hidden">
         <div>
-          <label className="block text-sm font-medium mb-1">
-            Period
-          </label>
-          <Select value={periodId} onValueChange={(value) => setPeriodId(value)}>
+          <label className="block text-sm font-medium mb-1">Period</label>
+          <Select
+            value={periodId}
+            onValueChange={(value) => setPeriodId(value)}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
@@ -132,10 +198,11 @@ export default function DepreciationReport() {
           </Select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">
-            Book
-          </label>
-          <Select value={selectedBookId.toString()} onValueChange={(value) => setSelectedBookId(Number(value))}>
+          <label className="block text-sm font-medium mb-1">Book</label>
+          <Select
+            value={selectedBookId.toString()}
+            onValueChange={(value) => setSelectedBookId(Number(value))}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select book" />
             </SelectTrigger>
@@ -153,8 +220,8 @@ export default function DepreciationReport() {
             Show
           </Button>
         </div>
-
-      </div>      <Card className="shadow-md">
+      </div>{' '}
+      <Card className="shadow-md">
         <CardContent className="overflow-auto">
           {loading ? (
             <p>Loading...</p>
@@ -199,7 +266,8 @@ export default function DepreciationReport() {
                   </TableRow>
                 )}
               </TableBody>
-            </Table>          )}
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
