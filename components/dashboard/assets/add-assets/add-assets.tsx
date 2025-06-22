@@ -16,6 +16,7 @@ import {
   CreateLocationType,
   CreateSupplierType,
   GetCategoryType,
+  GetCompanyType,
   GetCostCenterType,
   GetDepartmentType,
   GetLocationType,
@@ -33,6 +34,7 @@ import {
   createSite,
   createSupplier,
   getAllCategories,
+  getAllCompanies,
   getAllCostCenters,
   getAllDepartments,
   getAllLocations,
@@ -89,6 +91,7 @@ const AddAssets = () => {
     categoryId: 0,
     supplierId: null,
     user: null,
+    companyId: 0,
     locationId: null,
     sectionId: null,
     departmentId: null,
@@ -122,6 +125,7 @@ const AddAssets = () => {
   const [departments, setDepartments] = useState<GetDepartmentType[]>([])
   const [categories, setCategories] = useState<GetCategoryType[]>([])
   const [locations, setLocations] = useState<GetLocationType[]>([])
+  const [companies, setCompanies] = useState<GetCompanyType[]>([])
   const [sites, setSites] = useState<GetSiteType[]>([])
   const [suppliers, setSuppliers] = useState<GetSupplierType[]>([])
   const [costCenters, setCostCenters] = useState<GetCostCenterType[]>([])
@@ -205,6 +209,7 @@ const AddAssets = () => {
         departmentsData,
         categoriesData,
         locationsData,
+        companiesData,
         sitesData,
         suppliersData,
         costCentersData,
@@ -212,6 +217,7 @@ const AddAssets = () => {
         getAllDepartments(token),
         getAllCategories(token),
         getAllLocations(token),
+        getAllCompanies(token),
         getAllSites(token),
         getAllSuppliers(token),
         getAllCostCenters(token),
@@ -220,6 +226,7 @@ const AddAssets = () => {
         departmentsData?.error?.status === 401 ||
         categoriesData?.error?.status === 401 ||
         locationsData?.error?.status === 401 ||
+        companiesData?.error?.status === 401 ||
         sitesData?.error?.status === 401 ||
         suppliersData?.error?.status === 401 ||
         costCentersData?.error?.status === 401
@@ -230,6 +237,7 @@ const AddAssets = () => {
         setDepartments(departmentsData.data || [])
         setCategories(categoriesData.data || [])
         setLocations(locationsData.data || [])
+        setCompanies(companiesData.data || [])
         setSites(sitesData.data || [])
         setSuppliers(suppliersData.data || [])
         setCostCenters(costCentersData.data || [])
@@ -887,21 +895,58 @@ const AddAssets = () => {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="status">Active Status</Label>
-                <Switch
-                  id="status"
-                  name="status"
-                  onChange={(checked) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      status: checked ? 'active' : 'inactive',
-                    }))
-                  }
-                />
+              <div className="space-y-2">
+                <Label htmlFor="companyId">Company</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={formData.companyId?.toString() || ''}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        companyId: value ? Number.parseInt(value) : 0,
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {companies.map((company) => (
+                        <SelectItem
+                          key={company.companyId}
+                          value={company.companyId?.toString() ?? ''}
+                        >
+                          {company.companyName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    title="Add new Supplier"
+                    onClick={() => setSupplierPopupOpen(true)}
+                    type="button"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
+              <div className="space-y-2 mt-10">
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="status">Active Status</Label>
+                  <Switch
+                    id="status"
+                    name="status"
+                    onChange={(checked) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: checked ? 'active' : 'inactive',
+                      }))
+                    }
+                  />
+                </div>
+              </div>
           </div>
 
           <div className="p-6 my-5 border rounded-lg shadow-sm bg-white">

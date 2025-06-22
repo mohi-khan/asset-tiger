@@ -142,6 +142,7 @@ export const createAsset = z.object({
   categoryId: z.number().int(),
   supplierId: z.number().int().nullable().optional(),
   user: z.string().max(100).nullable().optional(),
+  companyId: z.number().int(),
   locationId: z.number().int().nullable().optional(),
   sectionId: z.number().int().nullable().optional(),
   departmentId: z.number().int().nullable().optional(),
