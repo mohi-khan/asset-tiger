@@ -95,15 +95,15 @@ const AddAssets = () => {
     locationId: null,
     sectionId: null,
     departmentId: null,
-    assetValue: 0,
-    currentValue: 0,
-    depRate: 0,
-    salvageValue: 0,
+    // assetValue: 0,
+    // currentValue: 0,
+    // depRate: 0,
+    // salvageValue: 0,
     status: '',
-    soldDate: null,
-    soldValue: null,
-    mfgCode: null,
-    mfgYear: null,
+    // soldDate: null,
+    // soldValue: null,
+    // mfgCode: null,
+    // mfgYear: null,
     countryCode: null,
     model: null,
     slNo: null,
@@ -370,13 +370,13 @@ const AddAssets = () => {
       try {
         const processedData = {
           ...formData,
-          mfgYear: Number(formData.mfgYear || '0'),
-          mfgCode: Number(formData.mfgCode || '0'),
-          assetValue: Number(formData.assetValue || 0),
-          currentValue: Number(formData.currentValue || 0),
-          depRate: Number(formData.depRate || 0),
-          salvageValue: Number(formData.salvageValue || 0),
-          soldValue: Number(formData.soldValue || 0),
+          // mfgYear: Number(formData.mfgYear || '0'),
+          // mfgCode: Number(formData.mfgCode || '0'),
+          // assetValue: Number(formData.assetValue || 0),
+          // currentValue: Number(formData.currentValue || 0),
+          // depRate: Number(formData.depRate || 0),
+          // salvageValue: Number(formData.salvageValue || 0),
+          // soldValue: Number(formData.soldValue || 0),
           status: formData.status || '',
         }
         await createAsset(processedData, token)
@@ -677,6 +677,34 @@ const AddAssets = () => {
                 required
               />
             </div>
+            <div className="space-y-2">
+                <Label htmlFor="companyId">Company</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={formData.companyId?.toString() || ''}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        companyId: value ? Number.parseInt(value) : 0,
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {companies.map((company) => (
+                        <SelectItem
+                          key={company.companyId}
+                          value={company.companyId?.toString() ?? ''}
+                        >
+                          {company.companyName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
             <div className="space-y-2">
               <Label htmlFor="assetCode">Asset Code(*)</Label>
@@ -684,6 +712,16 @@ const AddAssets = () => {
                 id="assetCode"
                 name="assetCode"
                 value={formData.assetCode}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="assetGlCode">Asset Gl Code</Label>
+              <Input
+                id="assetGlCode"
+                name="assetGlCode"
+                value={formData.purDate}
                 onChange={handleInputChange}
                 required
               />
@@ -702,7 +740,7 @@ const AddAssets = () => {
                 required
               />
             </div>
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="soldDate">Sold Date</Label>
               <Input
                 id="soldDate"
@@ -712,7 +750,7 @@ const AddAssets = () => {
                 onChange={handleInputChange}
                 required
               />
-            </div>
+            </div> */}
 
             <div className="space-y-2">
               <Label htmlFor="startDate">Start Date</Label>
@@ -721,17 +759,6 @@ const AddAssets = () => {
                 name="startDate"
                 type="date"
                 value={formData.startDate || ''}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="assetGlCode">Asset Gl Code</Label>
-              <Input
-                id="assetGlCode"
-                name="assetGlCode"
-                value={formData.purDate}
                 onChange={handleInputChange}
                 required
               />
@@ -873,7 +900,7 @@ const AddAssets = () => {
                 required
               />
             </div>
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="mfgCode">Manufacture Code</Label>
               <Input
                 id="mfgCode"
@@ -894,35 +921,7 @@ const AddAssets = () => {
                 onChange={handleInputChange}
                 required
               />
-            </div>
-              <div className="space-y-2">
-                <Label htmlFor="companyId">Company</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={formData.companyId?.toString() || ''}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        companyId: value ? Number.parseInt(value) : 0,
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a company" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {companies.map((company) => (
-                        <SelectItem
-                          key={company.companyId}
-                          value={company.companyId?.toString() ?? ''}
-                        >
-                          {company.companyName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+            </div> */}
               <div className="space-y-2 mt-10">
                 <div className="flex items-center space-x-2">
                   <Label htmlFor="status">Active Status</Label>
@@ -1103,106 +1102,6 @@ const AddAssets = () => {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-6 mb-5 border rounded-lg shadow-sm bg-white">
-            {/* Header */}
-            <div className="mb-4 pb-2 border-b">
-              <h3 className="font-semibold">Depreciation Info</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-4 items-center mb-5">
-              <Label htmlFor="assetValue">Asset Value</Label>
-              <div className="relative flex items-center">
-                <div className="absolute left-3 pointer-events-none">
-                  <span className="text-gray-500">$</span>
-                </div>
-                <Input
-                  id="assetValue"
-                  type="number"
-                  name="assetValue"
-                  placeholder="0.00"
-                  className="pl-9"
-                  value={formData.assetValue || ''}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 items-center mb-5">
-              <Label htmlFor="currentValue">Current Value</Label>
-              <div className="relative flex items-center">
-                <div className="absolute left-3 pointer-events-none">
-                  <span className="text-gray-500">$</span>
-                </div>
-                <Input
-                  id="currentValue"
-                  type="number"
-                  name="currentValue"
-                  placeholder="0.00"
-                  className="pl-9"
-                  value={formData.currentValue || ''}
-                  onChange={handleInputChange}
-                />
-                {/* <Input
-                id="mfgCode"
-                type="number"
-                name="mfgCode"
-                value={formData.mfgCode || 0}
-                onChange={handleInputChange}
-                required
-              /> */}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 items-center mb-5">
-              <Label htmlFor="soldValue">Sold Value</Label>
-              <div className="relative flex items-center">
-                <div className="absolute left-3 pointer-events-none">
-                  <span className="text-gray-500">$</span>
-                </div>
-                <Input
-                  id="soldValue"
-                  type="number"
-                  name="soldValue"
-                  placeholder="0.00"
-                  className="pl-9"
-                  value={formData.soldValue || ''}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 items-center mb-5">
-              <Label htmlFor="salvageValue">Salvage Value</Label>
-              <div className="relative flex items-center">
-                <div className="absolute left-3 pointer-events-none">
-                  <span className="text-gray-500">$</span>
-                </div>
-                <Input
-                  id="salvageValue"
-                  type="number"
-                  name="salvageValue"
-                  placeholder="0.00"
-                  className="pl-9"
-                  value={formData.salvageValue || ''}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 items-center">
-              <Label htmlFor="depRate">Depreciation Rate</Label>
-              <div className="relative flex items-center">
-                <div className="absolute left-3 pointer-events-none">
-                  <span className="text-gray-500">%</span>
-                </div>
-                <Input
-                  id="depRate"
-                  type="number"
-                  name="depRate"
-                  placeholder="0.00"
-                  className="pl-9"
-                  value={formData.depRate || ''}
-                  onChange={handleInputChange}
-                />
               </div>
             </div>
           </div>
