@@ -53,6 +53,7 @@ import { format, set } from 'date-fns'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
+import { CustomCombobox } from '@/utils/custom-combobox'
 
 const countries = [
   { id: 1, name: 'Bangladesh' },
@@ -95,15 +96,15 @@ const AddAssets = () => {
     locationId: null,
     sectionId: null,
     departmentId: null,
-    assetValue: 0,
-    currentValue: 0,
-    depRate: 0,
-    salvageValue: 0,
+    // assetValue: 0,
+    // currentValue: 0,
+    // depRate: 0,
+    // salvageValue: 0,
     status: '',
-    soldDate: null,
-    soldValue: null,
-    mfgCode: null,
-    mfgYear: null,
+    // soldDate: null,
+    // soldValue: null,
+    // mfgCode: null,
+    // mfgYear: null,
     countryCode: null,
     model: null,
     slNo: null,
@@ -370,13 +371,13 @@ const AddAssets = () => {
       try {
         const processedData = {
           ...formData,
-          mfgYear: Number(formData.mfgYear || '0'),
-          mfgCode: Number(formData.mfgCode || '0'),
-          assetValue: Number(formData.assetValue || 0),
-          currentValue: Number(formData.currentValue || 0),
-          depRate: Number(formData.depRate || 0),
-          salvageValue: Number(formData.salvageValue || 0),
-          soldValue: Number(formData.soldValue || 0),
+          // mfgYear: Number(formData.mfgYear || '0'),
+          // mfgCode: Number(formData.mfgCode || '0'),
+          // assetValue: Number(formData.assetValue || 0),
+          // currentValue: Number(formData.currentValue || 0),
+          // depRate: Number(formData.depRate || 0),
+          // salvageValue: Number(formData.salvageValue || 0),
+          // soldValue: Number(formData.soldValue || 0),
           status: formData.status || '',
         }
         await createAsset(processedData, token)
@@ -677,6 +678,39 @@ const AddAssets = () => {
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="companyId">Company</Label>
+              <CustomCombobox
+                items={companies.map((company) => ({
+                  id: (company.companyId || company.companyId).toString(),
+                  name:
+                    company.companyName || company.address || 'Unnamed Company',
+                }))}
+                value={
+                  formData.companyId
+                    ? {
+                        id: formData.companyId.toString(),
+                        name:
+                          companies.find(
+                            (c) =>
+                              (c.companyId || c.companyId) ===
+                              formData.companyId
+                          )?.companyName ||
+                          companies.find(
+                            (c) =>
+                              (c.companyId || c.companyId) ===
+                              formData.companyId
+                          )?.companyName ||
+                          '',
+                      }
+                    : null
+                }
+                onChange={(value) =>
+                  handleSelectChange('companyId', value ? value.id : '0')
+                }
+                placeholder="Select company"
+              />
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="assetCode">Asset Code(*)</Label>
@@ -684,6 +718,16 @@ const AddAssets = () => {
                 id="assetCode"
                 name="assetCode"
                 value={formData.assetCode}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="assetGlCode">Asset Gl Code</Label>
+              <Input
+                id="assetGlCode"
+                name="assetGlCode"
+                value={formData.purDate}
                 onChange={handleInputChange}
                 required
               />
@@ -702,7 +746,7 @@ const AddAssets = () => {
                 required
               />
             </div>
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="soldDate">Sold Date</Label>
               <Input
                 id="soldDate"
@@ -712,7 +756,7 @@ const AddAssets = () => {
                 onChange={handleInputChange}
                 required
               />
-            </div>
+            </div> */}
 
             <div className="space-y-2">
               <Label htmlFor="startDate">Start Date</Label>
@@ -725,46 +769,37 @@ const AddAssets = () => {
                 required
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="assetGlCode">Asset Gl Code</Label>
-              <Input
-                id="assetGlCode"
-                name="assetGlCode"
-                value={formData.purDate}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="site">Supplier</Label>
               <div className="flex gap-2">
-                <Select
-                  value={formData.supplierId?.toString() || ''}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      supplierId: value ? Number.parseInt(value) : null,
-                    }))
+                <CustomCombobox
+                  items={suppliers.map((supplier) => ({
+                    id: (supplier.id ?? '').toString(),
+                    name: supplier.name || 'Unnamed Supplier',
+                  }))}
+                  value={
+                    formData.supplierId
+                      ? {
+                          id: formData.supplierId.toString(),
+                          name:
+                            suppliers.find(
+                              (s) => (s.id || s.id) === formData.supplierId
+                            )?.name ||
+                            suppliers.find(
+                              (s) => (s.id || s.id) === formData.supplierId
+                            )?.name ||
+                            '',
+                        }
+                      : null
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a Supplier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {suppliers.map((supplier) => (
-                      <SelectItem
-                        key={supplier.id}
-                        value={supplier.id?.toString() ?? ''}
-                      >
-                        {supplier.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(value) =>
+                    handleSelectChange('supplierId', value ? value.id : '0')
+                  }
+                  placeholder="Select a Supplier"
+                />
                 <Button
                   variant="outline"
                   size="icon"
@@ -779,31 +814,32 @@ const AddAssets = () => {
             <div className="space-y-2">
               <Label htmlFor="site">Category</Label>
               <div className="flex gap-2">
-                <Select
-                  value={formData.categoryId?.toString() || ''}
-                  onValueChange={(value) =>
+                <CustomCombobox
+                  items={categories
+                    .filter((category) => category.category_id !== undefined)
+                    .map((category) => ({
+                      id: category.category_id!.toString(),
+                      name: category.category_name || 'Unnamed Category',
+                    }))}
+                  value={
+                    formData.categoryId
+                      ? {
+                          id: formData.categoryId.toString(),
+                          name:
+                            categories.find(
+                              (c) => c.category_id === formData.categoryId
+                            )?.category_name || '',
+                        }
+                      : null
+                  }
+                  onChange={(value) =>
                     setFormData((prev) => ({
                       ...prev,
-                      categoryId: value ? Number.parseInt(value) : 0,
+                      categoryId: value ? Number.parseInt(value.id) : 0,
                     }))
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories
-                      .filter((category) => category.category_id !== undefined)
-                      .map((category) => (
-                        <SelectItem
-                          key={category.category_id}
-                          value={category.category_id!.toString()}
-                        >
-                          {category.category_name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Select a Category"
+                />{' '}
                 <Button
                   variant="outline"
                   size="icon"
@@ -817,31 +853,29 @@ const AddAssets = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="site">Country</Label>
-              <div className="flex gap-2">
-                <Select
-                  value={formData.countryCode?.toString() || ''}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      countryCode: value ? Number.parseInt(value) : null,
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a Country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map((country) => (
-                      <SelectItem
-                        key={country.id}
-                        value={country.id!.toString()}
-                      >
-                        {country.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <CustomCombobox
+                items={countries.map((country) => ({
+                  id: (country.id ?? '').toString(),
+                  name: country.name || 'Unnamed Country',
+                }))}
+                value={
+                  formData.countryCode
+                    ? {
+                        id: formData.countryCode.toString(),
+                        name:
+                          countries.find((c) => c.id === formData.countryCode)
+                            ?.name || '',
+                      }
+                    : null
+                }
+                onChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    countryCode: value ? Number.parseInt(value.id) : null,
+                  }))
+                }
+                placeholder="Select a Country"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="model">Model</Label>
@@ -873,7 +907,7 @@ const AddAssets = () => {
                 required
               />
             </div>
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="mfgCode">Manufacture Code</Label>
               <Input
                 id="mfgCode"
@@ -894,50 +928,22 @@ const AddAssets = () => {
                 onChange={handleInputChange}
                 required
               />
+            </div> */}
+            <div className="space-y-2 mt-10">
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="status">Active Status</Label>
+                <Switch
+                  id="status"
+                  name="status"
+                  onChange={(checked) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      status: checked ? 'active' : 'inactive',
+                    }))
+                  }
+                />
+              </div>
             </div>
-              <div className="space-y-2">
-                <Label htmlFor="companyId">Company</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={formData.companyId?.toString() || ''}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        companyId: value ? Number.parseInt(value) : 0,
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a company" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {companies.map((company) => (
-                        <SelectItem
-                          key={company.companyId}
-                          value={company.companyId?.toString() ?? ''}
-                        >
-                          {company.companyName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2 mt-10">
-                <div className="flex items-center space-x-2">
-                  <Label htmlFor="status">Active Status</Label>
-                  <Switch
-                    id="status"
-                    name="status"
-                    onChange={(checked) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        status: checked ? 'active' : 'inactive',
-                      }))
-                    }
-                  />
-                </div>
-              </div>
           </div>
 
           <div className="p-6 my-5 border rounded-lg shadow-sm bg-white">
@@ -953,29 +959,31 @@ const AddAssets = () => {
               <div className="space-y-2">
                 <Label htmlFor="site">Site</Label>
                 <div className="flex gap-2">
-                  <Select
-                    value={formData.sectionId?.toString() || ''}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        sectionId: value ? Number.parseInt(value) : null,
-                      }))
+                  <CustomCombobox
+                    items={sites.map((site) => ({
+                      id: (site.id ?? '').toString(),
+                      name: site.name || 'Unnamed Site',
+                    }))}
+                    value={
+                      formData.sectionId
+                        ? {
+                            id: formData.sectionId.toString(),
+                            name:
+                              sites.find(
+                                (s) => (s.id || s.id) === formData.sectionId
+                              )?.name ||
+                              sites.find(
+                                (s) => (s.id || s.id) === formData.sectionId
+                              )?.name ||
+                              '',
+                          }
+                        : null
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a Site" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sites.map((site) => (
-                        <SelectItem
-                          key={site.id}
-                          value={site.id?.toString() ?? ''}
-                        >
-                          {site.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(value) =>
+                      handleSelectChange('sectionId', value ? value.id : '0')
+                    }
+                    placeholder="Select a Site"
+                  />{' '}
                   <Button
                     variant="outline"
                     size="icon"
@@ -991,29 +999,31 @@ const AddAssets = () => {
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
                 <div className="flex gap-2">
-                  <Select
-                    value={formData.locationId?.toString() || ''}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        locationId: value ? Number.parseInt(value) : null,
-                      }))
+                  <CustomCombobox
+                    items={locations.map((location) => ({
+                      id: (location.id ?? '').toString(),
+                      name: location.name || 'Unnamed Location',
+                    }))}
+                    value={
+                      formData.locationId
+                        ? {
+                            id: formData.locationId.toString(),
+                            name:
+                              locations.find(
+                                (l) => (l.id || l.id) === formData.locationId
+                              )?.name ||
+                              locations.find(
+                                (l) => (l.id || l.id) === formData.locationId
+                              )?.name ||
+                              '',
+                          }
+                        : null
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations.map((location) => (
-                        <SelectItem
-                          key={location.id}
-                          value={location.id?.toString() ?? ''}
-                        >
-                          {location.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(value) =>
+                      handleSelectChange('locationId', value ? value.id : '0')
+                    }
+                    placeholder="Select a Location"
+                  />{' '}
                   <Button
                     variant="outline"
                     size="icon"
@@ -1032,30 +1042,31 @@ const AddAssets = () => {
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
                 <div className="flex gap-2">
-                  <Select
-                    value={formData.departmentId?.toString() || ''}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        departmentId: value ? Number.parseInt(value) : null,
-                      }))
+                  <CustomCombobox
+                    items={departments.map((department) => ({
+                      id: (department.departmentID ?? '').toString(),
+                      name: department.departmentName || 'Unnamed Department',
+                    }))}
+                    value={
+                      formData.departmentId
+                        ? {
+                            id: formData.departmentId.toString(),
+                            name:
+                              departments.find(
+                                (d) => (d.departmentID || d.departmentID) === formData.departmentId
+                              )?.departmentName ||
+                              departments.find(
+                                (d) => (d.departmentID || d.departmentID) === formData.departmentId
+                              )?.departmentName ||
+                              '',
+                          }
+                        : null
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((department) => (
-                        <SelectItem
-                          key={department.departmentID}
-                          value={department.departmentID.toString()}
-                        >
-                          {department.departmentName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
+                    onChange={(value) =>
+                      handleSelectChange('departmentId', value ? value.id : '0')
+                    }
+                    placeholder="Select a Department"
+                  />                  <Button
                     variant="outline"
                     size="icon"
                     title="Add new department"
@@ -1070,30 +1081,31 @@ const AddAssets = () => {
               <div className="space-y-2">
                 <Label htmlFor="costCenter">Cost Center</Label>
                 <div className="flex gap-2">
-                  <Select
-                    value={formData.costCenterId?.toString() || ''}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        costCenterId: value ? Number.parseInt(value) : null,
-                      }))
+                  <CustomCombobox
+                    items={costCenters.map((costCenter) => ({
+                      id: (costCenter.costCenterId ?? '').toString(),
+                      name: costCenter.costCenterName || 'Unnamed Cost Center',
+                    }))}
+                    value={
+                      formData.costCenterId
+                        ? {
+                            id: formData.costCenterId.toString(),
+                            name:
+                              costCenters.find(
+                                (c) => (c.costCenterId || c.costCenterId) === formData.costCenterId
+                              )?.costCenterName ||
+                              costCenters.find(
+                                (c) => (c.costCenterId || c.costCenterId) === formData.costCenterId
+                              )?.costCenterName ||
+                              '',
+                          }
+                        : null
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a cost center" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {costCenters.map((costCenter) => (
-                        <SelectItem
-                          key={costCenter.costCenterId}
-                          value={costCenter.costCenterId.toString()}
-                        >
-                          {costCenter.costCenterName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
+                    onChange={(value) =>
+                      handleSelectChange('costCenterId', value ? value.id : '0')
+                    }
+                    placeholder="Select a Cost Center"
+                  />                  <Button
                     variant="outline"
                     size="icon"
                     title="Add new cost center"
@@ -1103,106 +1115,6 @@ const AddAssets = () => {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-6 mb-5 border rounded-lg shadow-sm bg-white">
-            {/* Header */}
-            <div className="mb-4 pb-2 border-b">
-              <h3 className="font-semibold">Depreciation Info</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-4 items-center mb-5">
-              <Label htmlFor="assetValue">Asset Value</Label>
-              <div className="relative flex items-center">
-                <div className="absolute left-3 pointer-events-none">
-                  <span className="text-gray-500">$</span>
-                </div>
-                <Input
-                  id="assetValue"
-                  type="number"
-                  name="assetValue"
-                  placeholder="0.00"
-                  className="pl-9"
-                  value={formData.assetValue || ''}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 items-center mb-5">
-              <Label htmlFor="currentValue">Current Value</Label>
-              <div className="relative flex items-center">
-                <div className="absolute left-3 pointer-events-none">
-                  <span className="text-gray-500">$</span>
-                </div>
-                <Input
-                  id="currentValue"
-                  type="number"
-                  name="currentValue"
-                  placeholder="0.00"
-                  className="pl-9"
-                  value={formData.currentValue || ''}
-                  onChange={handleInputChange}
-                />
-                {/* <Input
-                id="mfgCode"
-                type="number"
-                name="mfgCode"
-                value={formData.mfgCode || 0}
-                onChange={handleInputChange}
-                required
-              /> */}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 items-center mb-5">
-              <Label htmlFor="soldValue">Sold Value</Label>
-              <div className="relative flex items-center">
-                <div className="absolute left-3 pointer-events-none">
-                  <span className="text-gray-500">$</span>
-                </div>
-                <Input
-                  id="soldValue"
-                  type="number"
-                  name="soldValue"
-                  placeholder="0.00"
-                  className="pl-9"
-                  value={formData.soldValue || ''}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 items-center mb-5">
-              <Label htmlFor="salvageValue">Salvage Value</Label>
-              <div className="relative flex items-center">
-                <div className="absolute left-3 pointer-events-none">
-                  <span className="text-gray-500">$</span>
-                </div>
-                <Input
-                  id="salvageValue"
-                  type="number"
-                  name="salvageValue"
-                  placeholder="0.00"
-                  className="pl-9"
-                  value={formData.salvageValue || ''}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 items-center">
-              <Label htmlFor="depRate">Depreciation Rate</Label>
-              <div className="relative flex items-center">
-                <div className="absolute left-3 pointer-events-none">
-                  <span className="text-gray-500">%</span>
-                </div>
-                <Input
-                  id="depRate"
-                  type="number"
-                  name="depRate"
-                  placeholder="0.00"
-                  className="pl-9"
-                  value={formData.depRate || ''}
-                  onChange={handleInputChange}
-                />
               </div>
             </div>
           </div>

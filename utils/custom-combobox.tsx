@@ -55,7 +55,7 @@ export function CustomCombobox<T extends ComboboxItem>({
   }
 
   return (
-    <div onMouseDown={handleContainerMouseDown}>
+    <div onMouseDown={handleContainerMouseDown} className="w-full">
       <Combobox value={value} onChange={onChange}>
         <div className="relative">
           <div className="relative w-full cursor-default overflow-hidden border rounded-lg bg-white text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
