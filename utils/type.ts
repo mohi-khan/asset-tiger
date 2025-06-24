@@ -309,6 +309,9 @@ export const getDepreciationBookSchema = z.object({
   id: z.number(),
   name: z.string().max(100),
   description: z.string().nullable(), // assuming text can be null
+  companyId: z.number().int(),
+  companyName: z.string(),
+  depFreq: z.string(),
   isActive: z.boolean().default(true),
   createdBy: z.number().nullable(), // assuming it can be null if not set
   createdAt: z.string(), // or z.coerce.date() if parsed as Date
@@ -319,6 +322,8 @@ export type GetDepreciationBookType = z.infer<typeof getDepreciationBookSchema>;
 export const createDepreciationBookSchema = z.object({
   name: z.string().max(100),
   description: z.string().nullable(), // assuming text can be null
+  companyId: z.number().int(),
+  depFreq: z.string(),
   isActive: z.boolean().default(true),
   createdBy: z.number().nullable(), // assuming it can be null if not set
   createdAt: z.string(), // or z.coerce.date() if parsed as Date

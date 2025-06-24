@@ -20,12 +20,14 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { format } from 'date-fns'
 import type {
   CreateDepreciationBookType,
+  GetCompanyType,
   GetDepreciationBookType,
 } from '@/utils/type'
-import { createDepreciationBook, getAllDepreciationBook } from '@/utils/api'
+import { createDepreciationBook, getAllCompanies, getAllDepreciationBook } from '@/utils/api'
 import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
 import { useRouter } from 'next/navigation'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const DepreciationBook = () => {
   useInitializeUser()
@@ -33,6 +35,8 @@ const DepreciationBook = () => {
   const [token] = useAtom(tokenAtom)
 
   const router = useRouter()
+
+  const [companies, setCompanies] = useState<GetCompanyType[]>([])
 
   useEffect(() => {
     const checkUserData = () => {
@@ -53,10 +57,35 @@ const DepreciationBook = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
+  const fetchCompanies = useCallback(async () => {
+    if (!token) return
+    setIsLoading(true)
+    try {
+      const response = await getAllCompanies(token)
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else {
+        console.log('🚀 ~ fetchCompanies ~ response:', response)
+        setCompanies(response.data ?? [])
+      }
+    } catch (error) {
+      console.error('Error fetching companies:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [router, token])
+  
+  useEffect(() => {
+    fetchCompanies()
+  }, [fetchCompanies])
+
   // State for form data
   const [formData, setFormData] = useState<CreateDepreciationBookType>({
     name: '',
     description: null,
+    companyId: 0,
+    depFreq: '',
     isActive: true,
     createdBy: userData?.userId || null,
     createdAt: new Date().toISOString(),
@@ -142,6 +171,8 @@ const DepreciationBook = () => {
     setFormData({
       name: '',
       description: null,
+      companyId: 0,
+      depFreq: '',
       isActive: true,
       createdBy: userData?.userId || null,
       createdAt: new Date().toISOString(),
@@ -182,6 +213,8 @@ const DepreciationBook = () => {
               <TableHead>ID</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
+              <TableHead>Company</TableHead>
+              <TableHead>Depreciation Frequency</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created At</TableHead>
               <TableHead>Updated At</TableHead>
@@ -206,6 +239,8 @@ const DepreciationBook = () => {
                   <TableCell>{book.id}</TableCell>
                   <TableCell>{book.name}</TableCell>
                   <TableCell>{book.description || '-'}</TableCell>
+                  <TableCell>{book.companyName || '-'}</TableCell>
+                  <TableCell>{book.depFreq || '-'}</TableCell>
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${book.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
@@ -251,6 +286,47 @@ const DepreciationBook = () => {
                 value={formData.description || ''}
                 onChange={handleInputChange}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="companyName">Company*</Label>
+              <Select
+                value={formData.companyId.toString()}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, companyName: value }))
+                }
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select company" />
+                </SelectTrigger>
+                <SelectContent>
+                  {companies.map((company) => (
+                    <SelectItem key={company.companyId} value={company.companyId.toString()}>
+                      {company.companyName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="depFreq">Depreciation Frequency*</Label>
+              <Select
+                value={formData.depFreq}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, depFreq: value }))
+                }
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center space-x-2">
