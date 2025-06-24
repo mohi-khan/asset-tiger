@@ -523,9 +523,9 @@ export default function AssetDetails() {
             <div className="p-1 text-sm border text-muted-foreground">
               Asset Value
             </div>
-            <div className="p-1 border">
+            {/* <div className="p-1 border">
               {assetData.assetValue.toLocaleString()}
-            </div>
+            </div> */}
           </div>
           <div className="grid grid-cols-2">
             <div className="p-1 text-sm border text-muted-foreground">
@@ -547,11 +547,11 @@ export default function AssetDetails() {
             <div className="p-1 text-sm border text-muted-foreground">
               Current Value
             </div>
-            <div className="p-1 border">
+            {/* <div className="p-1 border">
               {assetData.currentValue
                 ? `${assetData.currentValue.toLocaleString()}`
                 : 'N/A'}
-            </div>
+            </div> */}
           </div>
           <div className="grid grid-cols-2">
             <div className="text-sm border p-1 text-muted-foreground">
@@ -630,11 +630,11 @@ export default function AssetDetails() {
                 <div className="p-1 border text-sm text-muted-foreground">
                   Supplier
                 </div>
-                <div className="border p-1">
+                {/* <div className="border p-1">
                   {assetData.manufacure
                     ? `Supplier ${assetData.manufacure}`
                     : 'N/A'}
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -665,7 +665,7 @@ export default function AssetDetails() {
                   Asset Value
                 </div>
                 <div className="border p-1">
-                  {assetData.assetValue.toLocaleString()}
+                  {/* {assetData.assetValue.toLocaleString()} */}
                 </div>
               </div>
               <div className="grid grid-cols-2">
@@ -673,7 +673,7 @@ export default function AssetDetails() {
                   Depreciation Rate
                 </div>
                 <div className="border p-1">
-                  {assetData.depRate ? `${assetData.depRate}%` : 'N/A'}
+                  {/* {assetData.depRate ? `${assetData.depRate}%` : 'N/A'} */}
                 </div>
               </div>
               <div className="grid grid-cols-2">
@@ -681,9 +681,9 @@ export default function AssetDetails() {
                   Salvage Value
                 </div>
                 <div className="border p-1">
-                  {assetData.salvageValue
+                  {/* {assetData.salvageValue
                     ? `${assetData.salvageValue.toLocaleString()}`
-                    : 'N/A'}
+                    : 'N/A'} */}
                 </div>
               </div>
               <div className="grid grid-cols-2">
@@ -691,9 +691,9 @@ export default function AssetDetails() {
                   Current Value
                 </div>
                 <div className="border p-1">
-                  {assetData.currentValue
+                  {/* {assetData.currentValue
                     ? `${assetData.currentValue.toLocaleString()}`
-                    : 'N/A'}
+                    : 'N/A'} */}
                 </div>
               </div>
               <div className="grid grid-cols-2">

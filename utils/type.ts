@@ -211,15 +211,15 @@ export const assetDetailsSchema = z.object({
   locationName: z.string(),
   sectionName: z.string(),
   departmentName: z.string(),
-  assetValue: z.number(),
-  currentValue: z.number(),
-  depRate: z.number(),
-  salvageValue: z.number(),
+  // assetValue: z.number(),
+  // currentValue: z.number(),
+  // depRate: z.number(),
+  // salvageValue: z.number(),
   status: z.string(),
-  soldDate: z.string().nullable(), // assuming soldDate can be null
-  soldValue: z.string().nullable(), // likely a typo, same as soldDate — adjust as needed
-  manufacure: z.string(),
-  mfgYear: z.number(),
+  // soldDate: z.string().nullable(), // assuming soldDate can be null
+  // soldValue: z.string().nullable(), // likely a typo, same as soldDate — adjust as needed
+  // manufacure: z.string(),
+  // mfgYear: z.number(),
   country: z.string(),
   model: z.string(),
   slNo: z.string(),
