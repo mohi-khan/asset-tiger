@@ -921,15 +921,6 @@ const AddAssets = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    title="Add new Supplier"
-                    onClick={() => setSupplierPopupOpen(true)}
-                    type="button"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
               <div className="space-y-2 mt-10">

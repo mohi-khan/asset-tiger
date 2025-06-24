@@ -70,6 +70,7 @@ import {
 } from '@/utils/type'
 import { useRouter } from 'next/navigation'
 import { CustomCombobox } from '@/utils/custom-combobox'
+import { format } from 'date-fns'
 
 const Assets = () => {
   useInitializeUser()
@@ -328,6 +329,11 @@ const Assets = () => {
     }
   }
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-'
+    return format(new Date(dateString), 'MMM dd, yyyy')
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Header with title, search, and add button */}
@@ -411,7 +417,7 @@ const Assets = () => {
                     <TableRow key={asset.id}>
                       <TableCell>{asset.assetCode}</TableCell>
                       <TableCell>{asset.assetName}</TableCell>
-                      <TableCell>{asset.purDate}</TableCell>
+                      <TableCell>{formatDate(asset.purDate)}</TableCell>
                       <TableCell>{asset.assetValue}</TableCell>
                       <TableCell>{asset.currentValue || 'N/A'}</TableCell>
                       <TableCell>{asset.status || 'Active'}</TableCell>

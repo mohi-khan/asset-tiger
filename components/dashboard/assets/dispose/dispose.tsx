@@ -89,7 +89,7 @@ const Dispose = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [token])
+  }, [token, router])
 
   const fetchAssets = useCallback(async () => {
     if (!token) return
@@ -108,7 +108,7 @@ const Dispose = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [token])
+  }, [token, router])
 
   // Fetch disposes on component mount
   useEffect(() => {
