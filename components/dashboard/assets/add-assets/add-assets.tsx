@@ -1700,14 +1700,12 @@ const AddAssets = () => {
                     : Number(categoryFormData.depreciation_rate)
                 }
                 onChange={(e) => {
-                  const value =
-                    e.target.value === undefined ? null : Number(e.target.value)
                   handleCategoryInputChange({
                     ...e,
                     target: {
                       ...e.target,
                       name: 'depreciation_rate',
-                      value,
+                      value: e.target.value,
                     },
                   })
                 }}
