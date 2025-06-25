@@ -54,6 +54,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { CustomCombobox } from '@/utils/custom-combobox'
+import { Textarea } from '@/components/ui/textarea'
 
 const countries = [
   { id: 1, name: 'Bangladesh' },
@@ -90,12 +91,12 @@ const AddAssets = () => {
     startDate: '',
     purDate: '',
     categoryId: 0,
-    supplierId: null,
-    user: null,
+    supplierId: 0,
+    user: '',
     companyId: 0,
-    locationId: null,
-    sectionId: null,
-    departmentId: null,
+    locationId: 0,
+    sectionId: 0,
+    departmentId: 0,
     // assetValue: 0,
     // currentValue: 0,
     // depRate: 0,
@@ -105,12 +106,13 @@ const AddAssets = () => {
     // soldValue: null,
     // mfgCode: null,
     // mfgYear: null,
-    countryCode: null,
+    countryCode: 0,
     model: null,
     slNo: null,
-    costCenterId: null,
+    costCenterId: 0,
     assetGlCode: null,
-    createdBy: userData?.userId || 0,
+    createdBy: userData?.userId,
+    notes: '',
     updatedBy: null,
   })
 
@@ -379,6 +381,7 @@ const AddAssets = () => {
           // salvageValue: Number(formData.salvageValue || 0),
           // soldValue: Number(formData.soldValue || 0),
           status: formData.status || '',
+          notes: formData.notes || '',
         }
         await createAsset(processedData, token)
       } catch (error) {
@@ -681,35 +684,31 @@ const AddAssets = () => {
             <div className="space-y-2">
               <Label htmlFor="companyId">Company</Label>
               <CustomCombobox
-                items={companies.map((company) => ({
-                  id: (company.companyId || company.companyId).toString(),
-                  name:
-                    company.companyName || company.address || 'Unnamed Company',
-                }))}
+                items={companies
+                  .filter((company) => company.companyId !== undefined)
+                  .map((company) => ({
+                    id: company.companyId!.toString(),
+                    name: company.companyName || 'Unnamed Company',
+                  }))}
                 value={
                   formData.companyId
                     ? {
                         id: formData.companyId.toString(),
                         name:
                           companies.find(
-                            (c) =>
-                              (c.companyId || c.companyId) ===
-                              formData.companyId
-                          )?.companyName ||
-                          companies.find(
-                            (c) =>
-                              (c.companyId || c.companyId) ===
-                              formData.companyId
-                          )?.companyName ||
-                          '',
+                            (c) => c.companyId === formData.companyId
+                          )?.companyName || '',
                       }
                     : null
                 }
                 onChange={(value) =>
-                  handleSelectChange('companyId', value ? value.id : '0')
+                  setFormData((prev) => ({
+                    ...prev,
+                    companyId: value ? Number.parseInt(value.id) : 0,
+                  }))
                 }
                 placeholder="Select company"
-              />
+              />{' '}
             </div>
 
             <div className="space-y-2">
@@ -776,27 +775,27 @@ const AddAssets = () => {
               <Label htmlFor="site">Supplier</Label>
               <div className="flex gap-2">
                 <CustomCombobox
-                  items={suppliers.map((supplier) => ({
-                    id: (supplier.id ?? '').toString(),
-                    name: supplier.name || 'Unnamed Supplier',
-                  }))}
+                  items={suppliers
+                    .filter((supplier) => supplier.id !== undefined)
+                    .map((supplier) => ({
+                      id: supplier.id!.toString(),
+                      name: supplier.name || 'Unnamed Supplier',
+                    }))}
                   value={
                     formData.supplierId
                       ? {
                           id: formData.supplierId.toString(),
                           name:
-                            suppliers.find(
-                              (s) => (s.id || s.id) === formData.supplierId
-                            )?.name ||
-                            suppliers.find(
-                              (s) => (s.id || s.id) === formData.supplierId
-                            )?.name ||
-                            '',
+                            suppliers.find((s) => s.id === formData.supplierId)
+                              ?.name || '',
                         }
                       : null
                   }
                   onChange={(value) =>
-                    handleSelectChange('supplierId', value ? value.id : '0')
+                    setFormData((prev) => ({
+                      ...prev,
+                      supplierId: value ? Number.parseInt(value.id) : 0,
+                    }))
                   }
                   placeholder="Select a Supplier"
                 />
@@ -839,7 +838,7 @@ const AddAssets = () => {
                     }))
                   }
                   placeholder="Select a Category"
-                />{' '}
+                />
                 <Button
                   variant="outline"
                   size="icon"
@@ -907,28 +906,22 @@ const AddAssets = () => {
                 required
               />
             </div>
-            {/* <div className="space-y-2">
-              <Label htmlFor="mfgCode">Manufacture Code</Label>
-              <Input
-                id="mfgCode"
-                name="mfgCode"
-                type="number"
-                value={formData.mfgCode || 0}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="mfgYear">Manufacture Year</Label>
-              <Input
-                id="mfgYear"
-                name="mfgYear"
-                type="number"
-                value={formData.mfgYear || 0}
-                onChange={handleInputChange}
-                required
-              />
-            </div> */}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              name="notes"
+              value={formData.notes || ''}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  notes: e.target.value,
+                }))
+              }
+              placeholder="Enter notes here..."
+              className="min-h-[100px]"
+            />
             <div className="space-y-2 mt-10">
               <div className="flex items-center space-x-2">
                 <Label htmlFor="status">Active Status</Label>
@@ -960,27 +953,27 @@ const AddAssets = () => {
                 <Label htmlFor="site">Site</Label>
                 <div className="flex gap-2">
                   <CustomCombobox
-                    items={sites.map((site) => ({
-                      id: (site.id ?? '').toString(),
-                      name: site.name || 'Unnamed Site',
-                    }))}
+                    items={sites
+                      .filter((site) => site.id !== undefined)
+                      .map((site) => ({
+                        id: (site.id ?? '').toString(),
+                        name: site.name || 'Unnamed Site',
+                      }))}
                     value={
                       formData.sectionId
                         ? {
                             id: formData.sectionId.toString(),
                             name:
-                              sites.find(
-                                (s) => (s.id || s.id) === formData.sectionId
-                              )?.name ||
-                              sites.find(
-                                (s) => (s.id || s.id) === formData.sectionId
-                              )?.name ||
-                              '',
+                              sites.find((s) => s.id === formData.sectionId)
+                                ?.name || '',
                           }
                         : null
                     }
                     onChange={(value) =>
-                      handleSelectChange('sectionId', value ? value.id : '0')
+                      setFormData((prev) => ({
+                        ...prev,
+                        sectionId: value ? Number.parseInt(value.id) : 0,
+                      }))
                     }
                     placeholder="Select a Site"
                   />{' '}
@@ -1000,27 +993,28 @@ const AddAssets = () => {
                 <Label htmlFor="location">Location</Label>
                 <div className="flex gap-2">
                   <CustomCombobox
-                    items={locations.map((location) => ({
-                      id: (location.id ?? '').toString(),
-                      name: location.name || 'Unnamed Location',
-                    }))}
+                    items={locations
+                      .filter((location) => location.id !== undefined)
+                      .map((location) => ({
+                        id: location.id!.toString(),
+                        name: location.name || 'Unnamed Location',
+                      }))}
                     value={
                       formData.locationId
                         ? {
                             id: formData.locationId.toString(),
                             name:
                               locations.find(
-                                (l) => (l.id || l.id) === formData.locationId
-                              )?.name ||
-                              locations.find(
-                                (l) => (l.id || l.id) === formData.locationId
-                              )?.name ||
-                              '',
+                                (l) => l.id === formData.locationId
+                              )?.name || '',
                           }
                         : null
                     }
                     onChange={(value) =>
-                      handleSelectChange('locationId', value ? value.id : '0')
+                      setFormData((prev) => ({
+                        ...prev,
+                        locationId: value ? Number.parseInt(value.id) : 0,
+                      }))
                     }
                     placeholder="Select a Location"
                   />{' '}
@@ -1043,30 +1037,34 @@ const AddAssets = () => {
                 <Label htmlFor="department">Department</Label>
                 <div className="flex gap-2">
                   <CustomCombobox
-                    items={departments.map((department) => ({
-                      id: (department.departmentID ?? '').toString(),
-                      name: department.departmentName || 'Unnamed Department',
-                    }))}
+                    items={departments
+                      .filter(
+                        (department) => department.departmentID !== undefined
+                      )
+                      .map((department) => ({
+                        id: department.departmentID!.toString(),
+                        name: department.departmentName || 'Unnamed Department',
+                      }))}
                     value={
                       formData.departmentId
                         ? {
                             id: formData.departmentId.toString(),
                             name:
                               departments.find(
-                                (d) => (d.departmentID || d.departmentID) === formData.departmentId
-                              )?.departmentName ||
-                              departments.find(
-                                (d) => (d.departmentID || d.departmentID) === formData.departmentId
-                              )?.departmentName ||
-                              '',
+                                (d) => d.departmentID === formData.departmentId
+                              )?.departmentName || '',
                           }
                         : null
                     }
                     onChange={(value) =>
-                      handleSelectChange('departmentId', value ? value.id : '0')
+                      setFormData((prev) => ({
+                        ...prev,
+                        departmentId: value ? Number.parseInt(value.id) : 0,
+                      }))
                     }
                     placeholder="Select a Department"
-                  />                  <Button
+                  />{' '}
+                  <Button
                     variant="outline"
                     size="icon"
                     title="Add new department"
@@ -1082,30 +1080,35 @@ const AddAssets = () => {
                 <Label htmlFor="costCenter">Cost Center</Label>
                 <div className="flex gap-2">
                   <CustomCombobox
-                    items={costCenters.map((costCenter) => ({
-                      id: (costCenter.costCenterId ?? '').toString(),
-                      name: costCenter.costCenterName || 'Unnamed Cost Center',
-                    }))}
+                    items={costCenters
+                      .filter(
+                        (costCenter) => costCenter.costCenterId !== undefined
+                      )
+                      .map((costCenter) => ({
+                        id: costCenter.costCenterId!.toString(),
+                        name:
+                          costCenter.costCenterName || 'Unnamed Cost Center',
+                      }))}
                     value={
                       formData.costCenterId
                         ? {
                             id: formData.costCenterId.toString(),
                             name:
                               costCenters.find(
-                                (c) => (c.costCenterId || c.costCenterId) === formData.costCenterId
-                              )?.costCenterName ||
-                              costCenters.find(
-                                (c) => (c.costCenterId || c.costCenterId) === formData.costCenterId
-                              )?.costCenterName ||
-                              '',
+                                (c) => c.costCenterId === formData.costCenterId
+                              )?.costCenterName || '',
                           }
                         : null
                     }
                     onChange={(value) =>
-                      handleSelectChange('costCenterId', value ? value.id : '0')
+                      setFormData((prev) => ({
+                        ...prev,
+                        costCenterId: value ? Number.parseInt(value.id) : 0,
+                      }))
                     }
                     placeholder="Select a Cost Center"
-                  />                  <Button
+                  />
+                  <Button
                     variant="outline"
                     size="icon"
                     title="Add new cost center"

@@ -161,6 +161,7 @@ export const createAsset = z.object({
   costCenterId: z.number().int().nullable().optional(),
   assetGlCode: z.string().max(100).nullable().optional(),
   createdBy: z.number().int().nullable().optional(),
+  notes: z.string().max(500).nullable().optional(), // Optional notes field
   createdAt: z.string().optional(), // Normally comes from DB
   updatedBy: z.number().int().nullable().optional(),
   updatedAt: z.string().optional(), // Normally comes from DB
@@ -194,6 +195,7 @@ export const getAsset = z.object({
   costCenterId: z.number().int().nullable().optional(),
   assetGlCode: z.string().max(100).nullable().optional(),
   createdBy: z.number().int().nullable().optional(),
+  notes: z.string().max(500).nullable().optional(), // Optional notes field
   createdAt: z.string().optional(), // Normally comes from DB
   updatedBy: z.number().int().nullable().optional(),
   updatedAt: z.string().optional(), // Normally comes from DB
