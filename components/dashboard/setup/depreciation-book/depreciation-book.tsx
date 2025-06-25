@@ -23,11 +23,21 @@ import type {
   GetCompanyType,
   GetDepreciationBookType,
 } from '@/utils/type'
-import { createDepreciationBook, getAllCompanies, getAllDepreciationBook } from '@/utils/api'
+import {
+  createDepreciationBook,
+  getAllCompanies,
+  getAllDepreciationBook,
+} from '@/utils/api'
 import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
 import { useRouter } from 'next/navigation'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const DepreciationBook = () => {
   useInitializeUser()
@@ -75,7 +85,7 @@ const DepreciationBook = () => {
       setIsLoading(false)
     }
   }, [router, token])
-  
+
   useEffect(() => {
     fetchCompanies()
   }, [fetchCompanies])
@@ -223,13 +233,13 @@ const DepreciationBook = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-4">
+                <TableCell colSpan={8} className="text-center py-4">
                   Loading depreciation books...
                 </TableCell>
               </TableRow>
             ) : depreciationBooks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-4">
+                <TableCell colSpan={8} className="text-center py-4">
                   No depreciation books found
                 </TableCell>
               </TableRow>
@@ -291,9 +301,14 @@ const DepreciationBook = () => {
             <div className="space-y-2">
               <Label htmlFor="companyName">Company*</Label>
               <Select
-                value={formData.companyId.toString()}
+                value={
+                  formData.companyId > 0 ? formData.companyId.toString() : ''
+                }
                 onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, companyName: value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    companyId: Number.parseInt(value),
+                  }))
                 }
                 required
               >
@@ -302,7 +317,10 @@ const DepreciationBook = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {companies.map((company) => (
-                    <SelectItem key={company.companyId} value={company.companyId.toString()}>
+                    <SelectItem
+                      key={company.companyId}
+                      value={company.companyId.toString()}
+                    >
                       {company.companyName}
                     </SelectItem>
                   ))}
@@ -323,8 +341,8 @@ const DepreciationBook = () => {
                   <SelectValue placeholder="Select frequency" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
+                  <SelectItem value="Monthly">Monthly</SelectItem>
+                  <SelectItem value="Yearly">Yearly</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -135,32 +135,12 @@ export function DashboardSidebar() {
       href: '/dashboard/reports',
       subItems: [
         {
-          title: 'Asset Register',
-          href: '/dashboard/report/asset-register',
-        },
-        {
           title: 'Depreciation Report',
           href: '/dashboard/report/depreciation-report',
         },
         {
-          title: 'Asset Movement Reprot',
-          href: '/dashboard/report/asset-movement-report',
-        },
-        {
-          title: 'Maintainence Report',
-          href: '/dashboard/report/maintainence-report',
-        },
-        {
           title: 'Disposal Report',
           href: '/dashboard/report/disposal-Report',
-        },
-        {
-          title: 'Asset Valuation Summery',
-          href: '/dashboard/report/asset-valuation-summery',
-        },
-        {
-          title: 'Accounting Journal Report',
-          href: '/dashboard/report/accounting-Journal-Report',
         },
         {
           title: 'GL Depreciation Report',
