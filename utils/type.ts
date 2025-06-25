@@ -496,6 +496,7 @@ export const createAssetCapexAdditionSchema = z.object({
   addedValue: z.number().nonnegative(),
   description: z.string().optional(),
   newBookValue: z.number().nonnegative().optional(),
+  supplierId: z.number().int().optional(),
   createdBy: z.number().int().optional(),
   createdAt: z.string().datetime().optional() // set automatically by DB
 });

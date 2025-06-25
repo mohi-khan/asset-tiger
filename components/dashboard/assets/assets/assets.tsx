@@ -26,6 +26,7 @@ import {
   createAddition,
   createRetirement,
   getAllDepreciationBook,
+  getAllSuppliers,
 } from '@/utils/api'
 import { tokenAtom, useInitializeUser, userDataAtom } from '@/utils/user'
 import { useAtom } from 'jotai'
@@ -67,6 +68,7 @@ import {
   createDepreciationInfoSchema,
   createAssetCapexAdditionSchema,
   createAssetPartialRetirementSchema,
+  GetSupplierType,
 } from '@/utils/type'
 import { useRouter } from 'next/navigation'
 import { CustomCombobox } from '@/utils/custom-combobox'
@@ -96,6 +98,7 @@ const Assets = () => {
 
   // State for assets data
   const [assets, setAssets] = useState<GetAssetType[]>([])
+  const [suppliers, setSuppliers] = useState<GetSupplierType[]>([])
   const [depreciationBooks, setDepreciationBooks] = useState<
     GetDepreciationBookType[]
   >([])
@@ -152,6 +155,7 @@ const Assets = () => {
       additionDate: new Date().toISOString().split('T')[0],
       addedValue: 0,
       description: '',
+      supplierId: 0,
       newBookValue: 0,
       createdBy: userData?.userId,
     },
@@ -223,10 +227,40 @@ const Assets = () => {
     }
   }, [token, router, toast])
 
+  const fetchSuppliers = useCallback(async () => {
+    if (!token) return
+    try {
+      const response = await getAllSuppliers(token)
+      if (response?.error?.status === 401) {
+        router.push('/unauthorized-access')
+        return
+      } else if (response.data) {
+        setSuppliers(response.data)
+      } else {
+        setSuppliers([])
+        if (response.error) {
+          toast({
+            title: 'Error',
+            description: response.error.message,
+            variant: 'destructive',
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch depreciation books:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch depreciation books',
+        variant: 'destructive',
+      })
+    }
+  }, [token, router, toast])
+
   useEffect(() => {
     fetchAssets()
     fetchDepreciationBooks()
-  }, [fetchAssets, fetchDepreciationBooks])
+    fetchSuppliers()
+  }, [fetchAssets, fetchDepreciationBooks, fetchSuppliers])
 
   // Dialog handlers
   const handleOpenDepreciationDialog = (assetId: number) => {
@@ -252,6 +286,7 @@ const Assets = () => {
       additionDate: new Date().toISOString().split('T')[0],
       addedValue: 0,
       description: '',
+      supplierId: 0,
       newBookValue: 0,
       createdBy: userData?.userId,
     })
@@ -393,8 +428,8 @@ const Assets = () => {
                   <TableHead>Asset Code</TableHead>
                   <TableHead>Asset Name</TableHead>
                   <TableHead>Purchase Date</TableHead>
-                  <TableHead>Asset Value</TableHead>
-                  <TableHead>Current Value</TableHead>
+                  {/* <TableHead>Asset Value</TableHead>
+                  <TableHead>Current Value</TableHead> */}
                   <TableHead>Status</TableHead>
                   <TableHead>Model</TableHead>
                   <TableHead>Serial No.</TableHead>
@@ -418,8 +453,8 @@ const Assets = () => {
                       <TableCell>{asset.assetCode}</TableCell>
                       <TableCell>{asset.assetName}</TableCell>
                       <TableCell>{formatDate(asset.purDate)}</TableCell>
-                      <TableCell>{asset.assetValue}</TableCell>
-                      <TableCell>{asset.currentValue || 'N/A'}</TableCell>
+                      {/* <TableCell>{asset.assetValue}</TableCell>
+                      <TableCell>{asset.currentValue || 'N/A'}</TableCell> */}
                       <TableCell>{asset.status || 'Active'}</TableCell>
                       <TableCell>{asset.model || 'N/A'}</TableCell>
                       <TableCell>{asset.slNo || 'N/A'}</TableCell>
@@ -532,7 +567,7 @@ const Assets = () => {
                     <FormLabel>Depreciation Method</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={field.value !== undefined ? String(field.value) : undefined}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -826,6 +861,34 @@ const Assets = () => {
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={additionForm.control}
+                name="supplierId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Supplier</FormLabel>
+                    <Select
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      defaultValue={field.value !== undefined ? String(field.value) : undefined}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a supplier" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {suppliers.map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id?.toString() ?? ''}>
+                            {supplier.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
