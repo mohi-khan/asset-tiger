@@ -726,7 +726,7 @@ const AddAssets = () => {
               <Input
                 id="assetGlCode"
                 name="assetGlCode"
-                value={formData.purDate}
+                value={formData.assetGlCode || ''}
                 onChange={handleInputChange}
                 required
               />
