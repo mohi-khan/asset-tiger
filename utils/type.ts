@@ -227,6 +227,7 @@ export const assetDetailsSchema = z.object({
   slNo: z.string(),
   costCenter: z.string(),
   assetGlCode: z.string(),
+  notes: z.string().max(500).nullable().optional(),
   createdBy: z.string(),
   createdAt: z.string(),
   assetDepStartValue: z.number(),
