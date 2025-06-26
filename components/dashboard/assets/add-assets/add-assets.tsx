@@ -128,12 +128,14 @@ const AddAssets = () => {
   // API data states
   const [departments, setDepartments] = useState<GetDepartmentType[]>([])
   const [categories, setCategories] = useState<GetCategoryType[]>([])
+  const [allCategories, setAllCategories] = useState<GetCategoryType[]>([])
   const [subCategories, setSubCategories] = useState<GetCategoryType[]>([])
   const [locations, setLocations] = useState<GetLocationType[]>([])
   const [companies, setCompanies] = useState<GetCompanyType[]>([])
   const [sites, setSites] = useState<GetSiteType[]>([])
   const [suppliers, setSuppliers] = useState<GetSupplierType[]>([])
   const [costCenters, setCostCenters] = useState<GetCostCenterType[]>([])
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null)
   const [loading, setLoading] = useState(true)
 
   // Form data for each popup
@@ -240,16 +242,13 @@ const AddAssets = () => {
         return
       } else {
         setDepartments(departmentsData.data || [])
+        setAllCategories(categoriesData.data || [])
         setCategories(
           categoriesData.data?.filter(
             (category) => category.parent_cat_code == null
           ) || []
         )
-        setSubCategories(
-          categoriesData.data?.filter(
-            (category) => category.parent_cat_code != null
-          ) || []
-        )
+        setSubCategories([])
         setLocations(locationsData.data || [])
         setCompanies(companiesData.data || [])
         setSites(sitesData.data || [])
@@ -266,6 +265,26 @@ const AddAssets = () => {
   useEffect(() => {
     fetchData()
   }, [token, fetchData])
+
+  const handleCategoryChange = (value: { id: string; name: string } | null) => {
+    const selectedCatId = value ? Number(value.id) : 0
+    console.log('🚀 Selected Category ID:', selectedCatId)
+
+    setFormData((prev) => ({
+      ...prev,
+      categoryId: selectedCatId,
+      subCategoryId: 0,
+    }))
+
+    // ✅ Use original full list from allCategories
+    setSubCategories(
+      allCategories?.filter(
+        (category) =>
+          Number(category.parent_cat_code) === selectedCatId
+        // console.log(category.parent_cat_code === selectedCatId)
+      ) || []
+    )
+  }
 
   // Handle main form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -743,12 +762,7 @@ const AddAssets = () => {
                         }
                       : null
                   }
-                  onChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categoryId: value ? Number.parseInt(value.id) : 0,
-                    }))
-                  }
+                  onChange={handleCategoryChange}
                   placeholder="Select a Category"
                 />
                 <Button
@@ -766,6 +780,7 @@ const AddAssets = () => {
               <Label htmlFor="site">Sub Category</Label>
               <div className="flex gap-2">
                 <CustomCombobox
+                  disabled={!formData.categoryId} 
                   items={subCategories
                     .filter((category) => category.category_id !== undefined)
                     .map((category) => ({
@@ -773,12 +788,12 @@ const AddAssets = () => {
                       name: category.category_name || 'Unnamed Category',
                     }))}
                   value={
-                    formData.categoryId
+                    formData.subCategoryId
                       ? {
-                          id: formData.categoryId.toString(),
+                          id: formData.subCategoryId.toString(),
                           name:
-                            categories.find(
-                              (c) => c.category_id === formData.categoryId
+                            subCategories.find(
+                              (c) => c.category_id === formData.subCategoryId
                             )?.category_name || '',
                         }
                       : null
@@ -786,10 +801,10 @@ const AddAssets = () => {
                   onChange={(value) =>
                     setFormData((prev) => ({
                       ...prev,
-                      categoryId: value ? Number.parseInt(value.id) : 0,
+                      subCategoryId: value ? Number.parseInt(value.id) : 0,
                     }))
                   }
-                  placeholder="Select a Category"
+                  placeholder="Select a Sub Category"
                 />
                 <Button
                   variant="outline"

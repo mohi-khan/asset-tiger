@@ -391,14 +391,17 @@ export default function AssetDetails() {
 
   // Add new maintenance
   const handleAddMaintenance = (maintenanceData: CreateMaintenanceType) => {
-    setMaintenanceData({
-      assetId: Number(params.id),
-      maintDate: maintenanceData.maintDate,
-      type: maintenanceData.type,
-      cost: maintenanceData.cost,
-      description: maintenanceData.description || '',
-      performedBy: maintenanceData.performedBy,
-    })
+    setMaintenanceData(prev => [
+      ...prev,
+      {
+        assetId: Number(params.id),
+        maintDate: maintenanceData.maintDate,
+        type: maintenanceData.type,
+        cost: maintenanceData.cost,
+        description: maintenanceData.description || '',
+        performedBy: maintenanceData.performedBy,
+      }
+    ])
   }
 
   // Loading state

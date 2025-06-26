@@ -34,10 +34,6 @@ export function DashboardSidebar() {
       href: '/dashboard/dashboard-overview',
     },
     {
-      title: 'Alerts',
-      icon: Settings,
-      href: '/dashboard/alerts',},
-    {
       title: 'Assets',
       icon: Settings,
       href: '/dashboard/assets',
