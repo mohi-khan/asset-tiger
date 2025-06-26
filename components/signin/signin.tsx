@@ -58,7 +58,7 @@ export default function SignIn() {
         const {
           userId,
           roleId,
-          // userCompanies,
+          userCompanies,
           // voucherTypes,
           // employeeId,
         } = response.data.user
@@ -66,7 +66,7 @@ export default function SignIn() {
         const userInfo = {
           userId,
           roleId,
-          // userCompanies,
+          userCompanies,
           // voucherTypes,
           // employeeId,
         }
