@@ -81,25 +81,25 @@ type DocData = {
 
 export default function AssetDetails() {
   useInitializeUser()
-    const [userData] = useAtom(userDataAtom)
-    const [token] = useAtom(tokenAtom)
-  
-    const router = useRouter()
-  
-    useEffect(() => {
-      const checkUserData = () => {
-        const storedUserData = localStorage.getItem('currentUser')
-        const storedToken = localStorage.getItem('authToken')
-  
-        if (!storedUserData || !storedToken) {
-          console.log('No user data or token found in localStorage')
-          router.push('/signin')
-          return
-        }
+  const [userData] = useAtom(userDataAtom)
+  const [token] = useAtom(tokenAtom)
+
+  const router = useRouter()
+
+  useEffect(() => {
+    const checkUserData = () => {
+      const storedUserData = localStorage.getItem('currentUser')
+      const storedToken = localStorage.getItem('authToken')
+
+      if (!storedUserData || !storedToken) {
+        console.log('No user data or token found in localStorage')
+        router.push('/signin')
+        return
       }
-  
-      checkUserData()
-    }, [userData, token, router])
+    }
+
+    checkUserData()
+  }, [userData, token, router])
   const params = useParams()
   const { toast } = useToast()
 
@@ -321,7 +321,12 @@ export default function AssetDetails() {
     fetchAssetDetails()
     fetchDepreciations()
     fetchAssetWarranty()
-  }, [fetchAssetDetails, fetchDepreciations, fetchAssetWarranty, fetchMaintenance])
+  }, [
+    fetchAssetDetails,
+    fetchDepreciations,
+    fetchAssetWarranty,
+    fetchMaintenance,
+  ])
 
   // Add new photo
   const handleAddPhoto = (photoData: { url: string; caption: string }) => {
@@ -727,6 +732,11 @@ export default function AssetDetails() {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div>
+            <h4 className="text-primary font-medium mb-2">Notes</h4>
+            <p className='border p-1'>{assetData.notes}</p>
           </div>
         </TabsContent>
 

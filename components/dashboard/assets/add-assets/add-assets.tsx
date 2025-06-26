@@ -91,6 +91,7 @@ const AddAssets = () => {
     startDate: '',
     purDate: '',
     categoryId: 0,
+    subCategoryId: 0,
     supplierId: 0,
     user: '',
     companyId: 0,
@@ -127,6 +128,7 @@ const AddAssets = () => {
   // API data states
   const [departments, setDepartments] = useState<GetDepartmentType[]>([])
   const [categories, setCategories] = useState<GetCategoryType[]>([])
+  const [subCategories, setSubCategories] = useState<GetCategoryType[]>([])
   const [locations, setLocations] = useState<GetLocationType[]>([])
   const [companies, setCompanies] = useState<GetCompanyType[]>([])
   const [sites, setSites] = useState<GetSiteType[]>([])
@@ -238,7 +240,16 @@ const AddAssets = () => {
         return
       } else {
         setDepartments(departmentsData.data || [])
-        setCategories(categoriesData.data || [])
+        setCategories(
+          categoriesData.data?.filter(
+            (category) => category.parent_cat_code == null
+          ) || []
+        )
+        setSubCategories(
+          categoriesData.data?.filter(
+            (category) => category.parent_cat_code != null
+          ) || []
+        )
         setLocations(locationsData.data || [])
         setCompanies(companiesData.data || [])
         setSites(sitesData.data || [])
@@ -250,7 +261,7 @@ const AddAssets = () => {
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }, [token, router])
 
   useEffect(() => {
     fetchData()
@@ -388,7 +399,7 @@ const AddAssets = () => {
         console.error('Error creating asset:', error)
       }
     },
-    [formData, userData, token]
+    [formData, token]
   )
 
   const handleCheckboxChange = (checked: boolean) => {
@@ -712,6 +723,87 @@ const AddAssets = () => {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="site">Category</Label>
+              <div className="flex gap-2">
+                <CustomCombobox
+                  items={categories
+                    .filter((category) => category.category_id !== undefined)
+                    .map((category) => ({
+                      id: category.category_id!.toString(),
+                      name: category.category_name || 'Unnamed Category',
+                    }))}
+                  value={
+                    formData.categoryId
+                      ? {
+                          id: formData.categoryId.toString(),
+                          name:
+                            categories.find(
+                              (c) => c.category_id === formData.categoryId
+                            )?.category_name || '',
+                        }
+                      : null
+                  }
+                  onChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      categoryId: value ? Number.parseInt(value.id) : 0,
+                    }))
+                  }
+                  placeholder="Select a Category"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  title="Add new site"
+                  onClick={() => setCategoryPopupOpen(true)}
+                  type="button"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="site">Sub Category</Label>
+              <div className="flex gap-2">
+                <CustomCombobox
+                  items={subCategories
+                    .filter((category) => category.category_id !== undefined)
+                    .map((category) => ({
+                      id: category.category_id!.toString(),
+                      name: category.category_name || 'Unnamed Category',
+                    }))}
+                  value={
+                    formData.categoryId
+                      ? {
+                          id: formData.categoryId.toString(),
+                          name:
+                            categories.find(
+                              (c) => c.category_id === formData.categoryId
+                            )?.category_name || '',
+                        }
+                      : null
+                  }
+                  onChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      categoryId: value ? Number.parseInt(value.id) : 0,
+                    }))
+                  }
+                  placeholder="Select a Category"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  title="Add new site"
+                  onClick={() => setCategoryPopupOpen(true)}
+                  type="button"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="assetCode">Asset Code(*)</Label>
               <Input
                 id="assetCode"
@@ -726,7 +818,7 @@ const AddAssets = () => {
               <Input
                 id="assetGlCode"
                 name="assetGlCode"
-                value={formData.purDate}
+                value={formData.assetGlCode || ''}
                 onChange={handleInputChange}
                 required
               />
@@ -804,46 +896,6 @@ const AddAssets = () => {
                   size="icon"
                   title="Add new Supplier"
                   onClick={() => setSupplierPopupOpen(true)}
-                  type="button"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="site">Category</Label>
-              <div className="flex gap-2">
-                <CustomCombobox
-                  items={categories
-                    .filter((category) => category.category_id !== undefined)
-                    .map((category) => ({
-                      id: category.category_id!.toString(),
-                      name: category.category_name || 'Unnamed Category',
-                    }))}
-                  value={
-                    formData.categoryId
-                      ? {
-                          id: formData.categoryId.toString(),
-                          name:
-                            categories.find(
-                              (c) => c.category_id === formData.categoryId
-                            )?.category_name || '',
-                        }
-                      : null
-                  }
-                  onChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      categoryId: value ? Number.parseInt(value.id) : 0,
-                    }))
-                  }
-                  placeholder="Select a Category"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  title="Add new site"
-                  onClick={() => setCategoryPopupOpen(true)}
                   type="button"
                 >
                   <Plus className="h-4 w-4" />
