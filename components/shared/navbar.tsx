@@ -63,9 +63,10 @@ export default function Navbar() {
       <div className="mx-auto px-4 sm:px-6 lg:px-8 border-b">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0 flex items-center">
-            <h1 className="text-3xl font-semibold text-yellow-400">
-              Asset Tiger
-            </h1>
+            <div className="flex items-center">
+              <span className="text-2xl font-bold text-gray-800">ASSET</span>
+              <span className="text-2xl font-bold text-yellow-500">TIGER</span>
+            </div>
           </div>
           <div className="flex items-center justify-between">
             <div className="hidden sm:flex sm:items-center sm:space-x-4 ml-4">
