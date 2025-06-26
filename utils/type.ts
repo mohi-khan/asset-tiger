@@ -140,6 +140,7 @@ export const createAsset = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
   purDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
   categoryId: z.number().int(),
+  subCategoryId: z.number().int(),
   supplierId: z.number().int().nullable().optional(),
   user: z.string().max(100).nullable().optional(),
   companyId: z.number().int(),
