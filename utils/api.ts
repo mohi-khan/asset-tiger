@@ -328,7 +328,7 @@ export async function getAllAssetMaintenance(token: string,) {
 
 export async function getAssetMaintenanceById(token: string, assetId: string) {
   return fetchApi<GetMaintenanceType[]>({
-    url: `api/maintenance/getDetails/${assetId}`,
+    url: `api/maintenance/getMaintenance/${assetId}`,
     method: 'GET',
     headers: {
       Authorization: token,
@@ -354,7 +354,7 @@ export async function createMaintenance(
 
 export async function getAssetWarrantyeById(token: string, assetId: string) {
   return fetchApi<GetWarrantyType[]>({
-    url: `api/warranty/getDetails/${assetId}`,
+    url: `api/warranty/getWarranty/${assetId}`,
     method: 'GET',
     headers: {
       Authorization: token,
@@ -406,7 +406,7 @@ export async function getAllDispose(token: string) {
 
 export async function getDepreciationByAssetId(token: string, assetId: number) {
   return fetchApi<GetDepTranType[]>({
-    url: `api/depCalculation/getDepByAssetId/${assetId}`,
+    url: `api/depinfo/getbyAsset/${assetId}`,
     method: 'GET',
     headers: {
       Authorization: token,

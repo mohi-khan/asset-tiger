@@ -392,7 +392,7 @@ const Assets = () => {
               <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
             </svg>
           </div>
-          <h2 className="text-lg font-semibold">Asset Details</h2>
+          <h2 className="text-lg font-semibold">Assets</h2>
         </div>
         <div className="flex items-center gap-4">
           <Input
@@ -464,50 +464,104 @@ const Assets = () => {
                         >
                           <Eye className="h-5 w-5 cursor-pointer text-amber-600 hover:text-amber-800" />
                         </Link>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 p-0"
+                        {asset.status !== 'SOLD' && (
+                          <div className="relative inline-block">
+                            <button
+                              onClick={() => {
+                                const dropdown = document.getElementById(
+                                  `dropdown-${asset.id}`
+                                )
+                                if (dropdown) {
+                                  dropdown.classList.toggle('hidden')
+                                }
+                              }}
+                              className="h-8 w-8 p-0 rounded"
                             >
-                              <MoreVertical className="h-5 w-5 text-amber-600 hover:text-amber-800" />
+                              <MoreVertical className="h-5 w-5 cursor-pointer text-amber-600 hover:text-amber-800" />
                               <span className="sr-only">Open menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
+                            </button>
+                            <div
+                              id={`dropdown-${asset.id}`}
+                              className="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border border-gray-200"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="py-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    if (asset.id !== undefined) {
+                                      handleOpenDepreciationDialog(asset.id)
+                                      const dropdown = document.getElementById(
+                                        `dropdown-${asset.id}`
+                                      )
+                                      if (dropdown) {
+                                        dropdown.classList.add('hidden')
+                                      }
+                                    }
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                                >
+                                  Create Depreciation Info
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    if (asset.id !== undefined) {
+                                      handleOpenAdditionDialog(asset.id)
+                                      const dropdown = document.getElementById(
+                                        `dropdown-${asset.id}`
+                                      )
+                                      if (dropdown) {
+                                        dropdown.classList.add('hidden')
+                                      }
+                                    }
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                                >
+                                  Create Addition
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    if (asset.id !== undefined) {
+                                      handleOpenRetirementDialog(asset.id)
+                                      const dropdown = document.getElementById(
+                                        `dropdown-${asset.id}`
+                                      )
+                                      if (dropdown) {
+                                        dropdown.classList.add('hidden')
+                                      }
+                                    }
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                                >
+                                  Create Retirement
+                                </button>
+                              </div>
+                            </div>
+                            <div
+                              className="fixed"
                               onClick={() => {
-                                if (asset.id !== undefined) {
-                                  handleOpenDepreciationDialog(asset.id)
+                                const dropdown = document.getElementById(
+                                  `dropdown-${asset.id}`
+                                )
+                                if (
+                                  dropdown &&
+                                  !dropdown.classList.contains('hidden')
+                                ) {
+                                  dropdown.classList.add('hidden')
                                 }
                               }}
-                              className="cursor-pointer"
-                            >
-                              Create Depreciation Info
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                if (asset.id !== undefined) {
-                                  handleOpenAdditionDialog(asset.id)
-                                }
+                              style={{
+                                display: document
+                                  .getElementById(`dropdown-${asset.id}`)
+                                  ?.classList.contains('hidden')
+                                  ? 'none'
+                                  : 'block',
                               }}
-                              className="cursor-pointer"
-                            >
-                              Create Addition
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                if (asset.id !== undefined) {
-                                  handleOpenRetirementDialog(asset.id)
-                                }
-                              }}
-                              className="cursor-pointer"
-                            >
-                              Create Retirement
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            />
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
@@ -519,7 +573,9 @@ const Assets = () => {
           {/* Pagination controls */}
           <div className="flex justify-center items-center gap-2 mt-4">
             <Button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              onClick={() => {
+                setCurrentPage((prev) => Math.max(prev - 1, 1))
+              }}
               disabled={currentPage === 1}
               variant="outline"
             >
@@ -529,9 +585,9 @@ const Assets = () => {
               Page {currentPage} of {totalPages}
             </span>
             <Button
-              onClick={() =>
+              onClick={() => {
                 setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
+              }}
               disabled={currentPage === totalPages}
               variant="outline"
             >
@@ -567,7 +623,11 @@ const Assets = () => {
                     <FormLabel>Depreciation Method</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value !== undefined ? String(field.value) : undefined}
+                      defaultValue={
+                        field.value !== undefined
+                          ? String(field.value)
+                          : undefined
+                      }
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -874,7 +934,11 @@ const Assets = () => {
                     <FormLabel>Supplier</FormLabel>
                     <Select
                       onValueChange={(value) => field.onChange(Number(value))}
-                      defaultValue={field.value !== undefined ? String(field.value) : undefined}
+                      defaultValue={
+                        field.value !== undefined
+                          ? String(field.value)
+                          : undefined
+                      }
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -883,7 +947,10 @@ const Assets = () => {
                       </FormControl>
                       <SelectContent>
                         {suppliers.map((supplier) => (
-                          <SelectItem key={supplier.id} value={supplier.id?.toString() ?? ''}>
+                          <SelectItem
+                            key={supplier.id}
+                            value={supplier.id?.toString() ?? ''}
+                          >
                             {supplier.name}
                           </SelectItem>
                         ))}
