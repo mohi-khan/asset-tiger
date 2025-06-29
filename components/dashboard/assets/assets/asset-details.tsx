@@ -231,7 +231,7 @@ export default function AssetDetails() {
         return
       } else {
         setDepreciation(data.data || [])
-        console.log('🚀 ~ fetchDepreciations ~ data.data:', data.data)
+        console.log("🚀 ~ fetchDepreciations ~ data.data:", data.data)
       }
     } catch (err) {
       console.error('Failed to fetch asset details:', err)
@@ -261,7 +261,7 @@ export default function AssetDetails() {
         return
       } else if (response.data) {
         setMaintenanceData(response.data || [])
-        console.log('🚀 ~ fetchCompanies ~ response.data:', response.data)
+        console.log("🚀 ~ fetchMaintenance ~ response.data:", response.data)
       } else {
         setMaintenanceData([])
         if (response.error) {
@@ -295,7 +295,7 @@ export default function AssetDetails() {
         return
       } else if (response.data) {
         setWarranty(response.data)
-        console.log('🚀 ~ fetchCompanies ~ response.data:', response.data)
+        console.log("🚀 ~ fetchAssetWarranty ~ response.data:", response.data)
       } else {
         setWarranty([])
         if (response.error) {
@@ -348,29 +348,6 @@ export default function AssetDetails() {
         uploadedBy: 'Current User',
       },
     ])
-  }
-
-  // Add new depreciation
-  const handleAddDepreciation = (depData: {
-    period: string
-    depreciationAmount: string
-    accumulatedDepreciation: string
-    bookValue: string
-  }) => {
-    const newDepreciation = {
-      id: depreciation.length + 1,
-      asset_id: Number(params.id),
-      asset_name: assetData?.assetName || '',
-      book_id: 1,
-      book_name: 'Default Book',
-      transaction_date: new Date().toISOString(),
-      period: depData.period,
-      depreciation_amount: Number(depData.depreciationAmount),
-      notes: null,
-      created_by: null,
-      created_at: new Date().toISOString(),
-    }
-    setDepreciation([...depreciation, newDepreciation])
   }
 
   // Add new warranty
@@ -878,36 +855,43 @@ export default function AssetDetails() {
         <TabsContent value="depreciation" className="mt-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium">Depreciation</h3>
-            <AddDepreciationDialog onAddDepreciation={handleAddDepreciation} />
           </div>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Period</TableHead>
-                <TableHead>Depreciation Amount</TableHead>
-                <TableHead>Asset Name</TableHead>
                 <TableHead>Book Name</TableHead>
-                <TableHead>Transaction Date</TableHead>
+                <TableHead>Method</TableHead>
+                <TableHead>Rate</TableHead>
+                <TableHead>Useful Life</TableHead>
+                <TableHead>Asset Value</TableHead>
+                <TableHead>Accumulated Depreciation</TableHead>
+                <TableHead>Salvage Value</TableHead>
+                <TableHead>Effective Date</TableHead>
+                <TableHead>Frequency</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {depreciation?.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={9}
                     className="text-center py-6 text-gray-500"
                   >
                     No depreciation data found for this asset.
                   </TableCell>
                 </TableRow>
               ) : (
-                depreciation?.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.period}</TableCell>
-                    <TableCell>{item.depreciation_amount}</TableCell>
-                    <TableCell>{item.asset_name}</TableCell>
-                    <TableCell>{item.book_name}</TableCell>
-                    <TableCell>{item.transaction_date}</TableCell>
+                depreciation?.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{item.bookName}</TableCell>
+                    <TableCell>{item.method}</TableCell>
+                    <TableCell>{item.rate}</TableCell>
+                    <TableCell>{item.usefullLife}</TableCell>
+                    <TableCell>{item.assetValue}</TableCell>
+                    <TableCell>{item.accDep}</TableCell>
+                    <TableCell>{item.salvageValue}</TableCell>
+                    <TableCell>{formatDate(item.effectiveDate)}</TableCell>
+                    <TableCell>{item.Frequency}</TableCell>
                   </TableRow>
                 ))
               )}
@@ -942,8 +926,8 @@ export default function AssetDetails() {
                 warranty?.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.type}</TableCell>
-                    <TableCell>{item.start_date}</TableCell>
-                    <TableCell>{item.end_date}</TableCell>
+                    <TableCell>{formatDate(item.start_date)}</TableCell>
+                    <TableCell>{formatDate(item.end_date)}</TableCell>
                     <TableCell>{item.warranty_provider}</TableCell>
                     <TableCell>{item.description}</TableCell>
                   </TableRow>
@@ -979,7 +963,7 @@ export default function AssetDetails() {
               ) : (
                 maintenanceData?.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.maintDate}</TableCell>
+                    <TableCell>{formatDate(item.maintDate)}</TableCell>
                     <TableCell>{item.type}</TableCell>
                     <TableCell>{item.cost}</TableCell>
                     <TableCell>{item.description}</TableCell>
@@ -1164,104 +1148,6 @@ function AddDocDialog({ onAddDoc }: { onAddDoc: (data: any) => void }) {
   )
 }
 
-// Add Depreciation Dialog Component
-function AddDepreciationDialog({
-  onAddDepreciation,
-}: {
-  onAddDepreciation: (data: any) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [period, setPeriod] = useState('')
-  const [depreciationAmount, setDepreciationAmount] = useState('')
-  const [accumulatedDepreciation, setAccumulatedDepreciation] = useState('')
-  const [bookValue, setBookValue] = useState('')
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onAddDepreciation({
-      period,
-      depreciationAmount,
-      accumulatedDepreciation,
-      bookValue,
-    })
-    setPeriod('')
-    setDepreciationAmount('')
-    setAccumulatedDepreciation('')
-    setBookValue('')
-    setOpen(false)
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="flex items-center gap-1">
-          <Plus className="h-4 w-4" />
-          Add Depreciation
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add Depreciation Entry</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="period">Period</Label>
-            <Input
-              id="period"
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-              placeholder="e.g. 2025-2026"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="depreciationAmount">Depreciation Amount</Label>
-            <Input
-              id="depreciationAmount"
-              value={depreciationAmount}
-              onChange={(e) => setDepreciationAmount(e.target.value)}
-              placeholder="e.g. ₹10,000.00"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="accumulatedDepreciation">
-              Accumulated Depreciation
-            </Label>
-            <Input
-              id="accumulatedDepreciation"
-              value={accumulatedDepreciation}
-              onChange={(e) => setAccumulatedDepreciation(e.target.value)}
-              placeholder="e.g. ₹25,000.00"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="bookValue">Book Value</Label>
-            <Input
-              id="bookValue"
-              value={bookValue}
-              onChange={(e) => setBookValue(e.target.value)}
-              placeholder="e.g. ₹75,000.00"
-              required
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit">Add Entry</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
 // Add Warranty Dialog Component
 function AddWarrantyDialog({
   onAddWarranty,
@@ -1433,6 +1319,7 @@ import {
   FormControl,
   FormMessage,
 } from '@/components/ui/form'
+import formatDate from '@/utils/formatDate'
 
 export function AddMaintenanceDialog({
   onAddMaintenance,
